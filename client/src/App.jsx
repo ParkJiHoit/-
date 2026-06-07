@@ -1,7 +1,8 @@
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Search, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import ColumnVisibilitySettings from './components/ColumnVisibilitySettings';
+import KeywordExpansionForm from './components/KeywordExpansionForm';
 import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
 import KeywordSearchForm from './components/KeywordSearchForm';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
@@ -26,13 +27,47 @@ function getInitialVisibleColumns() {
   }
 }
 
+async function parseApiResponse(response) {
+  const rawBody = await response.text();
+  const isJson = response.headers.get('content-type')?.includes('application/json');
+
+  if (!rawBody) return {};
+  if (!isJson) return { message: rawBody };
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    return { message: rawBody };
+  }
+}
+
+function buildSummary(rows) {
+  const totalKeywords = rows.length;
+  const efficiencySum = rows.reduce((sum, row) => sum + row.efficiencyScore, 0);
+  const saturationSum = rows.reduce((sum, row) => sum + row.saturationScore, 0);
+
+  return {
+    totalKeywords,
+    priorityCount: rows.filter((row) => row.recommendAction === '우선 테스트').length,
+    opportunityCount: rows.filter((row) => row.recommendAction === '기회 키워드').length,
+    saturatedCount: rows.filter((row) => row.recommendAction === '과포화 주의').length,
+    avgEfficiencyScore: totalKeywords ? Math.round(efficiencySum / totalKeywords) : 0,
+    avgSaturationScore: totalKeywords ? Math.round(saturationSum / totalKeywords) : 0
+  };
+}
+
 export default function App() {
+  const [activeTab, setActiveTab] = useState('analysis');
   const [analysis, setAnalysis] = useState(null);
+  const [expansion, setExpansion] = useState(null);
   const [filters, setFilters] = useState(defaultFilters);
   const [sortConfig, setSortConfig] = useState({ key: 'relevanceScore', direction: 'desc' });
   const [visibleColumns, setVisibleColumns] = useState(getInitialVisibleColumns);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const activeResult = activeTab === 'analysis' ? analysis : expansion;
+  const activeRows = activeResult?.keywords || [];
 
   useEffect(() => {
     window.localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visibleColumns));
@@ -43,9 +78,7 @@ export default function App() {
   };
 
   const filteredRows = useMemo(() => {
-    const rows = analysis?.keywords || [];
-
-    const filtered = rows.filter((row) => {
+    const filtered = activeRows.filter((row) => {
       if (filters.excludeLowRelevance && row.relevanceLevel === '낮음') return false;
       if (filters.relevanceLevel && row.relevanceLevel !== filters.relevanceLevel) return false;
       if (filters.minRelevance && row.relevanceScore < Number(filters.minRelevance)) return false;
@@ -66,65 +99,61 @@ export default function App() {
     });
 
     return sortKeywords(filtered, sortConfig);
-  }, [analysis, filters, sortConfig]);
+  }, [activeRows, filters, sortConfig]);
 
-  const currentSummary = useMemo(() => {
-    const totalKeywords = filteredRows.length;
-    const efficiencySum = filteredRows.reduce((sum, row) => sum + row.efficiencyScore, 0);
-    const saturationSum = filteredRows.reduce((sum, row) => sum + row.saturationScore, 0);
+  const currentSummary = useMemo(() => buildSummary(filteredRows), [filteredRows]);
 
-    return {
-      totalKeywords,
-      priorityCount: filteredRows.filter((row) => row.recommendAction === '우선 테스트').length,
-      opportunityCount: filteredRows.filter((row) => row.recommendAction === '기회 키워드').length,
-      saturatedCount: filteredRows.filter((row) => row.recommendAction === '과포화 주의').length,
-      avgEfficiencyScore: totalKeywords ? Math.round(efficiencySum / totalKeywords) : 0,
-      avgSaturationScore: totalKeywords ? Math.round(saturationSum / totalKeywords) : 0
-    };
-  }, [filteredRows]);
-
-  const analyzeKeyword = async (keyword) => {
+  const requestKeywords = async (endpoint, payload, failureMessage) => {
     setLoading(true);
     setError('');
 
     try {
-      const response = await fetch('/api/keywords/analyze', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ keyword })
+        body: JSON.stringify(payload)
       });
-      const rawBody = await response.text();
-      const isJson = response.headers.get('content-type')?.includes('application/json');
-      let data = {};
-
-      if (rawBody && isJson) {
-        try {
-          data = JSON.parse(rawBody);
-        } catch {
-          data = { message: rawBody };
-        }
-      } else if (rawBody) {
-        data = { message: rawBody };
-      }
+      const data = await parseApiResponse(response);
 
       if (!response.ok) {
-        throw new Error(data.message || '키워드 데이터를 조회하지 못했습니다.');
+        throw new Error(data.message || failureMessage);
       }
 
       if (!data.keywords) {
         throw new Error(data.message || '키워드 응답 형식이 올바르지 않습니다.');
       }
 
-      setAnalysis(data);
       setFilters(defaultFilters);
       setSortConfig({ key: 'relevanceScore', direction: 'desc' });
+      return data;
     } catch (requestError) {
-      setError(requestError.message || '키워드 분석 중 오류가 발생했습니다.');
+      setError(requestError.message || failureMessage);
+      return null;
     } finally {
       setLoading(false);
     }
+  };
+
+  const analyzeKeyword = async (keyword) => {
+    const data = await requestKeywords(
+      '/api/keywords/analyze',
+      { keyword },
+      '키워드 데이터를 조회하지 못했습니다.'
+    );
+
+    if (data) setAnalysis(data);
+  };
+
+  const expandKeyword = async (payload) => {
+    const data = await requestKeywords(
+      '/api/keywords/expand',
+      payload,
+      '키워드 확장 데이터를 조회하지 못했습니다.'
+    );
+
+    if (data) setExpansion(data);
   };
 
   const handleSort = (key) => {
@@ -157,42 +186,76 @@ export default function App() {
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
     const workbook = XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, '키워드 추천');
+    XLSX.utils.book_append_sheet(workbook, worksheet, activeTab === 'analysis' ? '키워드 분석' : '키워드 확장');
     XLSX.writeFile(workbook, getDownloadFileName());
   };
 
   return (
     <main className="min-h-screen bg-[#eef2f7]">
       <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-6 px-5 py-8 lg:px-8">
-        <header className="flex flex-col gap-3 border-b border-slate-300 pb-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
-              Naver Search Ads Keyword Ops
-            </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-              네이버 키워드 추천 대시보드
-            </h1>
-            <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-slate-600">
-              검색광고 운영을 위한 키워드 검색량, 경쟁도, 포화도, 효율 점수 분석
-            </p>
-          </div>
-          {analysis?.baseKeyword && (
-            <div className="rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700">
-              기준 키워드 <span className="ml-2 text-slate-950">{analysis.baseKeyword}</span>
+        <header className="flex flex-col gap-4 border-b border-slate-300 pb-6">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+                Naver Search Ads Keyword Ops
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+                네이버 키워드 추천 대시보드
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-slate-600">
+                검색광고 운영을 위한 키워드 검색량, 경쟁도, 포화도, 효율 점수 분석
+              </p>
             </div>
-          )}
+            {activeResult?.baseKeyword && (
+              <div className="rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700">
+                {activeTab === 'analysis' ? '기준 키워드' : '시드 키워드'}
+                <span className="ml-2 text-slate-950">
+                  {activeTab === 'analysis'
+                    ? activeResult.baseKeyword
+                    : activeResult.seedKeywords?.join(', ') || activeResult.baseKeyword}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <nav className="flex flex-wrap gap-2">
+            <TabButton
+              active={activeTab === 'analysis'}
+              icon={Search}
+              label="키워드 분석"
+              onClick={() => {
+                setActiveTab('analysis');
+                setError('');
+                setFilters(defaultFilters);
+              }}
+            />
+            <TabButton
+              active={activeTab === 'expansion'}
+              icon={Sparkles}
+              label="키워드 확장"
+              onClick={() => {
+                setActiveTab('expansion');
+                setError('');
+                setFilters(defaultFilters);
+              }}
+            />
+          </nav>
         </header>
 
-        <KeywordSearchForm
-          onSubmit={analyzeKeyword}
-          loading={loading}
-          suggestions={analysis?.searchSuggestions || []}
-        />
+        {activeTab === 'analysis' ? (
+          <KeywordSearchForm
+            onSubmit={analyzeKeyword}
+            loading={loading}
+            suggestions={analysis?.searchSuggestions || []}
+          />
+        ) : (
+          <KeywordExpansionForm onSubmit={expandKeyword} loading={loading} />
+        )}
 
         {loading && (
           <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-5 text-sm font-bold text-slate-700 shadow-sm">
             <Loader2 className="h-5 w-5 animate-spin text-slate-950" />
-            키워드 데이터를 분석 중입니다.
+            {activeTab === 'analysis' ? '키워드 데이터를 분석 중입니다.' : '키워드를 확장 중입니다.'}
           </div>
         )}
 
@@ -202,7 +265,7 @@ export default function App() {
           </div>
         )}
 
-        {analysis && !loading && (
+        {activeResult && !loading && (
           <>
             <SummaryCards summary={currentSummary} />
             <KeywordFilters
@@ -217,7 +280,9 @@ export default function App() {
             />
             <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <h2 className="text-lg font-black text-slate-950">키워드 분석 테이블</h2>
+                <h2 className="text-lg font-black text-slate-950">
+                  {activeTab === 'analysis' ? '키워드 분석 테이블' : '키워드 확장 테이블'}
+                </h2>
                 <p className="text-sm font-medium text-slate-500">
                   현재 필터 기준 {filteredRows.length}개 키워드 표시
                 </p>
@@ -257,6 +322,23 @@ export default function App() {
         )}
       </div>
     </main>
+  );
+}
+
+function TabButton({ active, icon: Icon, label, onClick }) {
+  return (
+    <button
+      className={`inline-flex h-11 items-center gap-2 rounded-md border px-4 text-sm font-black transition ${
+        active
+          ? 'border-slate-950 bg-slate-950 text-white'
+          : 'border-slate-300 bg-white text-slate-700 hover:border-slate-500'
+      }`}
+      type="button"
+      onClick={onClick}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
   );
 }
 

@@ -61,7 +61,11 @@ function normalizeCompetition(value) {
   return value || '알 수 없음';
 }
 
-function normalizeKeywordRow(rawKeyword, baseKeyword) {
+function normalizeText(value) {
+  return String(value || '').replace(/\s+/g, '').toLowerCase();
+}
+
+function normalizeKeywordRow(rawKeyword, baseKeyword, sourceKeyword = baseKeyword) {
   const keyword = rawKeyword.relKeyword || rawKeyword.keyword || '';
   const monthlyPcSearch = parseNaverNumber(rawKeyword.monthlyPcQcCnt);
   const monthlyMobileSearch = parseNaverNumber(rawKeyword.monthlyMobileQcCnt);
@@ -89,6 +93,7 @@ function normalizeKeywordRow(rawKeyword, baseKeyword) {
 
   const keywordData = {
     baseKeyword,
+    sourceKeyword,
     keyword,
     monthlyPcSearch,
     monthlyMobileSearch,
@@ -116,7 +121,7 @@ function dedupeKeywords(rows) {
   const seen = new Set();
 
   return rows.filter((row) => {
-    const key = row.keyword.replace(/\s+/g, '').toLowerCase();
+    const key = normalizeText(row.keyword);
     if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -139,10 +144,10 @@ function buildSummary(keywords) {
 }
 
 function buildSearchSuggestions(keywords, baseKeyword) {
-  const normalizedBase = baseKeyword.replace(/\s+/g, '').toLowerCase();
+  const normalizedBase = normalizeText(baseKeyword);
 
   return keywords
-    .filter((row) => row.keyword.replace(/\s+/g, '').toLowerCase() !== normalizedBase)
+    .filter((row) => normalizeText(row.keyword) !== normalizedBase)
     .filter((row) => row.relevanceScore >= 55)
     .sort((a, b) => {
       if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
@@ -156,19 +161,47 @@ function buildSearchSuggestions(keywords, baseKeyword) {
     }));
 }
 
+function sortKeywordRows(baseKeyword, rows) {
+  const baseKey = normalizeText(baseKeyword);
+
+  return rows.sort((a, b) => {
+    const aIsBase = normalizeText(a.keyword) === baseKey;
+    const bIsBase = normalizeText(b.keyword) === baseKey;
+    if (aIsBase !== bIsBase) return aIsBase ? -1 : 1;
+    if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
+    if (b.efficiencyScore !== a.efficiencyScore) return b.efficiencyScore - a.efficiencyScore;
+    return b.totalSearch - a.totalSearch;
+  });
+}
+
+function containsAny(keyword, words) {
+  const normalizedKeyword = normalizeText(keyword);
+  return words.some((word) => normalizedKeyword.includes(normalizeText(word)));
+}
+
+function filterExpandedRows(rows, includeWords, excludeWords, highQuality) {
+  const minRelevance = highQuality ? 55 : 35;
+  const minSearch = highQuality ? 10 : 0;
+
+  return rows.filter((row) => {
+    if (row.relevanceScore < minRelevance) return false;
+    if (row.totalSearch < minSearch) return false;
+    if (includeWords.length > 0 && !containsAny(row.keyword, includeWords)) return false;
+    if (excludeWords.length > 0 && containsAny(row.keyword, excludeWords)) return false;
+    if (highQuality && row.recommendAction === '제외 검토') return false;
+    return true;
+  });
+}
+
+function normalizeWordList(words) {
+  return [...new Set((words || []).map((word) => String(word || '').trim()).filter(Boolean))].slice(0, 5);
+}
+
 export async function analyzeKeyword(baseKeyword) {
   try {
     const rawKeywords = await fetchNaverKeywordTool(baseKeyword);
     const normalizedRows = dedupeKeywords(rawKeywords.map((row) => normalizeKeywordRow(row, baseKeyword)));
-    const baseKey = baseKeyword.replace(/\s+/g, '').toLowerCase();
-
-    const keywords = normalizedRows.sort((a, b) => {
-      const aIsBase = a.keyword.replace(/\s+/g, '').toLowerCase() === baseKey;
-      const bIsBase = b.keyword.replace(/\s+/g, '').toLowerCase() === baseKey;
-      if (aIsBase !== bIsBase) return aIsBase ? -1 : 1;
-      if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
-      return b.efficiencyScore - a.efficiencyScore;
-    });
+    const keywords = sortKeywordRows(baseKeyword, normalizedRows);
 
     return {
       baseKeyword,
@@ -182,6 +215,63 @@ export async function analyzeKeyword(baseKeyword) {
         error.response?.data?.message ||
         error.message ||
         '네이버 키워드 데이터를 조회하지 못했습니다.'
+    );
+    wrappedError.status = error.status || error.response?.status || 500;
+    throw wrappedError;
+  }
+}
+
+export async function expandKeyword({
+  seedKeywords = [],
+  baseKeyword = '',
+  includeWords = [],
+  excludeWords = [],
+  highQuality = false
+}) {
+  try {
+    const normalizedSeedKeywords = normalizeWordList(seedKeywords.length ? seedKeywords : [baseKeyword]).slice(0, 3);
+    const representativeKeyword = normalizedSeedKeywords[0];
+    const normalizedIncludeWords = normalizeWordList(includeWords);
+    const normalizedExcludeWords = normalizeWordList(excludeWords);
+    const expansionQueries = normalizedSeedKeywords.flatMap((seedKeyword) => [
+      seedKeyword,
+      ...normalizedIncludeWords.map((word) => `${seedKeyword} ${word}`)
+    ]);
+    const uniqueExpansionQueries = [...new Set(expansionQueries.map((seed) => seed.trim()).filter(Boolean))].slice(0, 12);
+
+    const responses = await Promise.all(
+      uniqueExpansionQueries.map(async (sourceKeyword) => ({
+        sourceKeyword,
+        rows: await fetchNaverKeywordTool(sourceKeyword)
+      }))
+    );
+
+    const normalizedRows = responses.flatMap(({ sourceKeyword, rows }) =>
+      rows.map((row) => normalizeKeywordRow(row, representativeKeyword, sourceKeyword))
+    );
+    const filteredRows = filterExpandedRows(
+      dedupeKeywords(normalizedRows),
+      normalizedIncludeWords,
+      normalizedExcludeWords,
+      highQuality
+    );
+    const keywords = sortKeywordRows(representativeKeyword, filteredRows).slice(0, highQuality ? 60 : 120);
+
+    return {
+      baseKeyword: representativeKeyword,
+      seedKeywords: normalizedSeedKeywords,
+      includeWords: normalizedIncludeWords,
+      excludeWords: normalizedExcludeWords,
+      highQuality,
+      summary: buildSummary(keywords),
+      keywords
+    };
+  } catch (error) {
+    const wrappedError = new Error(
+      error.response?.data?.title ||
+        error.response?.data?.message ||
+        error.message ||
+        '키워드 확장 데이터를 조회하지 못했습니다.'
     );
     wrappedError.status = error.status || error.response?.status || 500;
     throw wrappedError;
