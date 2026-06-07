@@ -267,12 +267,16 @@ export default function App() {
 
         {activeResult && !loading && (
           <>
-            <SummaryCards summary={currentSummary} />
-            <KeywordFilters
-              filters={filters}
-              onChange={setFilters}
-              onReset={() => setFilters(defaultFilters)}
-            />
+            {activeTab === 'analysis' && (
+              <>
+                <SummaryCards summary={currentSummary} />
+                <KeywordFilters
+                  filters={filters}
+                  onChange={setFilters}
+                  onReset={() => setFilters(defaultFilters)}
+                />
+              </>
+            )}
             <ColumnVisibilitySettings
               visibleColumns={visibleColumns}
               onChange={setVisibleColumns}

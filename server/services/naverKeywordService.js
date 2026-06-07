@@ -251,16 +251,18 @@ export async function expandKeyword({
       seedKeyword,
       ...normalizedIncludeWords.map((word) => `${seedKeyword}${word}`)
     ]);
+    const maxExpansionQueries = highQuality ? 4 : 6;
     const uniqueExpansionQueries = [
       ...new Set(expansionQueries.map((seed) => sanitizeNaverHintKeyword(seed)).filter(Boolean))
-    ].slice(0, 12);
+    ].slice(0, maxExpansionQueries);
 
-    const responses = await Promise.all(
-      uniqueExpansionQueries.map(async (sourceKeyword) => ({
+    const responses = [];
+    for (const sourceKeyword of uniqueExpansionQueries) {
+      responses.push({
         sourceKeyword,
         rows: await fetchNaverKeywordTool(sourceKeyword)
-      }))
-    );
+      });
+    }
 
     const normalizedRows = responses.flatMap(({ sourceKeyword, rows }) =>
       rows.map((row) => normalizeKeywordRow(row, representativeKeyword, sourceKeyword))
