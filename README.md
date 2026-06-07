@@ -189,6 +189,26 @@ Render는 GitHub에 새 commit이 올라오면 자동으로 다시 배포할 수
 
 Render 무료 Web Service는 일정 시간 접속이 없으면 잠들 수 있습니다. 팀원이 오랜만에 접속하면 첫 화면이 뜨기까지 30초~1분 정도 걸릴 수 있습니다. 내부 MVP 용도라면 보통 충분하지만, 매일 빠르게 써야 하면 유료 플랜을 검토하면 됩니다.
 
+### 10. Render 빌드 오류 해결
+
+아래 오류가 나오면 Render가 `NODE_ENV=production` 상태에서 클라이언트 devDependencies를 빼고 설치한 것입니다.
+
+```text
+Cannot find module 'tailwindcss'
+```
+
+이 프로젝트의 루트 `build` 스크립트는 클라이언트 빌드에 필요한 Tailwind/PostCSS 패키지를 포함해서 설치하도록 설정되어 있습니다.
+
+```json
+"build": "npm --prefix client install --include=dev && npm --prefix server install --omit=dev && npm --prefix client run build"
+```
+
+Render의 Build Command는 아래처럼 유지하면 됩니다.
+
+```text
+npm install && npm run build
+```
+
 ## 분석 로직
 
 네이버 API에서 직접 제공되는 키워드 관련 컬럼만 원천 데이터로 사용합니다.
