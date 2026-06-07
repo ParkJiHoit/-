@@ -4,26 +4,26 @@ import { SORTABLE_COLUMNS } from '../utils/tableSort';
 import KeywordBadge, { getActionRowClass } from './KeywordBadge';
 
 export const KEYWORD_TABLE_COLUMNS = [
-  { key: 'recommendAction', label: '추천 상태', alwaysVisible: false },
-  { key: 'keyword', label: '키워드', alwaysVisible: true },
-  { key: 'relevanceLevel', label: '연관도' },
-  { key: 'relevanceScore', label: '연관도 점수', sortable: true, align: 'right' },
-  { key: 'monthlyPcSearch', label: 'PC 검색량', align: 'right' },
-  { key: 'monthlyMobileSearch', label: '모바일 검색량', align: 'right' },
-  { key: 'totalSearch', label: '총 검색량', sortable: true, align: 'right' },
-  { key: 'mobileRatio', label: '모바일 비중', sortable: true, align: 'right' },
-  { key: 'monthlyPcCtr', label: 'PC 평균 CTR', align: 'right' },
-  { key: 'monthlyMobileCtr', label: '모바일 평균 CTR', align: 'right' },
-  { key: 'averageCtr', label: '평균 CTR', sortable: true, align: 'right' },
-  { key: 'competition', label: '경쟁도', sortable: true },
-  { key: 'averageDepth', label: '평균 노출 깊이', sortable: true, align: 'right' },
-  { key: 'saturationScore', label: '포화도 점수', sortable: true, align: 'right' },
-  { key: 'efficiencyScore', label: '효율 점수', sortable: true, align: 'right' },
-  { key: 'recommendActionText', label: '추천 액션' }
+  { key: 'recommendAction', label: '추천 상태', defaultVisible: true },
+  { key: 'keyword', label: '키워드', alwaysVisible: true, defaultVisible: true },
+  { key: 'relevanceLevel', label: '연관도', defaultVisible: true },
+  { key: 'relevanceScore', label: '연관도 점수', sortable: true, align: 'right', defaultVisible: false },
+  { key: 'monthlyPcSearch', label: 'PC 검색량', align: 'right', defaultVisible: false },
+  { key: 'monthlyMobileSearch', label: '모바일 검색량', align: 'right', defaultVisible: false },
+  { key: 'totalSearch', label: '총 검색량', sortable: true, align: 'right', defaultVisible: true },
+  { key: 'mobileRatio', label: '모바일 비중', sortable: true, align: 'right', defaultVisible: true },
+  { key: 'monthlyPcCtr', label: 'PC 평균 CTR', align: 'right', defaultVisible: false },
+  { key: 'monthlyMobileCtr', label: '모바일 평균 CTR', align: 'right', defaultVisible: false },
+  { key: 'averageCtr', label: '평균 CTR', sortable: true, align: 'right', defaultVisible: true },
+  { key: 'competition', label: '경쟁도', sortable: true, defaultVisible: true },
+  { key: 'averageDepth', label: '평균 노출 깊이', sortable: true, align: 'right', defaultVisible: false },
+  { key: 'saturationScore', label: '포화도 점수', sortable: true, align: 'right', defaultVisible: true },
+  { key: 'efficiencyScore', label: '효율 점수', sortable: true, align: 'right', defaultVisible: true },
+  { key: 'recommendActionText', label: '추천 액션', defaultVisible: false }
 ];
 
 export const DEFAULT_VISIBLE_COLUMN_KEYS = KEYWORD_TABLE_COLUMNS.reduce((columns, column) => {
-  columns[column.key] = true;
+  columns[column.key] = Boolean(column.alwaysVisible || column.defaultVisible);
   return columns;
 }, {});
 
@@ -37,7 +37,7 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns 
   const activeColumns = KEYWORD_TABLE_COLUMNS.filter(
     (column) => column.alwaysVisible || visibleColumns?.[column.key]
   );
-  const minWidth = Math.max(640, activeColumns.length * 118);
+  const minWidth = Math.max(860, activeColumns.length * 118);
 
   if (!rows.length) {
     return (

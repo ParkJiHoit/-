@@ -9,7 +9,7 @@ import SummaryCards from './components/SummaryCards';
 import { formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
 
-const COLUMN_STORAGE_KEY = 'naverKeywordDashboard.visibleColumns';
+const COLUMN_STORAGE_KEY = 'naverKeywordDashboard.visibleColumns.v2';
 
 function getInitialVisibleColumns() {
   try {
