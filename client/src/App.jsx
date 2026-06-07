@@ -95,10 +95,26 @@ export default function App() {
         },
         body: JSON.stringify({ keyword })
       });
-      const data = await response.json();
+      const rawBody = await response.text();
+      const isJson = response.headers.get('content-type')?.includes('application/json');
+      let data = {};
+
+      if (rawBody && isJson) {
+        try {
+          data = JSON.parse(rawBody);
+        } catch {
+          data = { message: rawBody };
+        }
+      } else if (rawBody) {
+        data = { message: rawBody };
+      }
 
       if (!response.ok) {
         throw new Error(data.message || '키워드 데이터를 조회하지 못했습니다.');
+      }
+
+      if (!data.keywords) {
+        throw new Error(data.message || '키워드 응답 형식이 올바르지 않습니다.');
       }
 
       setAnalysis(data);

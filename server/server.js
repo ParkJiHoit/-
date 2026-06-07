@@ -14,8 +14,13 @@ dotenv.config({ path: path.resolve(__dirname, '.env'), override: true });
 
 const app = express();
 const port = process.env.PORT || 4000;
+const clientOrigin = process.env.CLIENT_ORIGIN;
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173' }));
+if (clientOrigin) {
+  app.use(cors({ origin: clientOrigin }));
+} else if (process.env.NODE_ENV !== 'production') {
+  app.use(cors({ origin: 'http://localhost:5173' }));
+}
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
@@ -24,10 +29,21 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/keywords', keywordRoutes);
 
+app.use('/api', (_req, res) => {
+  res.status(404).json({ message: '존재하지 않는 API 경로입니다.' });
+});
+
 if (fs.existsSync(clientDistPath)) {
-  app.use(express.static(clientDistPath));
+  app.use(
+    '/assets',
+    express.static(path.join(clientDistPath, 'assets'), {
+      immutable: true,
+      maxAge: '1y'
+    })
+  );
 
   app.get('*', (_req, res) => {
+    res.set('Cache-Control', 'no-store');
     res.sendFile(path.join(clientDistPath, 'index.html'));
   });
 }
