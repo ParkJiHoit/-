@@ -27,6 +27,13 @@ function assertNaverCredentials() {
 async function fetchNaverKeywordTool(baseKeyword) {
   assertNaverCredentials();
 
+  const hintKeyword = sanitizeNaverHintKeyword(baseKeyword);
+  if (!hintKeyword) {
+    const error = new Error('네이버 API에 전달할 키워드가 유효하지 않습니다.');
+    error.status = 400;
+    throw error;
+  }
+
   const timestamp = Date.now().toString();
   const method = 'GET';
   const signature = createNaverSignature(
@@ -38,7 +45,7 @@ async function fetchNaverKeywordTool(baseKeyword) {
 
   const response = await axios.get(`${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`, {
     params: {
-      hintKeywords: baseKeyword,
+      hintKeywords: hintKeyword,
       showDetail: 1
     },
     headers: {
@@ -63,6 +70,13 @@ function normalizeCompetition(value) {
 
 function normalizeText(value) {
   return String(value || '').replace(/\s+/g, '').toLowerCase();
+}
+
+function sanitizeNaverHintKeyword(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/[^\p{L}\p{N}]/gu, '');
 }
 
 function normalizeKeywordRow(rawKeyword, baseKeyword, sourceKeyword = baseKeyword) {
@@ -235,9 +249,11 @@ export async function expandKeyword({
     const normalizedExcludeWords = normalizeWordList(excludeWords);
     const expansionQueries = normalizedSeedKeywords.flatMap((seedKeyword) => [
       seedKeyword,
-      ...normalizedIncludeWords.map((word) => `${seedKeyword} ${word}`)
+      ...normalizedIncludeWords.map((word) => `${seedKeyword}${word}`)
     ]);
-    const uniqueExpansionQueries = [...new Set(expansionQueries.map((seed) => seed.trim()).filter(Boolean))].slice(0, 12);
+    const uniqueExpansionQueries = [
+      ...new Set(expansionQueries.map((seed) => sanitizeNaverHintKeyword(seed)).filter(Boolean))
+    ].slice(0, 12);
 
     const responses = await Promise.all(
       uniqueExpansionQueries.map(async (sourceKeyword) => ({
