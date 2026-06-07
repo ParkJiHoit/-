@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: naver-keyword-dashboard
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NAVER_API_KEY
+        sync: false
+      - key: NAVER_SECRET_KEY
+        sync: false
+      - key: NAVER_CUSTOMER_ID
+        sync: false
