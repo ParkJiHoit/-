@@ -10,12 +10,6 @@ const SERVICES = [
   { id: 'blog',      icon: FileText, label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' }
 ];
 
-const NAV_ITEMS = [
-  { id: 'services', label: '서비스', dropdown: true },
-  { id: 'pricing',  label: '요금제' },
-  { id: 'updates',  label: '업데이트', href: NOTION_URL },
-];
-
 export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme, onToggleTheme }) {
   const [serviceOpen, setServiceOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
@@ -36,11 +30,25 @@ export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme, on
     setServiceOpen(false);
   };
 
+  const isDark = theme !== 'light';
+
+  const navBg    = isDark ? 'rgba(28,28,30,0.92)'    : 'rgba(255,255,255,0.92)';
+  const navBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+  const navShadow = isDark
+    ? '0 4px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.05) inset'
+    : '0 4px 24px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.8) inset';
+
+  const divider = (
+    <div style={{ width: 1, height: 16, background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)', flexShrink: 0 }} />
+  );
+
   const pillItem = (id) => ({
     borderRadius: 999,
-    padding: hoveredNav === id ? '6px 22px' : '6px 14px',
+    padding: hoveredNav === id ? '6px 20px' : '6px 12px',
     transition: 'padding 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.18s ease, color 0.18s ease',
-    background: hoveredNav === id ? 'rgba(255,255,255,0.09)' : 'transparent',
+    background: hoveredNav === id
+      ? isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'
+      : 'transparent',
     fontSize: 11,
     fontWeight: 700,
     color: hoveredNav === id ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -54,151 +62,198 @@ export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme, on
     gap: 4,
     fontFamily: 'inherit',
     textDecoration: 'none',
+    lineHeight: 1,
   });
 
   return (
-    <nav className="mac-nav">
-      <div
-        className="mx-auto flex h-full max-w-[1560px] items-center justify-between px-4"
-        style={{ position: 'relative' }}
+    <nav
+      style={{
+        position: 'fixed',
+        top: 16,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        height: 44,
+        padding: '0 6px',
+        gap: 2,
+        background: navBg,
+        backdropFilter: 'blur(24px) saturate(1.8)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
+        border: `1px solid ${navBorder}`,
+        borderRadius: 999,
+        boxShadow: navShadow,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {/* Logo */}
+      <button
+        onClick={() => onSwitchTab('analysis')}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          padding: '0 10px 0 8px',
+          border: 'none', background: 'transparent', cursor: 'pointer',
+        }}
       >
-        {/* ── Left: traffic lights + logo ── */}
-        <div className="flex items-center gap-5">
-          <div className="traffic-lights pl-0">
-            <div className="traffic-dot tl-red" />
-            <div className="traffic-dot tl-yellow" />
-            <div className="traffic-dot tl-green" />
-          </div>
-
-          <button
-            className="flex items-center gap-2"
-            onClick={() => onSwitchTab('analysis')}
-          >
-            <div
-              className="flex h-5 w-5 items-center justify-center rounded-md"
-              style={{ background: 'var(--accent)' }}
-            >
-              <span style={{ fontSize: 10, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' }}>K</span>
-            </div>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-              키워드랩
-            </span>
-          </button>
-        </div>
-
-        {/* ── Center: elastic pill nav ── */}
         <div
           style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 999,
-            padding: '3px',
+            width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+            background: 'var(--accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
-          {/* 서비스 (dropdown) */}
-          <div style={{ position: 'relative' }} ref={dropdownRef}>
-            <button
-              style={pillItem('services')}
-              onMouseEnter={() => setHoveredNav('services')}
-              onMouseLeave={() => setHoveredNav(null)}
-              onClick={() => setServiceOpen((v) => !v)}
-            >
-              서비스
-              <ChevronDown
-                style={{
-                  width: 10, height: 10, opacity: 0.55,
-                  transition: 'transform 0.15s',
-                  transform: serviceOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              />
-            </button>
+          <span style={{ fontSize: 10, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' }}>K</span>
+        </div>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
+          키워드랩
+        </span>
+      </button>
 
-            {serviceOpen && (
-              <div
-                className="mac-dropdown p-1.5"
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  top: 'calc(100% + 8px)',
-                  minWidth: 228,
-                }}
-              >
-                {SERVICES.map(({ id, icon: Icon, label, desc }) => {
-                  const isActive = activeTab === id;
-                  return (
-                    <button
-                      key={id}
-                      className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition"
-                      style={{ background: isActive ? 'var(--bg-overlay)' : 'transparent' }}
-                      onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--bg-overlay)'; }}
-                      onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-                      onClick={() => handleServiceClick(id)}
-                    >
-                      <div
-                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
-                        style={{ background: isActive ? 'var(--accent)' : 'var(--bg-overlay)' }}
-                      >
-                        <Icon className="h-4 w-4" style={{ color: isActive ? '#fff' : 'var(--text-secondary)' }} />
-                      </div>
-                      <div>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{label}</p>
-                        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: 0 }}>{desc}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+      {divider}
+
+      {/* 서비스 dropdown */}
+      <div style={{ position: 'relative' }} ref={dropdownRef}>
+        <button
+          style={pillItem('services')}
+          onMouseEnter={() => setHoveredNav('services')}
+          onMouseLeave={() => setHoveredNav(null)}
+          onClick={() => setServiceOpen((v) => !v)}
+        >
+          서비스
+          <ChevronDown
+            style={{
+              width: 10, height: 10, opacity: 0.5,
+              transition: 'transform 0.15s',
+              transform: serviceOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}
+          />
+        </button>
+
+        {serviceOpen && (
+          <div
+            className="mac-dropdown p-1.5"
+            style={{
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              top: 'calc(100% + 10px)',
+              minWidth: 228,
+            }}
+          >
+            {SERVICES.map(({ id, icon: Icon, label, desc }) => {
+              const isActive = activeTab === id;
+              return (
+                <button
+                  key={id}
+                  className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left"
+                  style={{ background: isActive ? 'var(--bg-overlay)' : 'transparent', border: 'none', cursor: 'pointer' }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--bg-overlay)'; }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  onClick={() => handleServiceClick(id)}
+                >
+                  <div
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: isActive ? 'var(--accent)' : 'var(--bg-overlay)' }}
+                  >
+                    <Icon className="h-4 w-4" style={{ color: isActive ? '#fff' : 'var(--text-secondary)' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{label}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: 0 }}>{desc}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-
-          {/* 요금제 */}
-          <button
-            style={pillItem('pricing')}
-            onMouseEnter={() => setHoveredNav('pricing')}
-            onMouseLeave={() => setHoveredNav(null)}
-            onClick={onMockAction}
-          >
-            요금제
-          </button>
-
-          {/* 업데이트 */}
-          <a
-            href={NOTION_URL}
-            target="_blank"
-            rel="noreferrer"
-            style={pillItem('updates')}
-            onMouseEnter={() => setHoveredNav('updates')}
-            onMouseLeave={() => setHoveredNav(null)}
-          >
-            업데이트
-          </a>
-        </div>
-
-        {/* ── Right: theme + auth ── */}
-        <div className="flex items-center gap-1.5">
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition"
-            style={{ color: 'var(--text-secondary)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-overlay)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-            onClick={onToggleTheme}
-            title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
-          >
-            {theme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-          </button>
-
-          <div className="mx-1 hidden h-4 md:block" style={{ width: 1, background: 'var(--border)' }} />
-
-          <button className="mac-btn-ghost mac-btn mac-btn-sm" onClick={onMockAction}>로그인</button>
-          <button className="mac-btn mac-btn-sm" onClick={onMockAction}>가입하기</button>
-        </div>
+        )}
       </div>
+
+      {/* 요금제 */}
+      <button
+        style={pillItem('pricing')}
+        onMouseEnter={() => setHoveredNav('pricing')}
+        onMouseLeave={() => setHoveredNav(null)}
+        onClick={onMockAction}
+      >
+        요금제
+      </button>
+
+      {/* 업데이트 */}
+      <a
+        href={NOTION_URL}
+        target="_blank"
+        rel="noreferrer"
+        style={pillItem('updates')}
+        onMouseEnter={() => setHoveredNav('updates')}
+        onMouseLeave={() => setHoveredNav(null)}
+      >
+        업데이트
+      </a>
+
+      {divider}
+
+      {/* Theme toggle */}
+      <button
+        onClick={onToggleTheme}
+        title={isDark ? '라이트 모드' : '다크 모드'}
+        style={{
+          width: 32, height: 32, borderRadius: 999, border: 'none',
+          background: 'transparent', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--text-secondary)',
+          transition: 'background 0.15s, color 0.15s',
+          flexShrink: 0,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)';
+          e.currentTarget.style.color = 'var(--text-primary)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent';
+          e.currentTarget.style.color = 'var(--text-secondary)';
+        }}
+      >
+        {isDark ? <Sun style={{ width: 14, height: 14 }} /> : <Moon style={{ width: 14, height: 14 }} />}
+      </button>
+
+      {divider}
+
+      {/* 로그인 */}
+      <button
+        onClick={onMockAction}
+        style={{
+          ...pillItem('login'),
+          padding: hoveredNav === 'login' ? '6px 16px' : '6px 10px',
+        }}
+        onMouseEnter={() => setHoveredNav('login')}
+        onMouseLeave={() => setHoveredNav(null)}
+      >
+        로그인
+      </button>
+
+      {/* 가입하기 */}
+      <button
+        onClick={onMockAction}
+        style={{
+          borderRadius: 999,
+          padding: '6px 14px',
+          border: 'none',
+          background: 'var(--accent)',
+          color: '#fff',
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.04em',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          transition: 'background 0.15s',
+          flexShrink: 0,
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
+      >
+        가입하기
+      </button>
     </nav>
   );
 }

@@ -22,6 +22,7 @@
   --success:       #30D158;
   --warning:       #FF9F0A;
   --nav-h: 52px;
+  --nav-offset: 76px; /* floating nav: 16px top + 44px height + 16px gap */
 }
 
 [data-theme="light"] {
