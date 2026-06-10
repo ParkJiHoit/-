@@ -1,4 +1,4 @@
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Moon, Sun } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import BlogAnalysisForm from './components/BlogAnalysisForm';
@@ -98,31 +98,30 @@ function ThemeToggle({ theme, onToggle }) {
           style={{
             position: 'absolute',
             top: 0, left: 0,
-            width: '50%', height: '100%',
+            width: 34, height: 34,
             borderRadius: 999,
             background: isDark ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)',
-            transform: isDark ? 'translateX(100%)' : 'translateX(0%)',
+            transform: isDark ? 'translateX(34px)' : 'translateX(0px)',
             transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
             pointerEvents: 'none',
           }}
         />
-        {[{ label: 'LIGHT', active: !isDark }, { label: 'DARK', active: isDark }].map(({ label, active }) => (
+        {[{ Icon: Sun, active: !isDark }, { Icon: Moon, active: isDark }].map(({ Icon, active }, i) => (
           <button
-            key={label}
+            key={i}
             onClick={onToggle}
             style={{
               position: 'relative', zIndex: 1,
-              minWidth: 52, padding: '5px 14px',
+              width: 34, height: 34,
               border: 'none', background: 'transparent',
               cursor: active ? 'default' : 'pointer',
               borderRadius: 999,
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
               transition: 'color 0.22s',
-              fontFamily: 'inherit',
             }}
           >
-            {label}
+            <Icon style={{ width: 14, height: 14 }} />
           </button>
         ))}
       </div>

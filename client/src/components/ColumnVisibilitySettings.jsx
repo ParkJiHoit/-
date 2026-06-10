@@ -99,7 +99,7 @@ export default function ColumnVisibilitySettings({ visibleColumns, onChange, onR
               {/* Tooltip */}
               <span
                 className="pointer-events-none absolute left-2 top-full z-20 mt-2 hidden w-64 rounded-xl px-3 py-2 text-xs leading-5 group-hover:block"
-                style={{ background: 'rgba(58,58,60,0.98)', color: 'var(--text-primary)', border: '1px solid var(--border)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+                style={{ background: 'rgba(28,28,30,0.96)', color: '#F5F5F7', border: '1px solid rgba(255,255,255,0.10)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
               >
                 {columnDescriptions[col.key]}
               </span>

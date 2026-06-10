@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { formatNumber, formatPercent, formatScore } from '../utils/formatters';
 import { SORTABLE_COLUMNS } from '../utils/tableSort';
-import KeywordBadge, { getActionRowClass } from './KeywordBadge';
+import KeywordBadge from './KeywordBadge';
 
 export const KEYWORD_TABLE_COLUMNS = [
   { key: 'recommendAction', label: '추천 상태', defaultVisible: true },
@@ -102,7 +102,7 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns 
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.keyword} className={getActionRowClass(row)}>
+              <tr key={row.keyword}>
                 {activeColumns.map((col) => (
                   <TableCell key={col.key} column={col} row={row} />
                 ))}
