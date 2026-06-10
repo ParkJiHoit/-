@@ -1,6 +1,9 @@
 import { ChevronDown, Search } from 'lucide-react';
 import { useState } from 'react';
 
+const TRENDING = ['스마트스토어', '무인카페', '블로그수익화', '소자본창업', '위탁판매'];
+const RANK_COLORS = ['#FF5C38', '#FF8C42', '#FFBA08', 'var(--text-tertiary)', 'var(--text-tertiary)'];
+
 export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] }) {
   const [keyword, setKeyword] = useState('');
   const [focused, setFocused] = useState(false);
@@ -113,17 +116,89 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] 
         </p>
       )}
 
-      {/* ── Hashtag suggestions ── */}
+      {/* ── Trending keywords (before first search) ── */}
+      {suggestions.length === 0 && (
+        <div style={{ marginTop: 32, textAlign: 'center', animation: 'macFadeUp 0.5s ease both' }}>
+          {/* Header row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 16 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 6, height: 6, borderRadius: '50%',
+              background: '#FF5C38',
+              boxShadow: '0 0 7px rgba(255,92,56,0.7)',
+              flexShrink: 0
+            }} />
+            <span style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase',
+              color: 'var(--text-tertiary)'
+            }}>
+              실시간 인기 검색어
+            </span>
+          </div>
+
+          {/* Keyword pills */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+            {TRENDING.map((kw, i) => (
+              <button
+                key={kw}
+                type="button"
+                onClick={() => submitKeyword(kw)}
+                disabled={loading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 999,
+                  padding: '8px 18px 8px 14px',
+                  cursor: 'pointer',
+                  transition: 'background 0.18s, border-color 0.18s, transform 0.15s',
+                  fontFamily: 'inherit',
+                  animationDelay: `${i * 0.07}s`,
+                  animation: 'macFadeUp 0.4s ease both',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <span style={{
+                  fontSize: 11, fontWeight: 800,
+                  color: RANK_COLORS[i],
+                  minWidth: 10, textAlign: 'center', lineHeight: 1,
+                  ...(i < 3 ? { filter: 'drop-shadow(0 0 4px currentColor)' } : {})
+                }}>
+                  {i + 1}
+                </span>
+                <span style={{
+                  fontSize: 13, fontWeight: 500,
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '-0.2px'
+                }}>
+                  {kw}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Related suggestions (after search) ── */}
       {suggestions.length > 0 && (
         <div style={{ marginTop: 22, textAlign: 'center' }}>
           <p style={{
-            fontSize: 12,
-            fontWeight: 500,
+            fontSize: 12, fontWeight: 500,
             color: 'var(--text-tertiary)',
-            marginBottom: 12,
-            letterSpacing: '0.04em'
+            marginBottom: 12, letterSpacing: '0.04em'
           }}>
-            🔍 관련 추천 검색어
+            관련 추천 검색어
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
             {suggestions.map((s) => (
@@ -137,8 +212,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] 
                   border: '1px solid rgba(255,255,255,0.10)',
                   borderRadius: 999,
                   padding: '7px 16px',
-                  fontSize: 13,
-                  fontWeight: 500,
+                  fontSize: 13, fontWeight: 500,
                   color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   transition: 'background 0.15s, color 0.15s, border-color 0.15s',

@@ -140,7 +140,7 @@ function HeroSection({ tab, hasResults, children }) {
         background: hasResults
           ? 'transparent'
           : 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(10,132,255,0.09) 0%, transparent 65%)',
-        paddingTop: hasResults ? 'calc(var(--nav-offset) + 24px)' : 'calc(var(--nav-offset) + 90px)',
+        paddingTop: hasResults ? 'calc(var(--nav-offset) + 24px)' : 'calc(var(--nav-offset) + 130px)',
         paddingBottom: hasResults ? 20 : 72
       }}
     >
