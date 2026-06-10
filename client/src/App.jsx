@@ -1,4 +1,4 @@
-import { Download, FileText, Loader2, Search, Sparkles } from 'lucide-react';
+import { Download, FileText, Loader2, Megaphone, Search, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import BlogAnalysisForm from './components/BlogAnalysisForm';
@@ -293,9 +293,14 @@ export default function App() {
         <header className="flex flex-col gap-4 border-b border-slate-300 pb-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
-                Naver Search & Content Ops
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+                  Naver Search & Content Ops
+                </p>
+                <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-black tracking-wider text-white">
+                  v0.4.0
+                </span>
+              </div>
               <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
                 네이버 키워드 추천 대시보드
               </h1>
@@ -321,25 +326,36 @@ export default function App() {
             )}
           </div>
 
-          <nav className="flex flex-wrap gap-2">
-            <TabButton
-              active={activeTab === 'analysis'}
-              icon={Search}
-              label="키워드 분석"
-              onClick={() => switchTab('analysis')}
-            />
-            <TabButton
-              active={activeTab === 'expansion'}
-              icon={Sparkles}
-              label="키워드 확장"
-              onClick={() => switchTab('expansion')}
-            />
-            <TabButton
-              active={activeTab === 'blog'}
-              icon={FileText}
-              label="블로그 분석"
-              onClick={() => switchTab('blog')}
-            />
+          <nav className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
+              <TabButton
+                active={activeTab === 'analysis'}
+                icon={Search}
+                label="키워드 분석"
+                onClick={() => switchTab('analysis')}
+              />
+              <TabButton
+                active={activeTab === 'expansion'}
+                icon={Sparkles}
+                label="키워드 확장"
+                onClick={() => switchTab('expansion')}
+              />
+              <TabButton
+                active={activeTab === 'blog'}
+                icon={FileText}
+                label="블로그 분석"
+                onClick={() => switchTab('blog')}
+              />
+            </div>
+            <a
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-xs font-black text-slate-600 transition hover:border-slate-400 hover:text-slate-900"
+              href="https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Megaphone className="h-3.5 w-3.5" />
+              업데이트 소식
+            </a>
           </nav>
         </header>
 
