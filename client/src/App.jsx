@@ -74,35 +74,49 @@ function LoadingRow({ label }) {
 /* ── Hero / compact wrapper ── */
 function HeroSection({ tab, hasResults, children }) {
   return (
-    <section
-      className="hero-transition mx-auto flex w-full flex-col items-center px-5 lg:px-8"
+    <div
+      className="hero-transition"
       style={{
-        maxWidth: 760,
-        paddingTop: hasResults ? 'calc(var(--nav-h) + 24px)' : 'calc(var(--nav-h) + 80px)',
-        paddingBottom: hasResults ? 20 : 64
+        position: 'relative',
+        background: hasResults
+          ? 'transparent'
+          : 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(10,132,255,0.09) 0%, transparent 65%)',
+        paddingTop: hasResults ? 'calc(var(--nav-h) + 24px)' : 'calc(var(--nav-h) + 90px)',
+        paddingBottom: hasResults ? 20 : 72
       }}
     >
-      {!hasResults && (
-        <div className="mac-fade-in mb-8 text-center">
-          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 10 }}>
-            {tab === 'analysis' && 'Keyword Analysis'}
-            {tab === 'expansion' && 'Keyword Expansion'}
-            {tab === 'blog'     && 'Blog Analysis'}
-          </p>
-          <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: 0 }}>
-            {tab === 'analysis' && '키워드를 분석해드립니다'}
-            {tab === 'expansion' && '시드 키워드로 대량 발굴'}
-            {tab === 'blog'     && '블로그 기회를 찾아드립니다'}
-          </h1>
-          <p style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginTop: 8 }}>
-            {tab === 'analysis' && '검색량, 경쟁도, 포화도, 기회 점수를 한번에 확인'}
-            {tab === 'expansion' && '시드 키워드 기반으로 관련 키워드를 대량으로 발굴'}
-            {tab === 'blog'     && '블로그 콘텐츠 경쟁도와 기회 점수를 분석'}
-          </p>
-        </div>
-      )}
-      {children}
-    </section>
+      <section
+        className="mx-auto flex w-full flex-col items-center px-5 lg:px-8"
+        style={{ maxWidth: 680 }}
+      >
+        {!hasResults && (
+          <div className="mac-fade-in mb-10 text-center">
+            <p style={{
+              fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase',
+              color: 'var(--text-tertiary)', marginBottom: 14
+            }}>
+              {tab === 'analysis' && 'Keyword Analysis'}
+              {tab === 'expansion' && 'Keyword Expansion'}
+              {tab === 'blog'     && 'Blog Analysis'}
+            </p>
+            <h1 style={{
+              fontSize: 32, fontWeight: 700, letterSpacing: '-0.5px',
+              color: 'var(--text-primary)', margin: 0, lineHeight: 1.25
+            }}>
+              {tab === 'analysis' && '키워드를 분석해드립니다'}
+              {tab === 'expansion' && '시드 키워드로 대량 발굴'}
+              {tab === 'blog'     && '블로그 기회를 찾아드립니다'}
+            </h1>
+            <p style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginTop: 10 }}>
+              {tab === 'analysis' && '검색량 · 경쟁도 · 포화도 · 기회 점수를 한번에'}
+              {tab === 'expansion' && '시드 키워드 기반으로 관련 키워드를 대량으로 발굴'}
+              {tab === 'blog'     && '블로그 콘텐츠 경쟁도와 기회 점수를 분석'}
+            </p>
+          </div>
+        )}
+        {children}
+      </section>
+    </div>
   );
 }
 
