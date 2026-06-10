@@ -4,25 +4,19 @@ import { SORTABLE_COLUMNS } from '../utils/tableSort';
 import KeywordBadge from './KeywordBadge';
 
 export const KEYWORD_TABLE_COLUMNS = [
-  { key: 'recommendAction', label: '추천 상태', defaultVisible: true },
-  { key: 'keyword', label: '키워드', alwaysVisible: true, defaultVisible: true },
-  { key: 'intentType', label: '의도 유형', defaultVisible: true },
-  { key: 'discoveryScore', label: '발굴 점수', sortable: true, align: 'right', defaultVisible: true },
-  { key: 'relevanceLevel', label: '연관도', defaultVisible: true },
-  { key: 'relevanceScore', label: '연관도 점수', sortable: true, align: 'right', defaultVisible: false },
-  { key: 'intentScore', label: '의도 점수', sortable: true, align: 'right', defaultVisible: false },
-  { key: 'monthlyPcSearch', label: 'PC 검색량', align: 'right', defaultVisible: false },
+  { key: 'recommendAction',     label: '추천 상태',    defaultVisible: true },
+  { key: 'keyword',             label: '키워드',        alwaysVisible: true, defaultVisible: true },
+  { key: 'intentType',          label: '의도 유형',    defaultVisible: true },
+  { key: 'relevanceLevel',      label: '연관도',        defaultVisible: false },
+  { key: 'discoveryScore',      label: '발굴 점수',    sortable: true, align: 'right', defaultVisible: false },
+  { key: 'totalSearch',         label: '총 검색량',    sortable: true, align: 'right', defaultVisible: true },
+  { key: 'monthlyPcSearch',     label: 'PC 검색량',    align: 'right', defaultVisible: false },
   { key: 'monthlyMobileSearch', label: '모바일 검색량', align: 'right', defaultVisible: false },
-  { key: 'totalSearch', label: '총 검색량', sortable: true, align: 'right', defaultVisible: true },
-  { key: 'mobileRatio', label: '모바일 비중', sortable: true, align: 'right', defaultVisible: true },
-  { key: 'monthlyPcCtr', label: 'PC 평균 CTR', align: 'right', defaultVisible: false },
-  { key: 'monthlyMobileCtr', label: '모바일 평균 CTR', align: 'right', defaultVisible: false },
-  { key: 'averageCtr', label: '평균 CTR', sortable: true, align: 'right', defaultVisible: true },
-  { key: 'competition', label: '경쟁도', sortable: true, defaultVisible: true },
-  { key: 'averageDepth', label: '평균 노출 깊이', sortable: true, align: 'right', defaultVisible: false },
-  { key: 'saturationScore', label: '포화도 점수', sortable: true, align: 'right', defaultVisible: true },
-  { key: 'efficiencyScore', label: '효율 점수', sortable: true, align: 'right', defaultVisible: true },
-  { key: 'recommendActionText', label: '추천 액션', defaultVisible: false }
+  { key: 'mobileRatio',         label: '모바일 비중',  sortable: true, align: 'right', defaultVisible: true },
+  { key: 'averageCtr',          label: '평균 CTR',     sortable: true, align: 'right', defaultVisible: true },
+  { key: 'competition',         label: '경쟁도',        sortable: true, defaultVisible: true },
+  { key: 'saturationScore',     label: '포화도',        sortable: true, align: 'right', defaultVisible: true },
+  { key: 'efficiencyScore',     label: '효율 점수',    sortable: true, align: 'right', defaultVisible: true },
 ];
 
 export const DEFAULT_VISIBLE_COLUMN_KEYS = KEYWORD_TABLE_COLUMNS.reduce((acc, col) => {
@@ -158,14 +152,8 @@ function TableCell({ column, row }) {
     );
   }
 
-  if (column.key === 'recommendActionText') {
-    return (
-      <td style={{ color: 'var(--text-secondary)' }}>{row.recommendAction}</td>
-    );
-  }
-
   const numericValue = getFormattedValue(column.key, row);
-  const isStrong = column.key === 'totalSearch' || column.key === 'efficiencyScore' || column.key === 'discoveryScore';
+  const isStrong = column.key === 'totalSearch' || column.key === 'efficiencyScore';
 
   return (
     <td style={{ textAlign: 'right', fontWeight: isStrong ? 600 : 400, color: isStrong ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
