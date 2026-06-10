@@ -159,10 +159,26 @@ function HeroSection({ tab, hasResults, children }) {
               {tab === 'blog'     && 'Blog Analysis'}
             </p>
             <h1 style={{
-              fontSize: 28, fontWeight: 700, letterSpacing: '-0.5px',
-              color: 'var(--text-primary)', margin: 0, lineHeight: 1.3
+              fontSize: tab === 'analysis' ? 42 : 30,
+              fontWeight: 800,
+              letterSpacing: tab === 'analysis' ? '-1.2px' : '-0.5px',
+              color: 'var(--text-primary)', margin: 0,
+              lineHeight: 1.22, textAlign: 'center'
             }}>
-              {tab === 'analysis' && '아직 아무도 쓰지 않은 키워드를 먼저 차지하세요'}
+              {tab === 'analysis' && (
+                <>
+                  아직 아무도 쓰지 않은 키워드를
+                  <br />
+                  <span style={{
+                    background: 'linear-gradient(120deg, #0A84FF 0%, #34C1FF 45%, #30D158 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}>
+                    먼저 차지하세요
+                  </span>
+                </>
+              )}
               {tab === 'expansion' && '시드 키워드로 대량 발굴'}
               {tab === 'blog'     && '블로그 기회를 찾아드립니다'}
             </h1>
