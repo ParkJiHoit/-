@@ -369,6 +369,14 @@ export default function App() {
     if (next === 'expansion') setSortConfig({ key: 'discoveryScore',  direction: 'desc' });
   };
 
+  const goHome = () => {
+    setActiveTab('analysis');
+    setAnalysis(null);
+    setError('');
+    setFilters(defaultFilters);
+    setSortConfig({ key: 'relevanceScore', direction: 'desc' });
+  };
+
   const handleMockAction = () => showToast('준비 중인 기능입니다 — 곧 만나보실 수 있어요!');
 
   /* ── Render ── */
@@ -377,6 +385,7 @@ export default function App() {
       <Navbar
         activeTab={activeTab}
         onSwitchTab={switchTab}
+        onGoHome={goHome}
         onMockAction={handleMockAction}
         theme={theme}
       />

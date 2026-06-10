@@ -13,7 +13,7 @@ const SERVICES = [
   { id: 'blog',      icon: FileText, label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' }
 ];
 
-export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme }) {
+export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction, theme }) {
   const [serviceOpen, setServiceOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
   const dropdownRef = useRef(null);
@@ -35,7 +35,7 @@ export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme }) 
 
   const isDark = theme !== 'light';
 
-  const navBg    = isDark ? 'rgba(28,28,30,0.92)'    : 'rgba(255,255,255,0.92)';
+  const navBg    = isDark ? 'rgba(28,28,30,0.72)'    : 'rgba(255,255,255,0.72)';
   const navBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
   const navShadow = isDark
     ? '0 4px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.05) inset'
@@ -92,7 +92,7 @@ export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme }) 
     >
       {/* Logo */}
       <button
-        onClick={() => onSwitchTab('analysis')}
+        onClick={onGoHome}
         style={{
           display: 'flex', alignItems: 'center', gap: 7,
           padding: '0 10px 0 8px',
