@@ -1,8 +1,11 @@
 import { ChevronDown, FileText, Search, Sparkles, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-const NOTION_URL =
+const NOTION_UPDATE_URL =
   'https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link';
+
+const NOTION_GUIDE_URL =
+  'https://helix-territory-c92.notion.site/37b24604a091802abe38f48e986102d7?source=copy_link';
 
 const SERVICES = [
   { id: 'analysis',  icon: Search,   label: '키워드 분석', desc: '기준 키워드로 연관 키워드 발굴' },
@@ -130,7 +133,7 @@ export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme }) 
           onMouseLeave={() => setHoveredNav(null)}
           onClick={() => setServiceOpen((v) => !v)}
         >
-          서비스
+          모든 서비스
           <ChevronDown
             style={{
               width: 10, height: 10, opacity: 0.5,
@@ -189,9 +192,21 @@ export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme }) 
         요금제
       </button>
 
+      {/* 사용 가이드 */}
+      <a
+        href={NOTION_GUIDE_URL}
+        target="_blank"
+        rel="noreferrer"
+        style={pillItem('guide')}
+        onMouseEnter={() => setHoveredNav('guide')}
+        onMouseLeave={() => setHoveredNav(null)}
+      >
+        사용 가이드
+      </a>
+
       {/* 업데이트 */}
       <a
-        href={NOTION_URL}
+        href={NOTION_UPDATE_URL}
         target="_blank"
         rel="noreferrer"
         style={pillItem('updates')}
