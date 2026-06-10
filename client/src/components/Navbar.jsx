@@ -35,7 +35,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
 
   const isDark = theme !== 'light';
 
-  const navBg    = isDark ? 'rgba(28,28,30,0.72)'    : 'rgba(255,255,255,0.72)';
+  const navBg    = isDark ? 'rgba(28,28,30,0.45)'    : 'rgba(255,255,255,0.45)';
   const navBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
   const navShadow = isDark
     ? '0 4px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.05) inset'
