@@ -84,3 +84,25 @@ export function calculateEfficiencyScore({
     )
   );
 }
+
+export function calculateDiscoveryScore({
+  relevanceScore,
+  totalSearch,
+  competition,
+  saturationScore,
+  intentScore
+}) {
+  const volumeScore = normalizeSearchVolume(totalSearch);
+  const competitionReverseScore = 100 - getCompetitionScore(competition);
+  const saturationReverseScore = 100 - saturationScore;
+
+  return Math.round(
+    clamp(
+      relevanceScore * 0.35 +
+        volumeScore * 0.25 +
+        competitionReverseScore * 0.2 +
+        intentScore * 0.15 +
+        saturationReverseScore * 0.05
+    )
+  );
+}

@@ -6,7 +6,9 @@ export const SORTABLE_COLUMNS = {
   averageDepth: '평균 노출 깊이',
   saturationScore: '포화도 점수',
   efficiencyScore: '효율 점수',
-  relevanceScore: '연관도 점수'
+  relevanceScore: '연관도 점수',
+  discoveryScore: '발굴 점수',
+  intentScore: '의도 점수'
 };
 
 const competitionRank = {
@@ -25,6 +27,7 @@ export function sortKeywords(rows, sortConfig) {
     const bValue = key === 'competition' ? competitionRank[b[key]] || 0 : Number(b[key]) || 0;
 
     if (aValue === bValue) {
+      if (b.discoveryScore !== a.discoveryScore) return b.discoveryScore - a.discoveryScore;
       if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
       return b.efficiencyScore - a.efficiencyScore;
     }

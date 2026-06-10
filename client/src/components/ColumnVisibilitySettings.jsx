@@ -4,6 +4,9 @@ import { DEFAULT_VISIBLE_COLUMN_KEYS, KEYWORD_TABLE_COLUMNS } from './KeywordTab
 const columnDescriptions = {
   recommendAction: '키워드의 현재 추천 상태를 색상 배지로 표시합니다.',
   keyword: '네이버 검색광고 API에서 내려온 추천 키워드입니다. 기준점이라 항상 표시됩니다.',
+  intentType: '추천 키워드의 검색 의도를 창업 의도, 대리점/매장, 비용/수익, 정보 탐색 등으로 분류합니다.',
+  intentScore: '키워드가 광고 운영 목적과 얼마나 잘 맞는지 0~100점으로 계산한 내부 점수입니다.',
+  discoveryScore: '연관도, 검색량, 경쟁도, 의도 적합도, 포화도를 종합한 키워드 발굴 우선순위 점수입니다.',
   relevanceLevel: '검색한 기준 키워드와 추천 키워드의 텍스트/의도 유사도를 높음, 중간, 낮음으로 구분합니다.',
   relevanceScore: '기준 키워드와 추천 키워드가 얼마나 가까운지 0~100점으로 계산한 내부 점수입니다.',
   monthlyPcSearch: '최근 기준 PC 월간 검색량입니다. 네이버 API의 PC 검색량 값을 사용합니다.',

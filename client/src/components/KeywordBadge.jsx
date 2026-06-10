@@ -10,7 +10,7 @@ const badgeStyles = {
 
 export function getActionRowClass(row) {
   if (row.saturationScore >= 80) return 'bg-rose-50/80';
-  if (row.efficiencyScore >= 80) return 'bg-emerald-50/80';
+  if (row.discoveryScore >= 80 || row.efficiencyScore >= 80) return 'bg-emerald-50/80';
   if (row.mobileRatio >= 80) return 'bg-violet-50/80';
   return 'bg-white';
 }

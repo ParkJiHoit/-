@@ -21,7 +21,7 @@ export function classifyKeyword(keywordData, baseKeyword) {
     normalizedBase.includes(normalizedKeyword);
 
   if (isDirectlyRelated || keywordData.relevanceScore >= 82) return ACTIONS.CORE;
-  if (keywordData.relevanceScore < 30) return ACTIONS.EXCLUDE;
+  if (keywordData.relevanceScore < 30 || keywordData.intentScore < 25) return ACTIONS.EXCLUDE;
   if (keywordData.efficiencyScore >= 75 && keywordData.saturationScore < 60) return ACTIONS.PRIORITY;
   if (keywordData.totalSearch >= 1000 && competitionScore >= 80 && keywordData.saturationScore >= 75) {
     return ACTIONS.SATURATED;

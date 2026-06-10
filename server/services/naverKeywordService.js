@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { classifyKeyword } from '../utils/keywordClassifier.js';
+import { classifyKeywordIntent } from '../utils/keywordIntent.js';
 import { calculateKeywordRelevance } from '../utils/keywordRelevance.js';
 import { createNaverSignature } from '../utils/naverSignature.js';
 import {
+  calculateDiscoveryScore,
   calculateEfficiencyScore,
   calculateSaturationScore,
   parseNaverNumber,
@@ -11,6 +13,14 @@ import {
 
 const NAVER_API_BASE_URL = 'https://api.searchad.naver.com';
 const KEYWORD_TOOL_URI = '/keywordstool';
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const keywordToolCache = new Map();
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 function assertNaverCredentials() {
   const missing = ['NAVER_API_KEY', 'NAVER_SECRET_KEY', 'NAVER_CUSTOMER_ID'].filter(
@@ -24,16 +34,7 @@ function assertNaverCredentials() {
   }
 }
 
-async function fetchNaverKeywordTool(baseKeyword) {
-  assertNaverCredentials();
-
-  const hintKeyword = sanitizeNaverHintKeyword(baseKeyword);
-  if (!hintKeyword) {
-    const error = new Error('네이버 API에 전달할 키워드가 유효하지 않습니다.');
-    error.status = 400;
-    throw error;
-  }
-
+function buildNaverRequestConfig(hintKeyword) {
   const timestamp = Date.now().toString();
   const method = 'GET';
   const signature = createNaverSignature(
@@ -43,7 +44,7 @@ async function fetchNaverKeywordTool(baseKeyword) {
     process.env.NAVER_SECRET_KEY
   );
 
-  const response = await axios.get(`${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`, {
+  return {
     params: {
       hintKeywords: hintKeyword,
       showDetail: 1
@@ -55,9 +56,42 @@ async function fetchNaverKeywordTool(baseKeyword) {
       'X-Signature': signature
     },
     timeout: 15000
+  };
+}
+
+async function fetchNaverKeywordTool(baseKeyword) {
+  assertNaverCredentials();
+
+  const hintKeyword = sanitizeNaverHintKeyword(baseKeyword);
+  if (!hintKeyword) {
+    const error = new Error('네이버 API에 전달할 키워드가 유효하지 않습니다.');
+    error.status = 400;
+    throw error;
+  }
+
+  const cacheKey = hintKeyword.toLowerCase();
+  const cached = keywordToolCache.get(cacheKey);
+
+  if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) {
+    return cached.rows;
+  }
+
+  let response;
+  try {
+    response = await axios.get(`${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`, buildNaverRequestConfig(hintKeyword));
+  } catch (error) {
+    if (error.response?.status !== 429) throw error;
+    await sleep(800);
+    response = await axios.get(`${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`, buildNaverRequestConfig(hintKeyword));
+  }
+
+  const rows = response.data?.keywordList || [];
+  keywordToolCache.set(cacheKey, {
+    createdAt: Date.now(),
+    rows
   });
 
-  return response.data?.keywordList || [];
+  return rows;
 }
 
 function normalizeCompetition(value) {
@@ -91,6 +125,7 @@ function normalizeKeywordRow(rawKeyword, baseKeyword, sourceKeyword = baseKeywor
   const competition = normalizeCompetition(rawKeyword.compIdx);
   const averageDepth = round(parseNaverNumber(rawKeyword.plAvgDepth), 1);
   const relevance = calculateKeywordRelevance(baseKeyword, keyword);
+  const intent = classifyKeywordIntent(keyword, baseKeyword);
 
   const saturationScore = calculateSaturationScore({
     competition,
@@ -103,6 +138,13 @@ function normalizeKeywordRow(rawKeyword, baseKeyword, sourceKeyword = baseKeywor
     competition,
     mobileRatio,
     saturationScore
+  });
+  const discoveryScore = calculateDiscoveryScore({
+    relevanceScore: relevance.relevanceScore,
+    totalSearch,
+    competition,
+    saturationScore,
+    intentScore: intent.intentScore
   });
 
   const keywordData = {
@@ -120,9 +162,12 @@ function normalizeKeywordRow(rawKeyword, baseKeyword, sourceKeyword = baseKeywor
     averageDepth,
     saturationScore,
     efficiencyScore,
+    discoveryScore,
     relevanceScore: relevance.relevanceScore,
     relevanceLevel: relevance.relevanceLevel,
-    matchedTerms: relevance.matchedTerms
+    matchedTerms: relevance.matchedTerms,
+    intentType: intent.intentType,
+    intentScore: intent.intentScore
   };
 
   return {
@@ -175,13 +220,18 @@ function buildSearchSuggestions(keywords, baseKeyword) {
     }));
 }
 
-function sortKeywordRows(baseKeyword, rows) {
+function sortKeywordRows(baseKeyword, rows, sortMode = 'analysis') {
   const baseKey = normalizeText(baseKeyword);
 
   return rows.sort((a, b) => {
     const aIsBase = normalizeText(a.keyword) === baseKey;
     const bIsBase = normalizeText(b.keyword) === baseKey;
     if (aIsBase !== bIsBase) return aIsBase ? -1 : 1;
+
+    if (sortMode === 'discovery' && b.discoveryScore !== a.discoveryScore) {
+      return b.discoveryScore - a.discoveryScore;
+    }
+
     if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
     if (b.efficiencyScore !== a.efficiencyScore) return b.efficiencyScore - a.efficiencyScore;
     return b.totalSearch - a.totalSearch;
@@ -200,6 +250,7 @@ function filterExpandedRows(rows, includeWords, excludeWords, highQuality) {
   return rows.filter((row) => {
     if (row.relevanceScore < minRelevance) return false;
     if (row.totalSearch < minSearch) return false;
+    if (highQuality && row.intentScore < 50) return false;
     if (includeWords.length > 0 && !containsAny(row.keyword, includeWords)) return false;
     if (excludeWords.length > 0 && containsAny(row.keyword, excludeWords)) return false;
     if (highQuality && row.recommendAction === '제외 검토') return false;
@@ -273,7 +324,10 @@ export async function expandKeyword({
       normalizedExcludeWords,
       highQuality
     );
-    const keywords = sortKeywordRows(representativeKeyword, filteredRows).slice(0, highQuality ? 60 : 120);
+    const keywords = sortKeywordRows(representativeKeyword, filteredRows, 'discovery').slice(
+      0,
+      highQuality ? 60 : 120
+    );
 
     return {
       baseKeyword: representativeKeyword,

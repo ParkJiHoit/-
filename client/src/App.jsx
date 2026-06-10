@@ -10,7 +10,7 @@ import SummaryCards from './components/SummaryCards';
 import { formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
 
-const COLUMN_STORAGE_KEY = 'naverKeywordDashboard.visibleColumns.v2';
+const COLUMN_STORAGE_KEY = 'naverKeywordDashboard.visibleColumns.v3';
 
 function getInitialVisibleColumns() {
   try {
@@ -103,7 +103,7 @@ export default function App() {
 
   const currentSummary = useMemo(() => buildSummary(filteredRows), [filteredRows]);
 
-  const requestKeywords = async (endpoint, payload, failureMessage) => {
+  const requestKeywords = async (endpoint, payload, failureMessage, nextSortConfig) => {
     setLoading(true);
     setError('');
 
@@ -126,7 +126,7 @@ export default function App() {
       }
 
       setFilters(defaultFilters);
-      setSortConfig({ key: 'relevanceScore', direction: 'desc' });
+      setSortConfig(nextSortConfig);
       return data;
     } catch (requestError) {
       setError(requestError.message || failureMessage);
@@ -140,7 +140,8 @@ export default function App() {
     const data = await requestKeywords(
       '/api/keywords/analyze',
       { keyword },
-      '키워드 데이터를 조회하지 못했습니다.'
+      '키워드 데이터를 조회하지 못했습니다.',
+      { key: 'relevanceScore', direction: 'desc' }
     );
 
     if (data) setAnalysis(data);
@@ -150,7 +151,8 @@ export default function App() {
     const data = await requestKeywords(
       '/api/keywords/expand',
       payload,
-      '키워드 확장 데이터를 조회하지 못했습니다.'
+      '키워드 확장 데이터를 조회하지 못했습니다.',
+      { key: 'discoveryScore', direction: 'desc' }
     );
 
     if (data) setExpansion(data);
@@ -170,6 +172,8 @@ export default function App() {
   const downloadExcel = () => {
     const exportRows = filteredRows.map((row) => ({
       키워드: row.keyword,
+      '의도 유형': row.intentType,
+      '발굴 점수': row.discoveryScore,
       연관도: row.relevanceLevel,
       '연관도 점수': row.relevanceScore,
       'PC 검색량': row.monthlyPcSearch,
@@ -227,6 +231,7 @@ export default function App() {
                 setActiveTab('analysis');
                 setError('');
                 setFilters(defaultFilters);
+                setSortConfig({ key: 'relevanceScore', direction: 'desc' });
               }}
             />
             <TabButton
@@ -237,6 +242,7 @@ export default function App() {
                 setActiveTab('expansion');
                 setError('');
                 setFilters(defaultFilters);
+                setSortConfig({ key: 'discoveryScore', direction: 'desc' });
               }}
             />
           </nav>

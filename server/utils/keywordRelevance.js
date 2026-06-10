@@ -18,8 +18,7 @@ const UNRELATED_BUSINESS_HINTS = [
   '술집',
   '식당',
   '배너',
-  'pop',
-  'POP'
+  'pop'
 ];
 
 function normalizeText(value) {
@@ -59,9 +58,7 @@ function expandTokens(tokens) {
 function getNgrams(text, size = 2) {
   if (text.length <= size) return [text].filter(Boolean);
 
-  return Array.from({ length: text.length - size + 1 }, (_value, index) =>
-    text.slice(index, index + size)
-  );
+  return Array.from({ length: text.length - size + 1 }, (_value, index) => text.slice(index, index + size));
 }
 
 function getJaccardScore(a, b) {

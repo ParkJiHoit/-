@@ -6,8 +6,11 @@ import KeywordBadge, { getActionRowClass } from './KeywordBadge';
 export const KEYWORD_TABLE_COLUMNS = [
   { key: 'recommendAction', label: '추천 상태', defaultVisible: true },
   { key: 'keyword', label: '키워드', alwaysVisible: true, defaultVisible: true },
+  { key: 'intentType', label: '의도 유형', defaultVisible: true },
+  { key: 'discoveryScore', label: '발굴 점수', sortable: true, align: 'right', defaultVisible: true },
   { key: 'relevanceLevel', label: '연관도', defaultVisible: true },
   { key: 'relevanceScore', label: '연관도 점수', sortable: true, align: 'right', defaultVisible: false },
+  { key: 'intentScore', label: '의도 점수', sortable: true, align: 'right', defaultVisible: false },
   { key: 'monthlyPcSearch', label: 'PC 검색량', align: 'right', defaultVisible: false },
   { key: 'monthlyMobileSearch', label: '모바일 검색량', align: 'right', defaultVisible: false },
   { key: 'totalSearch', label: '총 검색량', sortable: true, align: 'right', defaultVisible: true },
@@ -33,11 +36,23 @@ const relevanceStyles = {
   낮음: 'bg-slate-100 text-slate-600 ring-slate-200'
 };
 
+const intentStyles = {
+  '창업 의도': 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+  '대리점/매장': 'bg-sky-100 text-sky-700 ring-sky-200',
+  '비용/수익': 'bg-indigo-100 text-indigo-700 ring-indigo-200',
+  '정보 탐색': 'bg-amber-100 text-amber-700 ring-amber-200',
+  '판매/유통': 'bg-violet-100 text-violet-700 ring-violet-200',
+  '핵심 연관': 'bg-slate-900 text-white ring-slate-900',
+  '수리/중고': 'bg-orange-100 text-orange-700 ring-orange-200',
+  잡키워드: 'bg-rose-100 text-rose-700 ring-rose-200',
+  '일반 후보': 'bg-slate-100 text-slate-600 ring-slate-200'
+};
+
 export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns }) {
   const activeColumns = KEYWORD_TABLE_COLUMNS.filter(
     (column) => column.alwaysVisible || visibleColumns?.[column.key]
   );
-  const minWidth = Math.max(860, activeColumns.length * 118);
+  const minWidth = Math.max(980, activeColumns.length * 118);
 
   if (!rows.length) {
     return (
@@ -125,6 +140,20 @@ function TableCell({ column, row }) {
     );
   }
 
+  if (column.key === 'intentType') {
+    return (
+      <td className="whitespace-nowrap px-4 py-3">
+        <span
+          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ring-1 ${
+            intentStyles[row.intentType] || intentStyles['일반 후보']
+          }`}
+        >
+          {row.intentType || '일반 후보'}
+        </span>
+      </td>
+    );
+  }
+
   if (column.key === 'competition') {
     return <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700">{row.competition}</td>;
   }
@@ -135,7 +164,12 @@ function TableCell({ column, row }) {
 
   const numericValue = getFormattedValue(column.key, row);
 
-  return <NumberCell value={numericValue} strong={column.key === 'totalSearch' || column.key === 'efficiencyScore'} />;
+  return (
+    <NumberCell
+      value={numericValue}
+      strong={column.key === 'totalSearch' || column.key === 'efficiencyScore' || column.key === 'discoveryScore'}
+    />
+  );
 }
 
 function getFormattedValue(key, row) {
