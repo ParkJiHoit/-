@@ -386,7 +386,8 @@ export default function App() {
       <HeroSection tab={activeTab} hasResults={hasResults}>
         {activeTab === 'analysis' && (
           <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
-            suggestions={analysis?.searchSuggestions || []} />
+            suggestions={analysis?.searchSuggestions || []}
+            isMain={!hasResults} />
         )}
         {activeTab === 'expansion' && (
           <KeywordExpansionForm onSubmit={expandKeyword} loading={loading} />

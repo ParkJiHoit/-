@@ -9,7 +9,7 @@ function getHistory() {
   catch { return []; }
 }
 
-export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] }) {
+export default function KeywordSearchForm({ onSubmit, loading, suggestions = [], isMain = false }) {
   const [keyword, setKeyword] = useState('');
   const [focused, setFocused] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -38,7 +38,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] 
     localStorage.removeItem(HISTORY_KEY);
   };
 
-  const showHistory  = history.length > 0 && suggestions.length === 0;
+  const showHistory  = isMain && history.length > 0 && suggestions.length === 0;
   const showSuggestions = suggestions.length > 0;
 
   return (
