@@ -35,11 +35,11 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
 
   const isDark = theme !== 'light';
 
-  const navBg    = isDark ? 'rgba(28,28,30,0.45)'    : 'rgba(255,255,255,0.45)';
-  const navBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)';
+  const navBg     = isDark ? 'rgba(62,62,68,0.52)'     : 'rgba(210,215,225,0.55)';
+  const navBorder = isDark ? 'rgba(255,255,255,0.12)'  : 'rgba(0,0,0,0.10)';
   const navShadow = isDark
-    ? '0 4px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.05) inset'
-    : '0 4px 24px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.8) inset';
+    ? '0 4px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.08) inset'
+    : '0 4px 24px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.9) inset';
 
   const divider = (
     <div style={{ width: 1, height: 16, background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)', flexShrink: 0 }} />
