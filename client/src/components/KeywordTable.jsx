@@ -25,84 +25,86 @@ export const KEYWORD_TABLE_COLUMNS = [
   { key: 'recommendActionText', label: '추천 액션', defaultVisible: false }
 ];
 
-export const DEFAULT_VISIBLE_COLUMN_KEYS = KEYWORD_TABLE_COLUMNS.reduce((columns, column) => {
-  columns[column.key] = Boolean(column.alwaysVisible || column.defaultVisible);
-  return columns;
+export const DEFAULT_VISIBLE_COLUMN_KEYS = KEYWORD_TABLE_COLUMNS.reduce((acc, col) => {
+  acc[col.key] = Boolean(col.alwaysVisible || col.defaultVisible);
+  return acc;
 }, {});
 
-const relevanceStyles = {
-  높음: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
-  중간: 'bg-amber-100 text-amber-700 ring-amber-200',
-  낮음: 'bg-slate-100 text-slate-600 ring-slate-200'
+/* macOS badge classes for inline table badges */
+const RELEVANCE_CLASS = {
+  높음: 'mac-badge-green',
+  중간: 'mac-badge-orange',
+  낮음: 'mac-badge-gray'
 };
 
-const intentStyles = {
-  '창업 의도': 'bg-emerald-100 text-emerald-700 ring-emerald-200',
-  '대리점/매장': 'bg-sky-100 text-sky-700 ring-sky-200',
-  '비용/수익': 'bg-indigo-100 text-indigo-700 ring-indigo-200',
-  '정보 탐색': 'bg-amber-100 text-amber-700 ring-amber-200',
-  '판매/유통': 'bg-violet-100 text-violet-700 ring-violet-200',
-  '핵심 연관': 'bg-slate-900 text-white ring-slate-900',
-  '수리/중고': 'bg-orange-100 text-orange-700 ring-orange-200',
-  잡키워드: 'bg-rose-100 text-rose-700 ring-rose-200',
-  '일반 후보': 'bg-slate-100 text-slate-600 ring-slate-200'
+const INTENT_CLASS = {
+  '창업 의도':  'mac-badge-green',
+  '대리점/매장': 'mac-badge-blue',
+  '비용/수익':  'mac-badge-indigo',
+  '정보 탐색':  'mac-badge-orange',
+  '판매/유통':  'mac-badge-purple',
+  '핵심 연관':  'mac-badge-accent',
+  '수리/중고':  'mac-badge-red',
+  '잡키워드':   'mac-badge-red',
+  '일반 후보':  'mac-badge-gray'
 };
 
 export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns }) {
   const activeColumns = KEYWORD_TABLE_COLUMNS.filter(
-    (column) => column.alwaysVisible || visibleColumns?.[column.key]
+    (col) => col.alwaysVisible || visibleColumns?.[col.key]
   );
   const minWidth = Math.max(980, activeColumns.length * 118);
 
   if (!rows.length) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center text-sm font-semibold text-slate-500">
+      <div
+        className="mac-card p-10 text-center"
+        style={{ fontSize: 14, color: 'var(--text-tertiary)' }}
+      >
         추천 키워드가 없습니다. 다른 키워드로 다시 조회해 주세요.
       </div>
     );
   }
 
   return (
-    <section className="apple-card overflow-hidden">
-      <div className="scrollbar-thin max-h-[620px] overflow-auto">
-        <table className="w-full border-collapse text-sm" style={{ minWidth }}>
-          <thead className="sticky top-0 z-10 bg-slate-950 text-left text-xs font-bold uppercase tracking-wide text-white">
+    <section className="mac-card overflow-hidden">
+      <div className="mac-scroll" style={{ maxHeight: 620, overflowX: 'auto', overflowY: 'auto' }}>
+        <table className="mac-table" style={{ minWidth }}>
+          <thead>
             <tr>
-              {activeColumns.map((column) => (
+              {activeColumns.map((col) => (
                 <th
-                  className={`whitespace-nowrap px-4 py-3 ${column.align === 'right' ? 'text-right' : 'text-left'}`}
-                  key={column.key}
+                  key={col.key}
+                  style={{ textAlign: col.align === 'right' ? 'right' : 'left' }}
                 >
-                  {column.sortable ? (
+                  {col.sortable ? (
                     <button
-                      className="inline-flex items-center gap-1 rounded px-1 py-0.5 transition hover:bg-white/10"
+                      className="inline-flex items-center gap-1 rounded px-1 py-0.5 transition"
+                      style={{ color: 'inherit', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                       type="button"
-                      onClick={() => onSort(column.key)}
-                      title={`${SORTABLE_COLUMNS[column.key]} 정렬`}
+                      onClick={() => onSort(col.key)}
+                      title={`${SORTABLE_COLUMNS[col.key]} 정렬`}
                     >
-                      {column.label}
-                      {sortConfig.key === column.key ? (
-                        sortConfig.direction === 'asc' ? (
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        ) : (
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 opacity-60" />
-                      )}
+                      {col.label}
+                      {sortConfig.key === col.key
+                        ? sortConfig.direction === 'asc'
+                          ? <ArrowUp className="h-3 w-3" />
+                          : <ArrowDown className="h-3 w-3" />
+                        : <ArrowUpDown className="h-3 w-3" style={{ opacity: 0.4 }} />
+                      }
                     </button>
-                  ) : (
-                    column.label
-                  )}
+                  ) : col.label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody>
             {rows.map((row) => (
-              <tr className={`${getActionRowClass(row)} transition hover:bg-slate-100`} key={row.keyword}>
-                {activeColumns.map((column) => (
-                  <TableCell column={column} row={row} key={column.key} />
+              <tr key={row.keyword} className={getActionRowClass(row)}>
+                {activeColumns.map((col) => (
+                  <TableCell key={col.key} column={col} row={row} />
                 ))}
               </tr>
             ))}
@@ -116,24 +118,24 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns 
 function TableCell({ column, row }) {
   if (column.key === 'recommendAction') {
     return (
-      <td className="whitespace-nowrap px-4 py-3">
+      <td>
         <KeywordBadge action={row.recommendAction} />
       </td>
     );
   }
 
   if (column.key === 'keyword') {
-    return <td className="whitespace-nowrap px-4 py-3 font-black text-slate-950">{row.keyword}</td>;
+    return (
+      <td style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>
+        {row.keyword}
+      </td>
+    );
   }
 
   if (column.key === 'relevanceLevel') {
     return (
-      <td className="whitespace-nowrap px-4 py-3">
-        <span
-          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ring-1 ${
-            relevanceStyles[row.relevanceLevel] || relevanceStyles.낮음
-          }`}
-        >
+      <td>
+        <span className={`mac-badge ${RELEVANCE_CLASS[row.relevanceLevel] || 'mac-badge-gray'}`}>
           {row.relevanceLevel || '낮음'}
         </span>
       </td>
@@ -142,12 +144,8 @@ function TableCell({ column, row }) {
 
   if (column.key === 'intentType') {
     return (
-      <td className="whitespace-nowrap px-4 py-3">
-        <span
-          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ring-1 ${
-            intentStyles[row.intentType] || intentStyles['일반 후보']
-          }`}
-        >
+      <td>
+        <span className={`mac-badge ${INTENT_CLASS[row.intentType] || 'mac-badge-gray'}`}>
           {row.intentType || '일반 후보'}
         </span>
       </td>
@@ -155,49 +153,31 @@ function TableCell({ column, row }) {
   }
 
   if (column.key === 'competition') {
-    return <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700">{row.competition}</td>;
+    return (
+      <td style={{ color: 'var(--text-secondary)' }}>{row.competition}</td>
+    );
   }
 
   if (column.key === 'recommendActionText') {
-    return <td className="whitespace-nowrap px-4 py-3 font-semibold text-slate-700">{row.recommendAction}</td>;
+    return (
+      <td style={{ color: 'var(--text-secondary)' }}>{row.recommendAction}</td>
+    );
   }
 
   const numericValue = getFormattedValue(column.key, row);
+  const isStrong = column.key === 'totalSearch' || column.key === 'efficiencyScore' || column.key === 'discoveryScore';
 
   return (
-    <NumberCell
-      value={numericValue}
-      strong={column.key === 'totalSearch' || column.key === 'efficiencyScore' || column.key === 'discoveryScore'}
-    />
+    <td style={{ textAlign: 'right', fontWeight: isStrong ? 600 : 400, color: isStrong ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+      {numericValue}
+    </td>
   );
 }
 
 function getFormattedValue(key, row) {
-  const value = row[key];
-
-  if (key.includes('Ctr') || key === 'averageCtr' || key === 'mobileRatio') {
-    return formatPercent(value);
-  }
-
-  if (key.includes('Score')) {
-    return formatScore(value);
-  }
-
-  if (key === 'averageDepth') {
-    return Number(value || 0).toFixed(1);
-  }
-
-  return formatNumber(value);
-}
-
-function NumberCell({ value, strong = false }) {
-  return (
-    <td
-      className={`whitespace-nowrap px-4 py-3 text-right ${
-        strong ? 'font-black text-slate-950' : 'font-semibold text-slate-700'
-      }`}
-    >
-      {value}
-    </td>
-  );
+  const v = row[key];
+  if (key.includes('Ctr') || key === 'averageCtr' || key === 'mobileRatio') return formatPercent(v);
+  if (key.includes('Score')) return formatScore(v);
+  if (key === 'averageDepth') return Number(v || 0).toFixed(1);
+  return formatNumber(v);
 }

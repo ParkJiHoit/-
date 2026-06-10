@@ -2,171 +2,392 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════
+   macOS Sequoia Design System
+   ═══════════════════════════════════════════════════════ */
+
 :root {
+  /* Dark (default) */
+  --bg-base:       #1C1C1E;
+  --bg-elevated:   #2C2C2E;
+  --bg-overlay:    #3A3A3C;
+  --border:        rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.14);
+  --text-primary:   #F5F5F7;
+  --text-secondary: #98989D;
+  --text-tertiary:  #636366;
+  --accent:        #0A84FF;
+  --accent-hover:  #409CFF;
+  --destructive:   #FF453A;
+  --success:       #30D158;
+  --warning:       #FF9F0A;
   --nav-h: 52px;
-  --bg: #f5f5f7;
-  --surface: #ffffff;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-mid: rgba(0, 0, 0, 0.12);
-  --text-1: #1d1d1f;
-  --text-2: #6e6e73;
-  --text-3: #86868b;
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 6px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+[data-theme="light"] {
+  --bg-base:       #F2F2F7;
+  --bg-elevated:   #FFFFFF;
+  --bg-overlay:    #E5E5EA;
+  --border:        rgba(0,0,0,0.10);
+  --border-strong: rgba(0,0,0,0.18);
+  --text-primary:   #1C1C1E;
+  --text-secondary: #636366;
+  --text-tertiary:  #8E8E93;
+  --accent:        #007AFF;
+  --accent-hover:  #0A84FF;
+  --destructive:   #FF3B30;
+  --success:       #34C759;
+  --warning:       #FF9500;
 }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { transition: background 0.2s; }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: var(--bg);
-  color: var(--text-1);
-  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
-    "Apple SD Gothic Neo", system-ui, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
+button, input, select, textarea { font: inherit; }
 
-/* ── Frosted-glass Navbar ─────────────────────────────── */
-.glass-nav {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: saturate(180%) blur(24px);
-  -webkit-backdrop-filter: saturate(180%) blur(24px);
+/* ─── Text helpers ─── */
+.t-p   { color: var(--text-primary); }
+.t-s   { color: var(--text-secondary); }
+.t-t   { color: var(--text-tertiary); }
+.t-a   { color: var(--accent); }
+
+/* ─── Titlebar ─── */
+.mac-nav {
+  height: var(--nav-h);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(28, 28, 30, 0.88);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
   border-bottom: 1px solid var(--border);
 }
 
-/* ── Apple Surface Card ───────────────────────────────── */
-.apple-card {
-  background: var(--surface);
+[data-theme="light"] .mac-nav {
+  background: rgba(242, 242, 247, 0.88);
+}
+
+/* ─── Traffic lights ─── */
+.traffic-lights { display: flex; align-items: center; gap: 8px; }
+
+.traffic-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.traffic-dot::after {
+  position: absolute;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.traffic-lights:hover .tl-red::after    { content: '×'; opacity: 1; }
+.traffic-lights:hover .tl-yellow::after { content: '–'; opacity: 1; }
+.traffic-lights:hover .tl-green::after  { content: '+'; opacity: 1; }
+
+.tl-red    { background: #FF5F57; }
+.tl-yellow { background: #FFBD2E; }
+.tl-green  { background: #28C840; }
+
+/* ─── Card ─── */
+.mac-card {
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 1px rgba(0,0,0,0.3);
 }
 
-/* ── Animations ───────────────────────────────────────── */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+[data-theme="light"] .mac-card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease both;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-/* stagger delays for children */
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
-
-/* ── Scrollbar ────────────────────────────────────────── */
-.scrollbar-thin::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.14);
-  border-radius: 999px;
-}
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.26);
-}
-
-/* ── Service Dropdown ─────────────────────────────────── */
-.service-dropdown {
-  background: var(--surface);
+/* ─── Input ─── */
+.mac-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-}
-
-/* ── Input focus ring (Apple style) ──────────────────── */
-.apple-input {
-  background: var(--surface);
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  border-radius: var(--radius);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: var(--text-primary);
   outline: none;
-}
-.apple-input:focus {
-  border-color: rgba(0, 0, 0, 0.32);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
 }
 
-/* ── Toast notification ───────────────────────────────── */
-.toast {
+.mac-input::placeholder { color: var(--text-tertiary); }
+
+.mac-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+}
+
+.mac-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+[data-theme="light"] .mac-input { background: rgba(0, 0, 0, 0.04); }
+[data-theme="light"] .mac-input:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
+
+/* Small input (filters) */
+.mac-input-sm {
+  height: 34px;
+  padding: 0 10px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+/* ─── Buttons ─── */
+.mac-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.mac-btn:hover:not(:disabled)  { background: var(--accent-hover); }
+.mac-btn:active:not(:disabled) { transform: scale(0.97); }
+.mac-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.mac-btn-sm {
+  padding: 5px 13px;
+  font-size: 13px;
+  border-radius: 7px;
+}
+
+.mac-btn-ghost {
+  background: var(--bg-overlay);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.mac-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .mac-btn-ghost:hover:not(:disabled) {
+  background: #D1D1D6;
+}
+
+/* ─── Dropdown ─── */
+.mac-dropdown {
+  background: rgba(58, 58, 60, 0.96);
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 1px rgba(0,0,0,0.4);
+  animation: macScaleIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+[data-theme="light"] .mac-dropdown {
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 1px rgba(0,0,0,0.06);
+}
+
+/* ─── Table ─── */
+.mac-table { width: 100%; border-collapse: collapse; }
+
+.mac-table thead th {
+  background: var(--bg-overlay);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 9px 14px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.mac-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  transition: background 0.1s;
+}
+
+.mac-table tbody tr:last-child { border-bottom: none; }
+.mac-table tbody tr:hover { background: var(--bg-overlay); }
+
+.mac-table tbody td {
+  padding: 10px 14px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.mac-row-red    { background: rgba(255,69,58,0.07) !important; }
+.mac-row-green  { background: rgba(48,209,88,0.07) !important; }
+.mac-row-purple { background: rgba(191,90,242,0.07) !important; }
+.mac-table tbody tr.mac-row-red:hover,
+.mac-table tbody tr.mac-row-green:hover,
+.mac-table tbody tr.mac-row-purple:hover { background: var(--bg-overlay) !important; }
+
+/* ─── Badges ─── */
+.mac-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.mac-badge-green   { background: rgba(48,209,88,0.15);   color: #30D158; border-color: rgba(48,209,88,0.22); }
+.mac-badge-blue    { background: rgba(10,132,255,0.15);  color: #0A84FF; border-color: rgba(10,132,255,0.22); }
+.mac-badge-purple  { background: rgba(191,90,242,0.15);  color: #BF5AF2; border-color: rgba(191,90,242,0.22); }
+.mac-badge-red     { background: rgba(255,69,58,0.15);   color: #FF453A; border-color: rgba(255,69,58,0.22); }
+.mac-badge-orange  { background: rgba(255,159,10,0.15);  color: #FF9F0A; border-color: rgba(255,159,10,0.22); }
+.mac-badge-gray    { background: rgba(152,152,157,0.15); color: #98989D; border-color: rgba(152,152,157,0.22); }
+.mac-badge-accent  { background: var(--accent); color: #fff; }
+.mac-badge-indigo  { background: rgba(94,92,230,0.15);   color: #5E5CE6; border-color: rgba(94,92,230,0.22); }
+.mac-badge-teal    { background: rgba(90,200,250,0.15);  color: #5AC8FA; border-color: rgba(90,200,250,0.22); }
+
+[data-theme="light"] .mac-badge-green  { background: rgba(52,199,89,0.1);   color: #1a7f37; border-color: rgba(52,199,89,0.25); }
+[data-theme="light"] .mac-badge-blue   { background: rgba(0,122,255,0.1);   color: #0040DD; border-color: rgba(0,122,255,0.25); }
+[data-theme="light"] .mac-badge-purple { background: rgba(175,82,222,0.1);  color: #7335a3; border-color: rgba(175,82,222,0.25); }
+[data-theme="light"] .mac-badge-red    { background: rgba(255,59,48,0.1);   color: #c50012; border-color: rgba(255,59,48,0.25); }
+[data-theme="light"] .mac-badge-orange { background: rgba(255,149,0,0.1);   color: #995200; border-color: rgba(255,149,0,0.25); }
+[data-theme="light"] .mac-badge-gray   { background: rgba(142,142,147,0.1); color: #3A3A3C; border-color: rgba(142,142,147,0.25); }
+[data-theme="light"] .mac-badge-accent { background: var(--accent); color: #fff; }
+[data-theme="light"] .mac-badge-indigo { background: rgba(88,86,214,0.1);   color: #3634a3; border-color: rgba(88,86,214,0.25); }
+[data-theme="light"] .mac-badge-teal   { background: rgba(85,190,240,0.1);  color: #0c5d8a; border-color: rgba(85,190,240,0.25); }
+
+/* ─── Checkbox ─── */
+.mac-checkbox {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.mac-checkbox:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mac-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 3.5px;
+  top: 1px;
+  width: 5px;
+  height: 8px;
+  border: 1.5px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.mac-checkbox:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Scrollbar ─── */
+.mac-scroll::-webkit-scrollbar            { width: 6px; height: 6px; }
+.mac-scroll::-webkit-scrollbar-track      { background: transparent; }
+.mac-scroll::-webkit-scrollbar-thumb      { background: #48484A; border-radius: 3px; }
+.mac-scroll::-webkit-scrollbar-thumb:hover{ background: #636366; }
+
+[data-theme="light"] .mac-scroll::-webkit-scrollbar-thumb      { background: #C7C7CC; }
+[data-theme="light"] .mac-scroll::-webkit-scrollbar-thumb:hover{ background: #AEAEB2; }
+
+/* ─── Toast ─── */
+.mac-toast {
   position: fixed;
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(29, 29, 31, 0.92);
+  background: rgba(44, 44, 46, 0.96);
   backdrop-filter: blur(12px);
-  color: #fff;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
   padding: 10px 20px;
-  border-radius: 999px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
   z-index: 9999;
   white-space: nowrap;
-  animation: fadeInUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
   pointer-events: none;
+  animation: macFadeUp 0.22s ease both;
 }
 
-/* ── Hero section smooth transition ──────────────────── */
-.hero-section {
-  transition: padding 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+[data-theme="light"] .mac-toast {
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
 }
+
+/* ─── Divider ─── */
+.mac-divider { height: 1px; background: var(--border); }
+
+/* ─── Hero ─── */
+.hero-transition { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* ─── Animations ─── */
+@keyframes macFadeUp {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes macFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes macScaleIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.mac-fade-in { animation: macFadeIn 0.3s cubic-bezier(0.4,0,0.2,1) both; }
+
+.mac-stagger > *:nth-child(1) { animation: macFadeIn 0.3s 0ms   cubic-bezier(0.4,0,0.2,1) both; }
+.mac-stagger > *:nth-child(2) { animation: macFadeIn 0.3s 45ms  cubic-bezier(0.4,0,0.2,1) both; }
+.mac-stagger > *:nth-child(3) { animation: macFadeIn 0.3s 90ms  cubic-bezier(0.4,0,0.2,1) both; }
+.mac-stagger > *:nth-child(4) { animation: macFadeIn 0.3s 135ms cubic-bezier(0.4,0,0.2,1) both; }
+.mac-stagger > *:nth-child(5) { animation: macFadeIn 0.3s 180ms cubic-bezier(0.4,0,0.2,1) both; }
+.mac-stagger > *:nth-child(6) { animation: macFadeIn 0.3s 225ms cubic-bezier(0.4,0,0.2,1) both; }
