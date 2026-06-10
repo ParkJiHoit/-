@@ -14,7 +14,7 @@ import SummaryCards from './components/SummaryCards';
 import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
 
-const COLUMN_STORAGE_KEY = 'naverKeywordDashboard.visibleColumns.v3';
+const COLUMN_STORAGE_KEY = 'naverKeywordDashboard.visibleColumns.v4';
 const THEME_STORAGE_KEY  = 'keywordlab.theme';
 
 function getInitialVisibleColumns() {
@@ -231,7 +231,7 @@ export default function App() {
   const [expansion, setExpansion]       = useState(null);
   const [blogAnalysis, setBlogAnalysis] = useState(null);
   const [filters,  setFilters]          = useState(defaultFilters);
-  const [sortConfig, setSortConfig]     = useState({ key: 'relevanceScore', direction: 'desc' });
+  const [sortConfig, setSortConfig]     = useState({ key: 'efficiencyScore', direction: 'desc' });
   const [visibleColumns, setVisibleColumns] = useState(getInitialVisibleColumns);
   const [loading, setLoading]           = useState(false);
   const [error,   setError]             = useState('');
@@ -302,7 +302,7 @@ export default function App() {
 
   const analyzeKeyword = async (keyword) => {
     const data = await requestKeywords('/api/keywords/analyze', { keyword },
-      '키워드 데이터를 조회하지 못했습니다.', { key: 'relevanceScore', direction: 'desc' });
+      '키워드 데이터를 조회하지 못했습니다.', { key: 'efficiencyScore', direction: 'desc' });
     if (data) setAnalysis(data);
   };
 
@@ -365,7 +365,7 @@ export default function App() {
 
   const switchTab = (next) => {
     setActiveTab(next); setError(''); setFilters(defaultFilters);
-    if (next === 'analysis')  setSortConfig({ key: 'relevanceScore',  direction: 'desc' });
+    if (next === 'analysis')  setSortConfig({ key: 'efficiencyScore',  direction: 'desc' });
     if (next === 'expansion') setSortConfig({ key: 'discoveryScore',  direction: 'desc' });
   };
 
@@ -374,7 +374,7 @@ export default function App() {
     setAnalysis(null);
     setError('');
     setFilters(defaultFilters);
-    setSortConfig({ key: 'relevanceScore', direction: 'desc' });
+    setSortConfig({ key: 'efficiencyScore', direction: 'desc' });
   };
 
   const handleMockAction = () => showToast('준비 중인 기능입니다 — 곧 만나보실 수 있어요!');
@@ -431,55 +431,61 @@ export default function App() {
         {isKeywordTab && activeResult && !loading && (
           <div className="mac-fade-in flex flex-col gap-5">
             {activeTab === 'analysis' && (
-              <>
-                <SummaryCards summary={currentSummary} />
-                <KeywordFilters filters={filters} onChange={setFilters} onReset={() => setFilters(defaultFilters)} />
-              </>
-            )}
-            {activeTab === 'expansion' && (
-              <KeywordFilters filters={filters} onChange={setFilters} onReset={() => setFilters(defaultFilters)} />
+              <SummaryCards summary={currentSummary} />
             )}
 
-            <ColumnVisibilitySettings
-              visibleColumns={visibleColumns}
-              onChange={setVisibleColumns}
-              onReset={resetVisibleColumns}
-            />
-
-            {/* Table header bar */}
+            {/* Unified compact toolbar */}
             <div
-              className="mac-card flex flex-col gap-3 px-5 py-4 xl:flex-row xl:items-center xl:justify-between"
+              className="mac-card px-4 py-3"
+              style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}
             >
-              <div>
-                <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
-                  {activeTab === 'analysis' ? '키워드 분석 테이블' : '키워드 확장 테이블'}
-                </p>
-                <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                  현재 필터 기준 {formatNumber(filteredRows.length)}개 키워드
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <QuickToggle
-                  label="낮은 연관도 제외"
-                  checked={filters.excludeLowRelevance}
-                  onChange={(v) => updateFilter('excludeLowRelevance', v)}
-                  title="연관도 낮음 키워드를 숨깁니다."
-                />
-                <QuickToggle
-                  label="과포화 제외"
-                  checked={filters.excludeSaturated}
-                  onChange={(v) => updateFilter('excludeSaturated', v)}
-                  title="과포화 주의 키워드를 숨깁니다."
-                />
-                <button
-                  className="mac-btn mac-btn-sm"
-                  onClick={downloadKeywordExcel}
-                  disabled={!filteredRows.length}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  엑셀 다운로드
-                </button>
-              </div>
+              <KeywordFilters filters={filters} onChange={setFilters} />
+
+              <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
+
+              <QuickToggle
+                label="낮은 연관도 제외"
+                checked={filters.excludeLowRelevance}
+                onChange={(v) => updateFilter('excludeLowRelevance', v)}
+                title="연관도 낮음 키워드를 숨깁니다."
+              />
+              <QuickToggle
+                label="과포화 제외"
+                checked={filters.excludeSaturated}
+                onChange={(v) => updateFilter('excludeSaturated', v)}
+                title="과포화 주의 키워드를 숨깁니다."
+              />
+
+              <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
+
+              <ColumnVisibilitySettings
+                visibleColumns={visibleColumns}
+                onChange={setVisibleColumns}
+                onReset={resetVisibleColumns}
+              />
+
+              <div style={{ flex: 1, minWidth: 4 }} />
+
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
+                {formatNumber(filteredRows.length)}개 키워드
+              </span>
+
+              <button
+                className="mac-btn mac-btn-ghost mac-btn-sm"
+                type="button"
+                onClick={() => setFilters(defaultFilters)}
+              >
+                초기화
+              </button>
+
+              <button
+                className="mac-btn mac-btn-sm"
+                onClick={downloadKeywordExcel}
+                disabled={!filteredRows.length}
+              >
+                <Download className="h-3.5 w-3.5" />
+                엑셀 다운로드
+              </button>
             </div>
 
             <KeywordTable
