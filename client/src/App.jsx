@@ -1,13 +1,16 @@
-import { Download, Loader2, Search, Sparkles } from 'lucide-react';
+import { Download, FileText, Loader2, Search, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
+import BlogAnalysisForm from './components/BlogAnalysisForm';
+import BlogAnalysisPanel from './components/BlogAnalysisPanel';
+import BlogSummaryCards from './components/BlogSummaryCards';
 import ColumnVisibilitySettings from './components/ColumnVisibilitySettings';
 import KeywordExpansionForm from './components/KeywordExpansionForm';
 import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
 import KeywordSearchForm from './components/KeywordSearchForm';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
 import SummaryCards from './components/SummaryCards';
-import { formatPercent, getDownloadFileName } from './utils/formatters';
+import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
 
 const COLUMN_STORAGE_KEY = 'naverKeywordDashboard.visibleColumns.v3';
@@ -56,16 +59,26 @@ function buildSummary(rows) {
   };
 }
 
+function buildBlogDownloadFileName() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `naver_blog_keyword_analysis_${yyyy}${mm}${dd}.xlsx`;
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('analysis');
   const [analysis, setAnalysis] = useState(null);
   const [expansion, setExpansion] = useState(null);
+  const [blogAnalysis, setBlogAnalysis] = useState(null);
   const [filters, setFilters] = useState(defaultFilters);
   const [sortConfig, setSortConfig] = useState({ key: 'relevanceScore', direction: 'desc' });
   const [visibleColumns, setVisibleColumns] = useState(getInitialVisibleColumns);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const isKeywordTab = activeTab === 'analysis' || activeTab === 'expansion';
   const activeResult = activeTab === 'analysis' ? analysis : expansion;
   const activeRows = activeResult?.keywords || [];
 
@@ -78,6 +91,8 @@ export default function App() {
   };
 
   const filteredRows = useMemo(() => {
+    if (!isKeywordTab) return [];
+
     const filtered = activeRows.filter((row) => {
       if (filters.excludeLowRelevance && row.relevanceLevel === '낮음') return false;
       if (filters.relevanceLevel && row.relevanceLevel !== filters.relevanceLevel) return false;
@@ -99,7 +114,7 @@ export default function App() {
     });
 
     return sortKeywords(filtered, sortConfig);
-  }, [activeRows, filters, sortConfig]);
+  }, [activeRows, filters, isKeywordTab, sortConfig]);
 
   const currentSummary = useMemo(() => buildSummary(filteredRows), [filteredRows]);
 
@@ -158,6 +173,36 @@ export default function App() {
     if (data) setExpansion(data);
   };
 
+  const analyzeBlog = async (payload) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/blog/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await parseApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(data.message || '블로그 키워드 데이터를 조회하지 못했습니다.');
+      }
+
+      if (!data.metrics) {
+        throw new Error(data.message || '블로그 분석 응답 형식이 올바르지 않습니다.');
+      }
+
+      setBlogAnalysis(data);
+    } catch (requestError) {
+      setError(requestError.message || '블로그 키워드 데이터를 조회하지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSort = (key) => {
     setSortConfig((previous) => ({
       key,
@@ -169,7 +214,7 @@ export default function App() {
     setVisibleColumns({ ...DEFAULT_VISIBLE_COLUMN_KEYS });
   };
 
-  const downloadExcel = () => {
+  const downloadKeywordExcel = () => {
     const exportRows = filteredRows.map((row) => ({
       키워드: row.keyword,
       '의도 유형': row.intentType,
@@ -194,6 +239,54 @@ export default function App() {
     XLSX.writeFile(workbook, getDownloadFileName());
   };
 
+  const downloadBlogExcel = () => {
+    if (!blogAnalysis?.metrics) return;
+
+    const metricRows = [
+      {
+        키워드: blogAnalysis.metrics.keyword,
+        '월 검색량': blogAnalysis.metrics.monthlySearch,
+        '블로그 문서 수': blogAnalysis.metrics.totalBlogDocuments,
+        '최근 30일 샘플 수': blogAnalysis.metrics.recentPostCount,
+        '최근 발행 비중': formatPercent(blogAnalysis.metrics.recentPublishRatio),
+        '키워드 일치도': formatPercent(blogAnalysis.metrics.keywordMatchRatio),
+        '블로그 경쟁도': blogAnalysis.metrics.blogCompetitionScore,
+        '블로그 포화도': blogAnalysis.metrics.blogSaturationScore,
+        '콘텐츠 기회 점수': blogAnalysis.metrics.contentOpportunityScore,
+        '검색 트렌드': blogAnalysis.metrics.trendDirection,
+        '트렌드 변화율': formatPercent(blogAnalysis.metrics.trendChangeRate),
+        '추천 액션': blogAnalysis.metrics.recommendAction
+      }
+    ];
+    const postRows = blogAnalysis.posts.map((post) => ({
+      제목: post.title,
+      설명: post.description,
+      블로그명: post.bloggerName,
+      작성일: post.postDate,
+      '키워드 포함': post.keywordMatched ? '포함' : '낮음',
+      링크: post.link
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(metricRows), '블로그 분석');
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(postRows), '상위 블로그 결과');
+    XLSX.writeFile(workbook, buildBlogDownloadFileName());
+  };
+
+  const switchTab = (nextTab) => {
+    setActiveTab(nextTab);
+    setError('');
+    setFilters(defaultFilters);
+
+    if (nextTab === 'analysis') {
+      setSortConfig({ key: 'relevanceScore', direction: 'desc' });
+    }
+
+    if (nextTab === 'expansion') {
+      setSortConfig({ key: 'discoveryScore', direction: 'desc' });
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#eef2f7]">
       <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-6 px-5 py-8 lg:px-8">
@@ -201,16 +294,16 @@ export default function App() {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
-                Naver Search Ads Keyword Ops
+                Naver Search & Content Ops
               </p>
               <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
                 네이버 키워드 추천 대시보드
               </h1>
               <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-slate-600">
-                검색광고 운영을 위한 키워드 검색량, 경쟁도, 포화도, 효율 점수 분석
+                검색광고 운영과 블로그 콘텐츠 발굴을 위한 검색량, 경쟁도, 포화도, 기회 점수 분석
               </p>
             </div>
-            {activeResult?.baseKeyword && (
+            {isKeywordTab && activeResult?.baseKeyword && (
               <div className="rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700">
                 {activeTab === 'analysis' ? '기준 키워드' : '시드 키워드'}
                 <span className="ml-2 text-slate-950">
@@ -220,6 +313,12 @@ export default function App() {
                 </span>
               </div>
             )}
+            {activeTab === 'blog' && blogAnalysis?.keyword && (
+              <div className="rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700">
+                블로그 키워드
+                <span className="ml-2 text-slate-950">{blogAnalysis.keyword}</span>
+              </div>
+            )}
           </div>
 
           <nav className="flex flex-wrap gap-2">
@@ -227,41 +326,41 @@ export default function App() {
               active={activeTab === 'analysis'}
               icon={Search}
               label="키워드 분석"
-              onClick={() => {
-                setActiveTab('analysis');
-                setError('');
-                setFilters(defaultFilters);
-                setSortConfig({ key: 'relevanceScore', direction: 'desc' });
-              }}
+              onClick={() => switchTab('analysis')}
             />
             <TabButton
               active={activeTab === 'expansion'}
               icon={Sparkles}
               label="키워드 확장"
-              onClick={() => {
-                setActiveTab('expansion');
-                setError('');
-                setFilters(defaultFilters);
-                setSortConfig({ key: 'discoveryScore', direction: 'desc' });
-              }}
+              onClick={() => switchTab('expansion')}
+            />
+            <TabButton
+              active={activeTab === 'blog'}
+              icon={FileText}
+              label="블로그 분석"
+              onClick={() => switchTab('blog')}
             />
           </nav>
         </header>
 
-        {activeTab === 'analysis' ? (
+        {activeTab === 'analysis' && (
           <KeywordSearchForm
             onSubmit={analyzeKeyword}
             loading={loading}
             suggestions={analysis?.searchSuggestions || []}
           />
-        ) : (
-          <KeywordExpansionForm onSubmit={expandKeyword} loading={loading} />
         )}
+
+        {activeTab === 'expansion' && <KeywordExpansionForm onSubmit={expandKeyword} loading={loading} />}
+
+        {activeTab === 'blog' && <BlogAnalysisForm onSubmit={analyzeBlog} loading={loading} />}
 
         {loading && (
           <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-5 text-sm font-bold text-slate-700 shadow-sm">
             <Loader2 className="h-5 w-5 animate-spin text-slate-950" />
-            {activeTab === 'analysis' ? '키워드 데이터를 분석 중입니다.' : '키워드를 확장 중입니다.'}
+            {activeTab === 'analysis' && '키워드 데이터를 분석 중입니다.'}
+            {activeTab === 'expansion' && '키워드를 확장 중입니다.'}
+            {activeTab === 'blog' && '블로그 키워드 데이터를 분석 중입니다.'}
           </div>
         )}
 
@@ -271,7 +370,7 @@ export default function App() {
           </div>
         )}
 
-        {activeResult && !loading && (
+        {isKeywordTab && activeResult && !loading && (
           <>
             {activeTab === 'analysis' && (
               <>
@@ -294,7 +393,7 @@ export default function App() {
                   {activeTab === 'analysis' ? '키워드 분석 테이블' : '키워드 확장 테이블'}
                 </h2>
                 <p className="text-sm font-medium text-slate-500">
-                  현재 필터 기준 {filteredRows.length}개 키워드 표시
+                  현재 필터 기준 {formatNumber(filteredRows.length)}개 키워드 표시
                 </p>
               </div>
 
@@ -314,7 +413,7 @@ export default function App() {
                 <button
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-black text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
                   type="button"
-                  onClick={downloadExcel}
+                  onClick={downloadKeywordExcel}
                   disabled={!filteredRows.length}
                 >
                   <Download className="h-4 w-4" />
@@ -328,6 +427,29 @@ export default function App() {
               onSort={handleSort}
               visibleColumns={visibleColumns}
             />
+          </>
+        )}
+
+        {activeTab === 'blog' && blogAnalysis && !loading && (
+          <>
+            <BlogSummaryCards metrics={blogAnalysis.metrics} />
+            <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-black text-slate-950">블로그 분석 결과</h2>
+                <p className="text-sm font-medium text-slate-500">
+                  블로그 검색 결과 {formatNumber(blogAnalysis.metrics.totalBlogDocuments)}건 기준
+                </p>
+              </div>
+              <button
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-emerald-700 px-4 text-sm font-black text-white transition hover:bg-emerald-800"
+                type="button"
+                onClick={downloadBlogExcel}
+              >
+                <Download className="h-4 w-4" />
+                엑셀 다운로드
+              </button>
+            </div>
+            <BlogAnalysisPanel result={blogAnalysis} />
           </>
         )}
       </div>
