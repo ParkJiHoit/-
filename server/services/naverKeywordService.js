@@ -16,6 +16,13 @@ const KEYWORD_TOOL_URI = '/keywordstool';
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const keywordToolCache = new Map();
 
+function pruneCache(cache) {
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (now - entry.createdAt >= CACHE_TTL_MS) cache.delete(key);
+  }
+}
+
 function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -75,6 +82,8 @@ async function fetchNaverKeywordTool(baseKeyword) {
   if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) {
     return cached.rows;
   }
+
+  pruneCache(keywordToolCache);
 
   let response;
   try {
@@ -307,13 +316,12 @@ export async function expandKeyword({
       ...new Set(expansionQueries.map((seed) => sanitizeNaverHintKeyword(seed)).filter(Boolean))
     ].slice(0, maxExpansionQueries);
 
-    const responses = [];
-    for (const sourceKeyword of uniqueExpansionQueries) {
-      responses.push({
+    const responses = await Promise.all(
+      uniqueExpansionQueries.map(async (sourceKeyword) => ({
         sourceKeyword,
         rows: await fetchNaverKeywordTool(sourceKeyword)
-      });
-    }
+      }))
+    );
 
     const normalizedRows = responses.flatMap(({ sourceKeyword, rows }) =>
       rows.map((row) => normalizeKeywordRow(row, representativeKeyword, sourceKeyword))

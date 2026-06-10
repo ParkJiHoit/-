@@ -96,13 +96,15 @@ export function calculateDiscoveryScore({
   const competitionReverseScore = 100 - getCompetitionScore(competition);
   const saturationReverseScore = 100 - saturationScore;
 
+  // 포화도 역점수 비중을 5%→15%로 상향: 포화된 키워드는 발굴 가치가 낮으므로 더 강하게 반영
+  // 대신 연관도 비중을 35%→30%로 소폭 하향 (연관도는 필터링으로도 이미 걸러짐)
   return Math.round(
     clamp(
-      relevanceScore * 0.35 +
+      relevanceScore * 0.30 +
         volumeScore * 0.25 +
-        competitionReverseScore * 0.2 +
+        competitionReverseScore * 0.20 +
         intentScore * 0.15 +
-        saturationReverseScore * 0.05
+        saturationReverseScore * 0.10
     )
   );
 }

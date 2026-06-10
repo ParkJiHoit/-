@@ -382,6 +382,13 @@ export default function App() {
                 />
               </>
             )}
+            {activeTab === 'expansion' && (
+              <KeywordFilters
+                filters={filters}
+                onChange={setFilters}
+                onReset={() => setFilters(defaultFilters)}
+              />
+            )}
             <ColumnVisibilitySettings
               visibleColumns={visibleColumns}
               onChange={setVisibleColumns}

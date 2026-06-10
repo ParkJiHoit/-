@@ -1,5 +1,6 @@
 import { ExternalLink } from 'lucide-react';
 import { formatNumber, formatPercent } from '../utils/formatters';
+import TrendChart from './TrendChart';
 
 function formatPostDate(value) {
   if (!/^\d{8}$/.test(String(value || ''))) return '-';
@@ -21,11 +22,26 @@ function MetricRow({ label, value, helper }) {
 export default function BlogAnalysisPanel({ result }) {
   const metrics = result?.metrics;
   const posts = result?.posts || [];
+  const trendData = result?.trend || [];
 
   if (!metrics) return null;
 
   return (
-    <section className="grid gap-4 xl:grid-cols-[420px_1fr]">
+    <section className="flex flex-col gap-4">
+      {metrics.trendAvailable && trendData.length >= 2 && (
+        <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-4 py-3">
+            <h2 className="text-lg font-black text-slate-950">검색 트렌드</h2>
+            <p className="text-sm font-medium text-slate-500">
+              {metrics.trendStartDate} ~ {metrics.trendEndDate} · 네이버 데이터랩 기준
+            </p>
+          </div>
+          <div className="px-4 pb-3">
+            <TrendChart trendData={trendData} trendDirection={metrics.trendDirection} />
+          </div>
+        </article>
+      )}
+      <section className="grid gap-4 xl:grid-cols-[420px_1fr]">
       <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-4 py-3">
           <h2 className="text-lg font-black text-slate-950">블로그 분석 지표</h2>
@@ -140,6 +156,7 @@ export default function BlogAnalysisPanel({ result }) {
           </table>
         </div>
       </article>
+      </section>
     </section>
   );
 }

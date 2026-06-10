@@ -18,6 +18,17 @@ const CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 const blogCache = new Map();
 const trendCache = new Map();
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function pruneCache(cache) {
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (now - entry.createdAt >= CACHE_TTL_MS) cache.delete(key);
+  }
+}
+
 function getOpenApiCredentials() {
   return {
     clientId: process.env.NAVER_OPEN_API_CLIENT_ID || process.env.NAVER_CLIENT_ID,
@@ -47,16 +58,18 @@ function getOpenApiHeaders() {
 }
 
 function getCached(cache, key) {
-  const cached = cache.get(key);
-  if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.data;
-  return null;
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.createdAt >= CACHE_TTL_MS) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data;
 }
 
 function setCached(cache, key, data) {
-  cache.set(key, {
-    createdAt: Date.now(),
-    data
-  });
+  pruneCache(cache);
+  cache.set(key, { createdAt: Date.now(), data });
 }
 
 function formatDate(date) {
@@ -87,16 +100,20 @@ async function fetchBlogSearch(keyword, sort = 'sim') {
   const cached = getCached(blogCache, cacheKey);
   if (cached) return cached;
 
-  const response = await axios.get(`${NAVER_OPEN_API_BASE_URL}${BLOG_SEARCH_PATH}`, {
-    params: {
-      query: keyword,
-      display: 100,
-      start: 1,
-      sort
-    },
+  const requestConfig = {
+    params: { query: keyword, display: 100, start: 1, sort },
     headers: getOpenApiHeaders(),
     timeout: 15000
-  });
+  };
+
+  let response;
+  try {
+    response = await axios.get(`${NAVER_OPEN_API_BASE_URL}${BLOG_SEARCH_PATH}`, requestConfig);
+  } catch (error) {
+    if (error.response?.status !== 429) throw error;
+    await sleep(800);
+    response = await axios.get(`${NAVER_OPEN_API_BASE_URL}${BLOG_SEARCH_PATH}`, requestConfig);
+  }
 
   setCached(blogCache, cacheKey, response.data);
   return response.data;
@@ -222,6 +239,7 @@ export async function analyzeBlogKeyword({ keyword, months = 12 }) {
       monthlySearch: searchResult.monthlySearch,
       recentPublishRatio,
       blogSaturationScore,
+      blogCompetitionScore,
       contentOpportunityScore,
       trendDirection: trendMetrics.trendDirection
     });
