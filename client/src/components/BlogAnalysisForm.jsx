@@ -28,7 +28,7 @@ export default function BlogAnalysisForm({ onSubmit, loading }) {
           background: 'rgba(255,255,255,0.04)',
           boxShadow: focused
             ? '0 0 0 3px rgba(10,180,255,0.18), 0 0 32px rgba(10,180,255,0.22), 0 0 80px rgba(10,180,255,0.08)'
-            : '0 2px 20px rgba(0,0,0,0.4)',
+            : '0 2px 20px rgba(0,0,0,0.4), 0 0 18px rgba(10,180,255,0.07), 0 0 48px rgba(10,180,255,0.04)',
           transition: 'box-shadow 0.25s ease, border-color 0.25s ease',
           display: 'flex',
           alignItems: 'center',
