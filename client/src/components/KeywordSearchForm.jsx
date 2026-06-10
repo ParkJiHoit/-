@@ -1,21 +1,45 @@
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown, Clock, Search, X } from 'lucide-react';
 import { useState } from 'react';
 
-const TRENDING = ['스마트스토어', '무인카페', '블로그수익화', '소자본창업', '위탁판매'];
-const RANK_COLORS = ['#FF5C38', '#FF8C42', '#FFBA08', 'var(--text-tertiary)', 'var(--text-tertiary)'];
+const HISTORY_KEY = 'keywordlab.searchHistory';
+const MAX_HISTORY = 8;
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
 
 export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] }) {
   const [keyword, setKeyword] = useState('');
   const [focused, setFocused] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
+  const [history, setHistory] = useState(() => getHistory());
 
   const submitKeyword = (next = keyword) => {
     const trimmed = next.trim();
     if (!trimmed) { setValidationMessage('분석할 키워드를 입력해 주세요.'); return; }
     setValidationMessage('');
     setKeyword(trimmed);
+    const updated = [trimmed, ...history.filter((k) => k !== trimmed)].slice(0, MAX_HISTORY);
+    setHistory(updated);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
     onSubmit(trimmed);
   };
+
+  const removeItem = (kw, e) => {
+    e.stopPropagation();
+    const updated = history.filter((k) => k !== kw);
+    setHistory(updated);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+  };
+
+  const clearAll = () => {
+    setHistory([]);
+    localStorage.removeItem(HISTORY_KEY);
+  };
+
+  const showHistory  = history.length > 0 && suggestions.length === 0;
+  const showSuggestions = suggestions.length > 0;
 
   return (
     <div style={{ width: '100%' }}>
@@ -41,20 +65,12 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] 
         {/* Platform badge */}
         <div
           style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5,
-            paddingLeft: 22,
-            paddingRight: 18,
+            flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5,
+            paddingLeft: 22, paddingRight: 18,
             borderRight: '1px solid rgba(255,255,255,0.10)',
-            color: '#06C755',
-            fontWeight: 700,
-            fontSize: 13,
-            letterSpacing: '-0.2px',
-            whiteSpace: 'nowrap',
-            cursor: 'default',
-            userSelect: 'none'
+            color: '#06C755', fontWeight: 700, fontSize: 13,
+            letterSpacing: '-0.2px', whiteSpace: 'nowrap',
+            cursor: 'default', userSelect: 'none'
           }}
         >
           NAVER
@@ -64,17 +80,11 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] 
         {/* Input */}
         <input
           style={{
-            flex: 1,
-            height: '100%',
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            paddingLeft: 18,
-            paddingRight: 8,
-            fontSize: 17,
-            fontWeight: 400,
-            color: 'var(--text-primary)',
-            fontFamily: 'inherit'
+            flex: 1, height: '100%',
+            background: 'transparent', border: 'none', outline: 'none',
+            paddingLeft: 18, paddingRight: 8,
+            fontSize: 17, fontWeight: 400,
+            color: 'var(--text-primary)', fontFamily: 'inherit'
           }}
           placeholder="분석할 키워드를 입력하세요"
           value={keyword}
@@ -89,19 +99,11 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] 
           type="submit"
           disabled={loading}
           style={{
-            flexShrink: 0,
-            marginRight: 10,
-            width: 44,
-            height: 44,
-            borderRadius: 999,
-            border: 'none',
+            flexShrink: 0, marginRight: 10,
+            width: 44, height: 44, borderRadius: 999, border: 'none',
             background: focused ? 'var(--accent)' : 'rgba(255,255,255,0.10)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 0.15s',
-            color: '#fff'
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.15s', color: '#fff'
           }}
           onMouseEnter={(e) => !focused && (e.currentTarget.style.background = 'rgba(255,255,255,0.16)')}
           onMouseLeave={(e) => !focused && (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
@@ -116,87 +118,95 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] 
         </p>
       )}
 
-      {/* ── Trending keywords (before first search) ── */}
-      {suggestions.length === 0 && (
-        <div style={{ marginTop: 32, textAlign: 'center', animation: 'macFadeUp 0.5s ease both' }}>
-          {/* Header row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginBottom: 16 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 6, height: 6, borderRadius: '50%',
-              background: '#FF5C38',
-              boxShadow: '0 0 7px rgba(255,92,56,0.7)',
-              flexShrink: 0
-            }} />
-            <span style={{
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase',
-              color: 'var(--text-tertiary)'
-            }}>
-              실시간 인기 검색어
-            </span>
+      {/* ── Recent search history ── */}
+      {showHistory && (
+        <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Clock style={{ width: 11, height: 11, color: 'var(--text-tertiary)' }} />
+              <span style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
+                color: 'var(--text-tertiary)'
+              }}>
+                최근 검색어
+              </span>
+            </div>
+            <button
+              onClick={clearAll}
+              style={{
+                fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                letterSpacing: '0.04em',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-tertiary)')}
+            >
+              전체 삭제
+            </button>
           </div>
 
-          {/* Keyword pills */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-            {TRENDING.map((kw, i) => (
-              <button
+          {/* Pills */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center' }}>
+            {history.map((kw) => (
+              <div
                 key={kw}
-                type="button"
-                onClick={() => submitKeyword(kw)}
-                disabled={loading}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  background: 'rgba(255,255,255,0.04)',
+                  display: 'flex', alignItems: 'center', gap: 0,
+                  background: 'rgba(255,255,255,0.05)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 999,
-                  padding: '8px 18px 8px 14px',
-                  cursor: 'pointer',
-                  transition: 'background 0.18s, border-color 0.18s, transform 0.15s',
-                  fontFamily: 'inherit',
-                  animationDelay: `${i * 0.07}s`,
-                  animation: 'macFadeUp 0.4s ease both',
+                  overflow: 'hidden',
+                  transition: 'border-color 0.15s',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
               >
-                <span style={{
-                  fontSize: 11, fontWeight: 800,
-                  color: RANK_COLORS[i],
-                  minWidth: 10, textAlign: 'center', lineHeight: 1,
-                  ...(i < 3 ? { filter: 'drop-shadow(0 0 4px currentColor)' } : {})
-                }}>
-                  {i + 1}
-                </span>
-                <span style={{
-                  fontSize: 13, fontWeight: 500,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '-0.2px'
-                }}>
+                <button
+                  type="button"
+                  onClick={() => submitKeyword(kw)}
+                  disabled={loading}
+                  style={{
+                    padding: '7px 4px 7px 14px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 13, fontWeight: 500,
+                    color: 'var(--text-secondary)',
+                    fontFamily: 'inherit', letterSpacing: '-0.2px',
+                    transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                >
                   {kw}
-                </span>
-              </button>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => removeItem(kw, e)}
+                  style={{
+                    padding: '7px 10px 7px 6px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center',
+                    color: 'var(--text-tertiary)',
+                    transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-tertiary)')}
+                >
+                  <X style={{ width: 10, height: 10 }} />
+                </button>
+              </div>
             ))}
           </div>
         </div>
       )}
 
       {/* ── Related suggestions (after search) ── */}
-      {suggestions.length > 0 && (
-        <div style={{ marginTop: 22, textAlign: 'center' }}>
+      {showSuggestions && (
+        <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           <p style={{
-            fontSize: 12, fontWeight: 500,
-            color: 'var(--text-tertiary)',
-            marginBottom: 12, letterSpacing: '0.04em'
+            fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
+            color: 'var(--text-tertiary)', margin: 0
           }}>
             관련 추천 검색어
           </p>
@@ -210,8 +220,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [] 
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.10)',
-                  borderRadius: 999,
-                  padding: '7px 16px',
+                  borderRadius: 999, padding: '7px 16px',
                   fontSize: 13, fontWeight: 500,
                   color: 'var(--text-secondary)',
                   cursor: 'pointer',
