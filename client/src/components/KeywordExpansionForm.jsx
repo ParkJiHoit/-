@@ -27,15 +27,15 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
     <div className="mac-card px-4 py-4">
       <form className="grid gap-3 xl:grid-cols-[1.1fr_1fr_1fr_auto]" onSubmit={submitExpansion}>
         <WordArea label="시드 키워드" helper={`${seedKeywords.length}/3`}
-          placeholder={"예:\n휴대폰창업\n핸드폰창업\n휴대폰대리점"}
+          placeholder={"1줄에 1개 입력"}
           value={seedText} onChange={setSeedText} disabled={loading} tall />
 
         <WordArea label="포함할 단어" helper={`${includeWords.length}/5`}
-          placeholder={"예:\n소자본\n대리점\n무인"}
+          placeholder={""}
           value={includeText} onChange={setIncludeText} disabled={loading} />
 
         <WordArea label="제외할 단어" helper={`${excludeWords.length}/5`}
-          placeholder={"예:\n중고\n수리\n케이스"}
+          placeholder={""}
           value={excludeText} onChange={setExcludeText} disabled={loading} />
 
         <div className="flex flex-col justify-end gap-2">

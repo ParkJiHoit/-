@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, Moon, Search, Sparkles, Sun } from 'lucide-react';
+import { ChevronDown, FileText, Search, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const NOTION_URL =
@@ -10,7 +10,7 @@ const SERVICES = [
   { id: 'blog',      icon: FileText, label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' }
 ];
 
-export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme, onToggleTheme }) {
+export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme }) {
   const [serviceOpen, setServiceOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
   const dropdownRef = useRef(null);
@@ -190,32 +190,6 @@ export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme, on
       >
         업데이트
       </a>
-
-      {divider}
-
-      {/* Theme toggle */}
-      <button
-        onClick={onToggleTheme}
-        title={isDark ? '라이트 모드' : '다크 모드'}
-        style={{
-          width: 32, height: 32, borderRadius: 999, border: 'none',
-          background: 'transparent', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--text-secondary)',
-          transition: 'background 0.15s, color 0.15s',
-          flexShrink: 0,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)';
-          e.currentTarget.style.color = 'var(--text-primary)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'transparent';
-          e.currentTarget.style.color = 'var(--text-secondary)';
-        }}
-      >
-        {isDark ? <Sun style={{ width: 14, height: 14 }} /> : <Moon style={{ width: 14, height: 14 }} />}
-      </button>
 
       {divider}
 

@@ -71,8 +71,68 @@ function LoadingRow({ label }) {
   );
 }
 
+/* ── Theme Toggle (fixed top-right) ── */
+function ThemeToggle({ theme, onToggle }) {
+  const isDark = theme === 'dark';
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 16,
+        right: 16,
+        zIndex: 1001,
+        padding: 3,
+        background: isDark ? 'rgba(28,28,30,0.92)' : 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(24px) saturate(1.8)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)'}`,
+        borderRadius: 999,
+        boxShadow: isDark
+          ? '0 4px 24px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05) inset'
+          : '0 4px 16px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.8) inset',
+      }}
+    >
+      <div style={{ position: 'relative', display: 'flex' }}>
+        {/* Sliding indicator */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0, left: 0,
+            width: '50%', height: '100%',
+            borderRadius: 999,
+            background: isDark ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.09)',
+            transform: isDark ? 'translateX(100%)' : 'translateX(0%)',
+            transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
+            pointerEvents: 'none',
+          }}
+        />
+        {[{ label: 'LIGHT', active: !isDark }, { label: 'DARK', active: isDark }].map(({ label, active }) => (
+          <button
+            key={label}
+            onClick={onToggle}
+            style={{
+              position: 'relative', zIndex: 1,
+              minWidth: 52, padding: '5px 14px',
+              border: 'none', background: 'transparent',
+              cursor: active ? 'default' : 'pointer',
+              borderRadius: 999,
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.08em',
+              color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
+              transition: 'color 0.22s',
+              fontFamily: 'inherit',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── Hero / compact wrapper ── */
 function HeroSection({ tab, hasResults, children }) {
+  const maxW = tab === 'expansion' ? 960 : 680;
   return (
     <div
       className="hero-transition"
@@ -87,7 +147,7 @@ function HeroSection({ tab, hasResults, children }) {
     >
       <section
         className="mx-auto flex w-full flex-col items-center px-5 lg:px-8"
-        style={{ maxWidth: 680 }}
+        style={{ maxWidth: maxW }}
       >
         {!hasResults && (
           <div className="mac-fade-in mb-10 text-center">
@@ -304,8 +364,8 @@ export default function App() {
         onSwitchTab={switchTab}
         onMockAction={handleMockAction}
         theme={theme}
-        onToggleTheme={toggleTheme}
       />
+      <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
       {/* Hero search */}
       <HeroSection tab={activeTab} hasResults={hasResults}>
