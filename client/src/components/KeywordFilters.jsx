@@ -24,7 +24,7 @@ export default function KeywordFilters({ filters, onChange, onReset }) {
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="apple-card p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-slate-500" />

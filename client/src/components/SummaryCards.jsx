@@ -11,16 +11,16 @@ const cardConfig = [
 
 export default function SummaryCards({ summary }) {
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+    <section className="stagger-children grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
       {cardConfig.map(({ key, label, icon: Icon, suffix = '' }) => (
-        <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={key}>
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p>
-            <Icon className="h-4 w-4 text-slate-400" />
+        <article className="apple-card animate-fade-in-up p-4" key={key}>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-[11px] font-bold uppercase leading-4 tracking-wider text-slate-400">{label}</p>
+            <Icon className="h-4 w-4 shrink-0 text-slate-300" />
           </div>
-          <p className="mt-3 text-2xl font-black text-slate-950">
+          <p className="mt-3 text-2xl font-black tracking-tight text-slate-950">
             {summary?.[key] ?? 0}
-            {suffix}
+            {suffix && <span className="ml-0.5 text-base">{suffix}</span>}
           </p>
         </article>
       ))}

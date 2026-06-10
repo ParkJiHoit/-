@@ -53,27 +53,27 @@ export default function BlogSummaryCards({ metrics }) {
   ];
 
   return (
-    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+    <section className="stagger-children grid gap-3 md:grid-cols-2 xl:grid-cols-6">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm" key={card.label}>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <span className="text-xs font-black uppercase tracking-wide text-slate-500">{card.label}</span>
-              <Icon className="h-4 w-4 text-slate-400" />
+          <article className="apple-card animate-fade-in-up p-4" key={card.label}>
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-[11px] font-bold uppercase leading-4 tracking-wider text-slate-400">{card.label}</span>
+              <Icon className="h-4 w-4 shrink-0 text-slate-300" />
             </div>
-            <p className="text-2xl font-black text-slate-950">{card.value}</p>
-            <p className="mt-1 text-xs font-bold text-slate-500">{card.note}</p>
+            <p className="mt-3 text-2xl font-black tracking-tight text-slate-950">{card.value}</p>
+            <p className="mt-1 text-[11px] font-semibold text-slate-400">{card.note}</p>
           </article>
         );
       })}
 
       <div
-        className={`rounded-lg border p-4 shadow-sm xl:col-span-6 ${
+        className={`animate-fade-in-up rounded-xl border p-4 xl:col-span-6 ${
           actionStyles[metrics.recommendAction] || actionStyles['검토 후보']
         }`}
       >
-        <p className="text-xs font-black uppercase tracking-wide opacity-80">추천 액션</p>
+        <p className="text-[11px] font-bold uppercase tracking-wider opacity-70">추천 액션</p>
         <p className="mt-1 text-xl font-black">{metrics.recommendAction}</p>
       </div>
     </section>

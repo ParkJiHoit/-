@@ -63,7 +63,7 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns 
   }
 
   return (
-    <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="apple-card overflow-hidden">
       <div className="scrollbar-thin max-h-[620px] overflow-auto">
         <table className="w-full border-collapse text-sm" style={{ minWidth }}>
           <thead className="sticky top-0 z-10 bg-slate-950 text-left text-xs font-bold uppercase tracking-wide text-white">

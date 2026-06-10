@@ -38,8 +38,8 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-dashboard">
-      <form className="grid gap-4 xl:grid-cols-[1.1fr_1fr_1fr_auto]" onSubmit={submitExpansion}>
+    <section className="apple-card p-4">
+      <form className="grid gap-3 xl:grid-cols-[1.1fr_1fr_1fr_auto]" onSubmit={submitExpansion}>
         <WordTextarea
           label="시드 키워드"
           helper={`${seedKeywords.length}/3개`}
@@ -68,8 +68,8 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
           disabled={loading}
         />
 
-        <div className="flex flex-col justify-end gap-3">
-          <label className="flex min-h-12 items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-black text-slate-700">
+        <div className="flex flex-col justify-end gap-2">
+          <label className="flex min-h-10 items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 text-[13px] font-semibold text-slate-700 cursor-pointer">
             <input
               className="h-4 w-4 accent-slate-950"
               type="checkbox"
@@ -80,7 +80,7 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
             고성능 확장
           </label>
           <button
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-slate-950 px-5 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 text-[13px] font-bold text-white transition hover:bg-slate-800 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-300"
             type="submit"
             disabled={loading}
           >
@@ -90,10 +90,10 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
         </div>
       </form>
 
-      {validationMessage && <p className="mt-3 text-sm font-medium text-rose-600">{validationMessage}</p>}
+      {validationMessage && <p className="mt-2.5 text-[13px] font-medium text-rose-600">{validationMessage}</p>}
 
-      <p className="mt-4 text-sm font-medium leading-6 text-slate-500">
-        시드 키워드는 최대 3개, 포함/제외 단어는 최대 5개까지 줄바꿈 또는 쉼표로 구분합니다. 고성능 확장은 후보 수보다 연관도와 테스트 가치를 우선합니다.
+      <p className="mt-3 text-[12px] font-medium leading-5 text-slate-400">
+        시드 키워드 최대 3개, 포함/제외 단어 최대 5개. 줄바꿈 또는 쉼표로 구분합니다.
       </p>
     </section>
   );
@@ -102,13 +102,13 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
 function WordTextarea({ label, helper, placeholder, value, onChange, disabled, large = false }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-center justify-between gap-2 text-xs font-black uppercase tracking-wide text-slate-500">
+      <span className="mb-1.5 flex items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
         {label}
-        <span className="font-bold text-slate-400">{helper}</span>
+        <span className="text-slate-400">{helper}</span>
       </span>
       <textarea
-        className={`w-full resize-none rounded-md border border-slate-300 bg-slate-50 px-3 py-3 font-semibold text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-200 ${
-          large ? 'h-32 text-base' : 'h-28 text-sm'
+        className={`apple-input w-full resize-none px-3 py-3 font-semibold text-slate-900 ${
+          large ? 'h-[108px] text-[15px]' : 'h-[96px] text-[13px]'
         }`}
         placeholder={placeholder}
         value={value}

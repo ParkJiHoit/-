@@ -47,7 +47,7 @@ export default function ColumnVisibilitySettings({ visibleColumns, onChange, onR
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <section className="apple-card p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2">
           <Columns3 className="h-4 w-4 text-slate-500" />

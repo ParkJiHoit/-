@@ -29,7 +29,7 @@ export default function BlogAnalysisPanel({ result }) {
   return (
     <section className="flex flex-col gap-4">
       {metrics.trendAvailable && trendData.length >= 2 && (
-        <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <article className="apple-card overflow-hidden">
           <div className="border-b border-slate-200 px-4 py-3">
             <h2 className="text-lg font-black text-slate-950">검색 트렌드</h2>
             <p className="text-sm font-medium text-slate-500">
@@ -42,7 +42,7 @@ export default function BlogAnalysisPanel({ result }) {
         </article>
       )}
       <section className="grid gap-4 xl:grid-cols-[420px_1fr]">
-      <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <article className="apple-card overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-3">
           <h2 className="text-lg font-black text-slate-950">블로그 분석 지표</h2>
           <p className="text-sm font-medium text-slate-500">{metrics.keyword}</p>
@@ -99,7 +99,7 @@ export default function BlogAnalysisPanel({ result }) {
         </div>
       </article>
 
-      <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <article className="apple-card overflow-hidden">
         <div className="flex flex-col gap-1 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-lg font-black text-slate-950">상위 블로그 결과</h2>
