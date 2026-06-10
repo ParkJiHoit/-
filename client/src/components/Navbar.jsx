@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, Search, Sparkles } from 'lucide-react';
+import { ChevronDown, FileText, Search, Sparkles, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const NOTION_URL =
@@ -96,17 +96,27 @@ export default function Navbar({ activeTab, onSwitchTab, onMockAction, theme }) 
           border: 'none', background: 'transparent', cursor: 'pointer',
         }}
       >
+        {/* Ranklet icon: rising bars */}
         <div
           style={{
-            width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-            background: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 24, height: 24, borderRadius: 7, flexShrink: 0,
+            background: 'linear-gradient(135deg, #0A84FF 0%, #34C1FF 100%)',
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            padding: '4px 5px 3px',
+            gap: 2,
+            boxShadow: '0 2px 8px rgba(10,132,255,0.4)',
           }}
         >
-          <span style={{ fontSize: 10, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' }}>K</span>
+          {[5, 9, 7].map((h, i) => (
+            <div key={i} style={{ width: 3, height: h, borderRadius: 1.5, background: '#fff', opacity: i === 1 ? 1 : 0.75 }} />
+          ))}
         </div>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-          키워드랩
+        <span style={{
+          fontSize: 13, fontWeight: 800, letterSpacing: '0.04em',
+          color: 'var(--text-primary)',
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+          RANKLET
         </span>
       </button>
 
