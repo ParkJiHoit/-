@@ -295,6 +295,82 @@ function VBarChart({ items, loading, height = 110, count = 7, unit = '' }) {
   );
 }
 
+/* ─── News / Blog section ─── */
+const SOURCE_COLORS = ['#0A84FF', '#30D158', '#FF9F0A', '#BF5AF2', '#FF375F', '#32ADE6'];
+function sourceColor(source) {
+  let h = 0;
+  for (let i = 0; i < source.length; i++) h = (h * 31 + source.charCodeAt(i)) & 0xffff;
+  return SOURCE_COLORS[h % SOURCE_COLORS.length];
+}
+
+function NewsSection({ items, loading }) {
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {[90, 75, 85, 70].map((w, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Skeleton width={28} height={28} radius={8} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+              <Skeleton height={10} width={`${w}%`} radius={4} />
+              <Skeleton height={8} width="35%" radius={4} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!items?.length) {
+    return (
+      <div style={{ padding: '10px 0', fontSize: 12, color: 'var(--text-tertiary)' }}>
+        관련 기사를 불러올 수 없습니다
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {items.map((item, i) => {
+        const color = sourceColor(item.source || String(i));
+        const initial = (item.source || '?')[0].toUpperCase();
+        return (
+          <a
+            key={i}
+            href={item.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 8, transition: 'background 0.12s' }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-overlay)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <div style={{
+              width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+              background: color + '22', border: `1px solid ${color}44`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 800, color,
+            }}>
+              {initial}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                margin: 0, fontSize: 12, fontWeight: 500,
+                color: 'var(--text-primary)',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {item.title}
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: 10.5, color: 'var(--text-tertiary)' }}>
+                {item.time}{item.time && item.source ? ' · ' : ''}{item.source}
+                {item.type === 'blog' && <span style={{ marginLeft: 4, fontSize: 9.5, color: '#30D158', fontWeight: 600 }}>블로그</span>}
+              </p>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ─── Horizontal gender bars ─── */
 function GenderBars({ gender, loading }) {
   if (loading) {
@@ -415,54 +491,33 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       {/* Error banner */}
       {insightsError && !insightsLoading && <InsightsErrorNotice message={insightsError} />}
 
-      {/* Charts row */}
-      <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-
-        {/* Left: trend — vertically centered */}
-        <div style={{
-          flex: '2 1 320px', padding: '20px 22px',
-          borderRight: '1px solid var(--border)',
-          minWidth: 0,
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
-        }}>
-          <Label>검색 트렌드 (최근 30일)</Label>
+      {/* Trend chart — full width */}
+      <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)' }}>
+        <Label>일별 트렌드 추이</Label>
+        <div style={{ overflow: 'hidden' }}>
           <TrendChart data={insights?.trend} loading={insightsLoading} keyword={baseKeyword} />
         </div>
+      </div>
 
-        {/* Right: demographics */}
-        <div style={{
-          flex: '1 1 180px', maxWidth: 210, padding: '20px 14px',
-          display: 'flex', flexDirection: 'column', gap: 22,
-          minWidth: 0,
-        }}>
+      {/* News / Blog — between trend and demographics */}
+      <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--border)' }}>
+        <Label>관련 기사 · 블로그</Label>
+        <NewsSection items={insights?.news} loading={insightsLoading} />
+      </div>
 
-          <div>
-            <Label>요일별 검색 분포</Label>
-            <VBarChart
-              items={insights?.dayOfWeek}
-              loading={insightsLoading}
-              height={110}
-              count={7}
-              unit=""
-            />
-          </div>
-
-          <div>
-            <Label>성별 분포</Label>
-            <GenderBars gender={insights?.gender} loading={insightsLoading} />
-          </div>
-
-          <div>
-            <Label>연령별 분포</Label>
-            <VBarChart
-              items={ageItems}
-              loading={insightsLoading}
-              height={110}
-              count={5}
-              unit="%"
-            />
-          </div>
-
+      {/* Demographics — horizontal row */}
+      <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 160px', padding: '16px 18px', borderRight: '1px solid var(--border)', minWidth: 0 }}>
+          <Label>요일별 검색 분포</Label>
+          <VBarChart items={insights?.dayOfWeek} loading={insightsLoading} height={100} count={7} unit="" />
+        </div>
+        <div style={{ flex: '0 0 160px', padding: '16px 18px', borderRight: '1px solid var(--border)' }}>
+          <Label>성별 분포</Label>
+          <GenderBars gender={insights?.gender} loading={insightsLoading} />
+        </div>
+        <div style={{ flex: '1 1 160px', padding: '16px 18px', minWidth: 0 }}>
+          <Label>연령별 분포</Label>
+          <VBarChart items={ageItems} loading={insightsLoading} height={100} count={5} unit="%" />
         </div>
       </div>
     </section>
