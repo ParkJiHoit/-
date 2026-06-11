@@ -45,6 +45,48 @@ function catmullRom(pts, tension = 0.4) {
   return d;
 }
 
+/* ─── Mini sparkline for KPI cards ─── */
+function MiniSparkline({ data, positive }) {
+  if (!data?.length) return <div style={{ width: 72, height: 38 }} />;
+  const W = 72, H = 38;
+  const ratios = data.map((d) => d.ratio);
+  const max = Math.max(...ratios) || 1;
+  const min = Math.min(...ratios);
+  const range = max - min || 1;
+  const pts = data.map((d, i) => [
+    (i / (data.length - 1)) * W,
+    H - 4 - ((d.ratio - min) / range) * (H - 8),
+  ]);
+  const path = catmullRom(pts, 0.35);
+  const color = positive === true ? '#30D158' : positive === false ? '#FF375F' : 'var(--accent)';
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: W, height: H, flexShrink: 0, opacity: 0.85 }}>
+      <path d={path} fill="none" stroke={color} strokeWidth="1.5"
+        strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* ─── Trend stats helper ─── */
+function computeTrendStats(trend) {
+  if (!trend?.length) return {};
+  const n = trend.length;
+  const half = Math.floor(n / 2);
+  const prevHalf = trend.slice(0, half);
+  const currHalf = trend.slice(half);
+  const prevAvg = prevHalf.reduce((s, d) => s + d.ratio, 0) / (prevHalf.length || 1);
+  const currAvg = currHalf.reduce((s, d) => s + d.ratio, 0) / (currHalf.length || 1);
+  const changePercent = prevAvg > 0 ? ((currAvg - prevAvg) / prevAvg) * 100 : null;
+
+  const thisWeek = trend.slice(-7);
+  const prevWeek = trend.slice(-14, -7);
+  const weekSum  = thisWeek.reduce((s, d) => s + d.ratio, 0);
+  const prevWeekSum = prevWeek.reduce((s, d) => s + d.ratio, 0);
+  const weekChange = prevWeekSum > 0 ? ((weekSum - prevWeekSum) / prevWeekSum) * 100 : null;
+
+  return { changePercent, weekSum, weekChange };
+}
+
 /* ─── Trend line chart ─── */
 function TrendChart({ data, loading, keyword = '' }) {
   const [hoveredIdx, setHoveredIdx] = useState(null);
@@ -455,6 +497,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
     { label: '효율 점수',  value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—' },
   ];
 
+  const { changePercent, weekSum, weekChange } = computeTrendStats(insights?.trend);
+
   const genderItems = insights?.gender != null
     ? [
         { label: '남성', value: insights.gender.male,   color: 'var(--accent)' },
@@ -473,17 +517,33 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         }
       `}</style>
 
-      {/* Row 1: KPI — 4 independent floating cards */}
+      {/* Row 1: KPI — 4 independent floating cards with sparkline */}
       <div style={{ display: 'flex', gap: 10 }}>
-        {kpis.map(({ label, value }) => (
-          <div key={label} className="mac-card" style={{
-            flex: 1, padding: '18px 14px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
-          }}>
-            <p style={{ fontSize: 10.5, color: 'var(--text-secondary)', margin: 0, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{label}</p>
-            <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: 0 }}>{value}</p>
-          </div>
-        ))}
+        {kpis.map(({ label, value }) => {
+          const isUp = changePercent != null ? changePercent >= 0 : null;
+          return (
+            <div key={label} className="mac-card" style={{ flex: 1, padding: '16px 18px', minWidth: 0 }}>
+              <p style={{
+                fontSize: 10.5, color: 'var(--text-secondary)', margin: '0 0 10px',
+                fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+              }}>{label}</p>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '0 0 5px' }}>{value}</p>
+                  {isUp !== null && (
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
+                      {isUp ? '▲' : '▼'} {Math.abs(changePercent).toFixed(1)}% 전월 대비
+                    </p>
+                  )}
+                  {isUp === null && insightsLoading && (
+                    <Skeleton height={10} width="70%" radius={4} />
+                  )}
+                </div>
+                <MiniSparkline data={insights?.trend} positive={isUp} />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Error banner */}
@@ -497,7 +557,30 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
           flex: '2 1 300px', padding: '24px 28px',
           minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
-          <Label>일별 트렌드 추이</Label>
+          {/* Header row: label + weekly stats */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+              일별 트렌드 추이
+            </p>
+            {weekSum != null && (
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text-primary)' }}>
+                  주간 지수 {weekSum.toFixed(0)}
+                </p>
+                {weekChange != null && (
+                  <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 600, color: weekChange >= 0 ? '#30D158' : '#FF375F' }}>
+                    {weekChange >= 0 ? '▲' : '▼'} {Math.abs(weekChange).toFixed(1)}% 전주 대비
+                  </p>
+                )}
+              </div>
+            )}
+            {weekSum == null && insightsLoading && (
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <Skeleton height={14} width={100} radius={4} />
+                <Skeleton height={10} width={70} radius={4} />
+              </div>
+            )}
+          </div>
           <div style={{ overflow: 'hidden' }}>
             <TrendChart data={insights?.trend} loading={insightsLoading} keyword={baseKeyword} />
           </div>
