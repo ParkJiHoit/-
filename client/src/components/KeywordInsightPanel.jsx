@@ -106,12 +106,14 @@ function computeTrendStats(trend) {
     changePercent = prevAvg > 0 ? ((currAvg - prevAvg) / prevAvg) * 100 : null;
   }
 
-  // Weekly: last 7 days vs previous 7 days
-  const thisWeek  = trend.slice(-7);
-  const prevWeek  = trend.slice(-14, -7);
-  const weekSum   = thisWeek.reduce((s, d) => s + d.ratio, 0);
-  const prevWeekSum = prevWeek.reduce((s, d) => s + d.ratio, 0);
-  const weekChange = prevWeekSum > 0 ? ((weekSum - prevWeekSum) / prevWeekSum) * 100 : null;
+  // Weekly: prevWeek vs prevPrevWeek — both complete periods, avoids partial-week distortion
+  const thisWeek     = trend.slice(-7);
+  const prevWeek     = trend.slice(-14, -7);
+  const prevPrevWeek = trend.slice(-21, -14);
+  const weekSum      = thisWeek.reduce((s, d) => s + d.ratio, 0);
+  const prevWeekSum  = prevWeek.reduce((s, d) => s + d.ratio, 0);
+  const prevPrevWeekSum = prevPrevWeek.reduce((s, d) => s + d.ratio, 0);
+  const weekChange = prevPrevWeekSum > 0 ? ((prevWeekSum - prevPrevWeekSum) / prevPrevWeekSum) * 100 : null;
 
   return { changePercent, weekSum, prevWeekSum, weekChange };
 }
@@ -552,52 +554,51 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         label: '전주 검색량 합계',
         value: Math.round(prevWeekSum).toString(),
         change: weekChange,
-        compareLabel: '전주 대비',
       };
     }
     if (trendPeriod === 'monthly') {
-      // Sum daily ratios for the previous calendar month from 90-day trend data
+      // Compare prevMonth vs prevPrevMonth — both complete, avoids partial-month distortion
       const d = insights?.trend;
       if (!d?.length) return null;
       const now = new Date();
-      const prevM = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-      const prevMYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+      const prevM      = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+      const prevMYear  = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+      const prevPrevM      = prevM === 0 ? 11 : prevM - 1;
+      const prevPrevMYear  = prevM === 0 ? prevMYear - 1 : prevMYear;
       const prevData = d.filter((pt) => {
         const dt = new Date(pt.period);
         return dt.getFullYear() === prevMYear && dt.getMonth() === prevM;
       });
-      const currData = d.filter((pt) => {
+      const prevPrevData = d.filter((pt) => {
         const dt = new Date(pt.period);
-        return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth();
+        return dt.getFullYear() === prevPrevMYear && dt.getMonth() === prevPrevM;
       });
       if (!prevData.length) return null;
-      const prevSum = prevData.reduce((s, pt) => s + pt.ratio, 0);
-      const currSum = currData.reduce((s, pt) => s + pt.ratio, 0);
-      const change = prevSum > 0 ? ((currSum - prevSum) / prevSum) * 100 : null;
+      const prevSum     = prevData.reduce((s, pt) => s + pt.ratio, 0);
+      const prevPrevSum = prevPrevData.reduce((s, pt) => s + pt.ratio, 0);
+      const change = prevPrevSum > 0 ? ((prevSum - prevPrevSum) / prevPrevSum) * 100 : null;
       return {
         label: '전월 검색량 합계',
         value: Math.round(prevSum).toString(),
         change,
-        compareLabel: '전월 대비',
       };
     }
     if (trendPeriod === 'yearly') {
-      // Sum monthly ratios for the previous calendar year from yearlyData
+      // Compare prevYear vs prevPrevYear — both complete, avoids partial-year distortion
       if (!yearlyData.length) return null;
       const now = new Date();
-      const prevYear = (now.getFullYear() - 1).toString();
-      const currYear = now.getFullYear().toString();
-      const prevEntry = yearlyData.find((d) => d.period === prevYear);
-      const currEntry = yearlyData.find((d) => d.period === currYear);
+      const prevYear     = (now.getFullYear() - 1).toString();
+      const prevPrevYear = (now.getFullYear() - 2).toString();
+      const prevEntry     = yearlyData.find((d) => d.period === prevYear);
+      const prevPrevEntry = yearlyData.find((d) => d.period === prevPrevYear);
       if (!prevEntry) return null;
-      const prevSum = Math.round(prevEntry.sum ?? 0);
-      const currSum = Math.round(currEntry?.sum ?? 0);
-      const change = prevSum > 0 ? ((currSum - prevSum) / prevSum) * 100 : null;
+      const prevSum     = Math.round(prevEntry.sum ?? 0);
+      const prevPrevSum = Math.round(prevPrevEntry?.sum ?? 0);
+      const change = prevPrevSum > 0 ? ((prevSum - prevPrevSum) / prevPrevSum) * 100 : null;
       return {
         label: '전년 검색량 합계',
         value: prevSum.toString(),
         change,
-        compareLabel: '전년 대비',
       };
     }
     return null;
@@ -696,7 +697,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
                 </p>
                 {periodStats.change != null && (
                   <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 600, color: periodStats.change >= 0 ? '#30D158' : '#FF375F' }}>
-                    {periodStats.change >= 0 ? '▲' : '▼'} {Math.abs(periodStats.change).toFixed(1)}% {periodStats.compareLabel}
+                    {periodStats.change >= 0 ? '▲' : '▼'} {Math.abs(periodStats.change).toFixed(1)}%
                   </p>
                 )}
               </div>
