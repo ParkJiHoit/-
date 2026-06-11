@@ -45,10 +45,36 @@ function catmullRom(pts, tension = 0.4) {
   return d;
 }
 
+/* ─── Weekly aggregate helper (90 daily points → ~13 weekly) ─── */
+function weeklyAggregate(trend) {
+  if (!trend?.length) return [];
+  const result = [];
+  for (let i = 0; i < trend.length; i += 7) {
+    const week = trend.slice(i, Math.min(i + 7, trend.length));
+    const avg = week.reduce((s, d) => s + d.ratio, 0) / week.length;
+    result.push({ period: week[0].period, ratio: avg });
+  }
+  return result;
+}
+
+/* ─── Yearly aggregate helper (monthly data → per-year average) ─── */
+function aggregateByYear(monthlyData) {
+  if (!monthlyData?.length) return [];
+  const map = new Map();
+  monthlyData.forEach((d) => {
+    const yr = d.period.slice(0, 4);
+    if (!map.has(yr)) map.set(yr, { sum: 0, n: 0 });
+    const e = map.get(yr); e.sum += d.ratio; e.n++;
+  });
+  return Array.from(map.entries())
+    .map(([period, { sum, n }]) => ({ period, ratio: sum / n }))
+    .sort((a, b) => a.period.localeCompare(b.period));
+}
+
 /* ─── Mini sparkline for KPI cards ─── */
-function MiniSparkline({ data, positive }) {
-  if (!data?.length) return <div style={{ width: 72, height: 38 }} />;
-  const W = 72, H = 38;
+function MiniSparkline({ data }) {
+  if (!data?.length) return <div style={{ width: 80, height: 52 }} />;
+  const W = 80, H = 52;
   const ratios = data.map((d) => d.ratio);
   const max = Math.max(...ratios) || 1;
   const min = Math.min(...ratios);
@@ -60,7 +86,7 @@ function MiniSparkline({ data, positive }) {
   const path = catmullRom(pts, 0.2);
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: W, height: H, flexShrink: 0 }}>
-      <path d={path} fill="none" stroke="rgba(120,120,128,0.55)" strokeWidth="1.5"
+      <path d={path} fill="none" stroke="rgba(120,120,128,0.5)" strokeWidth="1.5"
         strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
@@ -493,6 +519,8 @@ function InsightsErrorNotice({ message }) {
 
 /* ─── Main Panel ─── */
 export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError }) {
+  const [trendPeriod, setTrendPeriod] = useState('daily');
+
   const kpis = [
     { label: '총 검색량',   value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—' },
     { label: '모바일 비중', value: keywordRow ? formatPercent(keywordRow.mobileRatio) : '—' },
@@ -501,6 +529,18 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
   ];
 
   const { changePercent, weekSum, weekChange } = computeTrendStats(insights?.trend);
+
+  // Weekly-aggregated sparkline data (90 daily → ~13 weekly points, much smoother)
+  const sparklineData = weeklyAggregate(insights?.trend);
+
+  // Period-based chart data
+  const yearlyData = aggregateByYear(insights?.trendYearly);
+  const PERIOD_OPTIONS = [
+    { key: 'daily',   label: '일간', title: '일별 트렌드 추이',  data: insights?.trend },
+    { key: 'monthly', label: '월간', title: '월별 트렌드 추이',  data: insights?.trendMonthly },
+    { key: 'yearly',  label: '연간', title: '연간 트렌드 추이',  data: yearlyData },
+  ];
+  const activePeriod = PERIOD_OPTIONS.find((p) => p.key === trendPeriod) || PERIOD_OPTIONS[0];
 
   const genderItems = insights?.gender != null
     ? [
@@ -525,24 +565,26 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         {kpis.map(({ label, value }) => {
           const isUp = changePercent != null ? changePercent >= 0 : null;
           return (
-            <div key={label} className="mac-card" style={{ flex: 1, padding: '16px 18px', minWidth: 0 }}>
+            <div key={label} className="mac-card" style={{
+              flex: 1, padding: '16px 18px', minWidth: 0,
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            }}>
               <p style={{
-                fontSize: 10.5, color: 'var(--text-secondary)', margin: '0 0 10px',
+                fontSize: 10.5, color: 'var(--text-secondary)', margin: '0 0 12px',
                 fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
               }}>{label}</p>
-              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '0 0 5px' }}>{value}</p>
-                  {isUp !== null && (
+                  <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '0 0 6px' }}>{value}</p>
+                  {isUp !== null ? (
                     <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
                       {isUp ? '▲' : '▼'} {Math.abs(changePercent).toFixed(1)}% 전월 대비
                     </p>
-                  )}
-                  {isUp === null && insightsLoading && (
-                    <Skeleton height={10} width="70%" radius={4} />
-                  )}
+                  ) : insightsLoading ? (
+                    <Skeleton height={10} width="65%" radius={4} />
+                  ) : null}
                 </div>
-                <MiniSparkline data={insights?.trend} positive={isUp} />
+                <MiniSparkline data={sparklineData} />
               </div>
             </div>
           );
@@ -560,14 +602,35 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
           flex: '2 1 300px', padding: '24px 28px',
           minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
-          {/* Header row: label + weekly stats */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-            <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-              일별 트렌드 추이
-            </p>
-            {weekSum != null && (
+          {/* Header: title + period buttons + weekly stats */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+                {activePeriod.title}
+              </p>
+              {/* Period toggle buttons */}
+              <div style={{ display: 'flex', gap: 3, background: 'var(--bg-overlay)', borderRadius: 8, padding: 3, border: '1px solid var(--border)' }}>
+                {PERIOD_OPTIONS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTrendPeriod(key)}
+                    style={{
+                      padding: '3px 10px', fontSize: 10.5, fontWeight: 600, borderRadius: 5,
+                      border: 'none', cursor: 'pointer',
+                      background: trendPeriod === key ? 'var(--accent)' : 'transparent',
+                      color: trendPeriod === key ? '#fff' : 'var(--text-tertiary)',
+                      transition: 'background 0.15s, color 0.15s',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Weekly stats — only shown in daily mode */}
+            {trendPeriod === 'daily' && weekSum != null && (
               <div style={{ textAlign: 'right' }}>
-                <p style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text-primary)' }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text-primary)' }}>
                   주간 검색량 합계 {weekSum.toFixed(0)}
                 </p>
                 {weekChange != null && (
@@ -577,7 +640,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
                 )}
               </div>
             )}
-            {weekSum == null && insightsLoading && (
+            {trendPeriod === 'daily' && weekSum == null && insightsLoading && (
               <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <Skeleton height={14} width={100} radius={4} />
                 <Skeleton height={10} width={70} radius={4} />
@@ -585,7 +648,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             )}
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <TrendChart data={insights?.trend} loading={insightsLoading} keyword={baseKeyword} />
+            <TrendChart data={activePeriod.data} loading={insightsLoading} keyword={baseKeyword} />
           </div>
         </div>
 

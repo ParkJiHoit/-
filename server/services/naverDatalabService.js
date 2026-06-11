@@ -137,6 +137,12 @@ export async function analyzeKeywordInsights(keyword) {
   const keywordGroups = [{ groupName: 'kw', keywords: [keyword] }];
   const base = { startDate, endDate, keywordGroups, timeUnit: 'date', device: '' };
 
+  // Monthly (2 years) and yearly base (5 years, monthly granularity → aggregated client-side)
+  const { startDate: startM, endDate: endM } = getDateRange(730);
+  const { startDate: startY, endDate: endY } = getDateRange(1826);
+  const baseMonthly = { startDate: startM, endDate: endM, keywordGroups, timeUnit: 'month', device: '' };
+  const baseYearly  = { startDate: startY, endDate: endY, keywordGroups, timeUnit: 'month', device: '' };
+
   const AGE_GROUPS = [
     { label: '10대', ages: ['2'] },
     { label: '20대', ages: ['3', '4'] },
@@ -152,12 +158,22 @@ export async function analyzeKeywordInsights(keyword) {
     datalabPost({ ...base, gender: 'f' }),
     ...AGE_GROUPS.map((g) => datalabPost({ ...base, ages: g.ages })),
     fetchNaverNews(keyword),
+    datalabPost(baseMonthly),
+    datalabPost(baseYearly),
   ]);
 
   const [trendSettled, maleSettled, femaleSettled, ...rest] = settled;
-  const ageSettled = rest.slice(0, AGE_GROUPS.length);
-  const newsSettled = rest[AGE_GROUPS.length];
+  const ageSettled         = rest.slice(0, AGE_GROUPS.length);
+  const newsSettled        = rest[AGE_GROUPS.length];
+  const monthlyTrendSettled = rest[AGE_GROUPS.length + 1];
+  const yearlyTrendSettled  = rest[AGE_GROUPS.length + 2];
+
   const news = newsSettled?.status === 'fulfilled' ? newsSettled.value : [];
+  const toPoints = (s) => s?.status === 'fulfilled'
+    ? (s.value?.results?.[0]?.data || []).map((d) => ({ period: d.period, ratio: d.ratio }))
+    : [];
+  const trendMonthly = toPoints(monthlyTrendSettled);
+  const trendYearly  = toPoints(yearlyTrendSettled);
 
   // Trend (daily)
   const rawTrend = trendSettled.status === 'fulfilled'
@@ -216,7 +232,7 @@ export async function analyzeKeywordInsights(keyword) {
     throw e;
   }
 
-  const data = { keyword, trend, dayOfWeek, gender, age, news };
+  const data = { keyword, trend, dayOfWeek, gender, age, news, trendMonthly, trendYearly };
   insightCache.set(cacheKey, { createdAt: Date.now(), data });
   return data;
 }
