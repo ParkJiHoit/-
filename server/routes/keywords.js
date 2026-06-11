@@ -18,8 +18,10 @@ router.post('/analyze', async (req, res, next) => {
     }
 
     const result = await analyzeKeyword(keyword);
+    console.log(`[analyze] ✓ "${keyword}" → ${result.keywords?.length} keywords`);
     res.json(result);
   } catch (error) {
+    console.error(`[analyze] ✗ "${req.body?.keyword}" → ${error.status || 500}: ${error.message}`);
     next(error);
   }
 });

@@ -13,6 +13,7 @@ import {
 
 const NAVER_API_BASE_URL = 'https://api.searchad.naver.com';
 const KEYWORD_TOOL_URI = '/keywordstool';
+const AUTOCOMPLETE_URL = 'https://ac.search.naver.com/nx/ac';
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const keywordToolCache = new Map();
 
@@ -89,12 +90,14 @@ async function fetchNaverKeywordTool(baseKeyword) {
   try {
     response = await axios.get(`${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`, buildNaverRequestConfig(hintKeyword));
   } catch (error) {
+    console.error(`[kwTool] "${hintKeyword}" → ${error.response?.status || 'ERR'}: ${error.message}`);
     if (error.response?.status !== 429) throw error;
     await sleep(800);
     response = await axios.get(`${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`, buildNaverRequestConfig(hintKeyword));
   }
 
   const rows = response.data?.keywordList || [];
+  console.log(`[kwTool] "${hintKeyword}" → ${rows.length} rows`);
   keywordToolCache.set(cacheKey, {
     createdAt: Date.now(),
     rows
@@ -247,34 +250,75 @@ function sortKeywordRows(baseKeyword, rows, sortMode = 'analysis') {
   });
 }
 
+// Universal Korean search-intent suffixes — morphological intent markers common
+// to ALL Korean keyword domains. Applied as fallback when autocomplete is unavailable.
+const INTENT_SUFFIXES = ['방법', '후기', '비용', '추천', '수익', '가격', '단점', '뜻'];
+
 /**
- * Derives additional hint keywords for broader API coverage.
- * Uses proportional character-prefix splits — no hardcoded vocabulary.
+ * Derives hint keywords for broad API coverage.
  *
- * Korean compound keywords form as [entity] + [descriptor]:
- *   "옆커폰창업" → prefix at 60% = "옆커폰" → reveals the entire keyword family
- *   "소자본창업1000만원" → prefix at 60% = "소자본창업" → meaningful unit
+ * Strategy:
+ *  1. Proportional prefix splits — uncovers the broader keyword family
+ *  2. Naver autocomplete (primary) — dynamically discovers intent-suffix variants
+ *  3. Universal intent-suffix fallback — when autocomplete is unavailable (server-side
+ *     bot detection), attaches common Korean intent markers to the head morpheme
  *
- * Searching only at these breakpoints keeps API calls to ≤3 while covering
- * the head morpheme that indexes the broader family.
+ * Total keyword-tool calls are capped at MAX_HINTS (8).
  */
-function deriveAnalysisHints(keyword) {
+async function deriveAnalysisHints(keyword) {
   const clean = sanitizeNaverHintKeyword(keyword);
   if (!clean) return [];
 
-  const hints = new Set([clean]);
+  const hints = [clean];
+  const seen = new Set([clean]);
   const len = clean.length;
+  const prefixes = [];
 
   if (len >= 4) {
     for (const ratio of [0.6, 0.45]) {
       const prefixLen = Math.round(len * ratio);
       if (prefixLen >= 2 && prefixLen < len) {
-        hints.add(clean.slice(0, prefixLen));
+        const prefix = clean.slice(0, prefixLen);
+        if (!seen.has(prefix)) {
+          hints.push(prefix);
+          seen.add(prefix);
+          prefixes.push(prefix);
+        }
       }
     }
   }
 
-  return [...hints];
+  // Cap at 6: base(1) + prefixes(up to 2) + intent hints(up to 3)
+  // Keeps API call count manageable without hitting Naver rate limits
+  const MAX_HINTS = 6;
+
+  // Primary: autocomplete (parallel for full keyword + first prefix)
+  const acTargets = [keyword, ...(prefixes.length ? [prefixes[0]] : [])];
+  const acResults = await Promise.allSettled(acTargets.map(fetchNaverAutoComplete));
+  const acSuggestions = acResults.flatMap((r) => r.status === 'fulfilled' ? r.value : []);
+
+  if (acSuggestions.length > 0) {
+    for (const suggestion of acSuggestions) {
+      if (hints.length >= MAX_HINTS) break;
+      const sanitized = sanitizeNaverHintKeyword(suggestion);
+      if (sanitized && !seen.has(sanitized)) {
+        seen.add(sanitized);
+        hints.push(suggestion);
+      }
+    }
+  } else {
+    // Fallback: attach universal intent suffixes to the full keyword (max 3 extra calls)
+    for (const suffix of INTENT_SUFFIXES.slice(0, 3)) {
+      if (hints.length >= MAX_HINTS) break;
+      const combined = clean + suffix;
+      if (!seen.has(combined)) {
+        seen.add(combined);
+        hints.push(combined);
+      }
+    }
+  }
+
+  return hints;
 }
 
 function containsAny(keyword, words) {
@@ -301,16 +345,36 @@ function normalizeWordList(words) {
   return [...new Set((words || []).map((word) => String(word || '').trim()).filter(Boolean))].slice(0, 5);
 }
 
+async function fetchNaverAutoComplete(keyword) {
+  try {
+    const { data } = await axios.get(AUTOCOMPLETE_URL, {
+      params: {
+        q: keyword, con: 1, frm: 'nv', ans: 2,
+        r_format: 'json', r_enc: 'UTF-8', r_unicode: 0,
+        t_koreng: 1, run: 2, rev: 4, q_enc: 'UTF-8',
+      },
+      timeout: 5000,
+    });
+    return (data?.answer || []).map(([kw]) => String(kw || '').trim()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 export async function analyzeKeyword(baseKeyword) {
   try {
-    const hints = deriveAnalysisHints(baseKeyword);
+    const hints = await deriveAnalysisHints(baseKeyword);
+    console.log(`[analyze] "${baseKeyword}" → hints(${hints.length}):`, hints);
 
-    const responses = await Promise.all(
+    const settled = await Promise.allSettled(
       hints.map(async (hint) => ({
         hint,
         rows: await fetchNaverKeywordTool(hint)
       }))
     );
+    const responses = settled
+      .filter((r) => r.status === 'fulfilled')
+      .map((r) => r.value);
 
     const rawKeywords = responses.flatMap(({ rows }) => rows);
     const normalizedRows = dedupeKeywords(rawKeywords.map((row) => normalizeKeywordRow(row, baseKeyword)));
@@ -350,9 +414,25 @@ export async function expandKeyword({
       seedKeyword,
       ...normalizedIncludeWords.map((word) => `${seedKeyword}${word}`)
     ]);
-    const maxExpansionQueries = highQuality ? 4 : 6;
+
+    // Autocomplete for each seed — discovers intent-suffix variants
+    const acSettled = await Promise.allSettled(normalizedSeedKeywords.map(fetchNaverAutoComplete));
+    const acSuggestions = acSettled.flatMap((r) => r.status === 'fulfilled' ? r.value : []);
+
+    // If autocomplete is blocked, fall back to intent-suffix combinations on each seed
+    const intentHints = acSuggestions.length === 0
+      ? normalizedSeedKeywords.flatMap((seed) => {
+          const clean = sanitizeNaverHintKeyword(seed);
+          return INTENT_SUFFIXES.slice(0, 4).map((suffix) => clean + suffix);
+        })
+      : acSuggestions;
+
+    const maxExpansionQueries = highQuality ? 6 : 8;
     const uniqueExpansionQueries = [
-      ...new Set(expansionQueries.map((seed) => sanitizeNaverHintKeyword(seed)).filter(Boolean))
+      ...new Set([
+        ...expansionQueries.map((seed) => sanitizeNaverHintKeyword(seed)).filter(Boolean),
+        ...intentHints.map((kw) => sanitizeNaverHintKeyword(kw)).filter(Boolean),
+      ])
     ].slice(0, maxExpansionQueries);
 
     const responses = await Promise.all(
