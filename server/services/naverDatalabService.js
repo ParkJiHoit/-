@@ -95,7 +95,17 @@ async function fetchNaverNews(keyword) {
     ]);
     if (newsRes.status === 'rejected') console.error('[News] news API error:', newsRes.reason?.response?.status, newsRes.reason?.response?.data ?? newsRes.reason?.message);
     if (blogRes.status === 'rejected') console.error('[News] blog API error:', blogRes.reason?.response?.status, blogRes.reason?.response?.data ?? blogRes.reason?.message);
-    const stripHtml = (s) => String(s || '').replace(/<[^>]+>/g, '').trim();
+    const stripHtml = (s) => String(s || '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&quot;/g, '"')
+      .replace(/&#34;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&apos;/g, "'")
+      .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      .trim();
     const newsItems = newsRes.status === 'fulfilled'
       ? (newsRes.value.data.items || []).map((it) => ({
           title: stripHtml(it.title),

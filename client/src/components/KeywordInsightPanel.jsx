@@ -521,11 +521,12 @@ function InsightsErrorNotice({ message }) {
 export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError }) {
   const [trendPeriod, setTrendPeriod] = useState('daily');
 
+  // changePercent reflects MoM search trend index — only meaningful for "총 검색량"
   const kpis = [
-    { label: '총 검색량',   value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—' },
-    { label: '모바일 비중', value: keywordRow ? formatPercent(keywordRow.mobileRatio) : '—' },
-    { label: '평균 CTR',   value: keywordRow ? formatPercent(keywordRow.averageCtr) : '—' },
-    { label: '효율 점수',  value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—' },
+    { label: '총 검색량',   value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—', showChange: true },
+    { label: '모바일 비중', value: keywordRow ? formatPercent(keywordRow.mobileRatio) : '—',  showChange: false },
+    { label: '평균 CTR',   value: keywordRow ? formatPercent(keywordRow.averageCtr) : '—',   showChange: false },
+    { label: '효율 점수',  value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—', showChange: false },
   ];
 
   const { changePercent, weekSum, prevWeekSum, weekChange } = computeTrendStats(insights?.trend);
@@ -622,8 +623,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
       {/* Row 1: KPI — 4 independent floating cards with sparkline */}
       <div style={{ display: 'flex', gap: 10 }}>
-        {kpis.map(({ label, value }) => {
-          const isUp = changePercent != null ? changePercent >= 0 : null;
+        {kpis.map(({ label, value, showChange }) => {
+          const isUp = showChange && changePercent != null ? changePercent >= 0 : null;
           return (
             <div key={label} className="mac-card" style={{
               flex: 1, padding: '16px 18px', minWidth: 0,
@@ -636,11 +637,11 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '0 0 6px' }}>{value}</p>
-                  {isUp !== null ? (
+                  {showChange && isUp !== null ? (
                     <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
                       {isUp ? '▲' : '▼'} {Math.abs(changePercent).toFixed(1)}% 전월 대비
                     </p>
-                  ) : insightsLoading ? (
+                  ) : showChange && insightsLoading ? (
                     <Skeleton height={10} width="65%" radius={4} />
                   ) : null}
                 </div>
