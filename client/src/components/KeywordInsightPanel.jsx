@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { formatNumber, formatPercent, formatScore } from '../utils/formatters';
 
 /* ─── Skeleton ─── */
-function Skeleton({ width = '100%', height = 8, radius = 4 }) {
+function Skeleton({ width = '100%', height = 8, radius = 6 }) {
   return (
     <div style={{
       width, height,
@@ -12,33 +13,52 @@ function Skeleton({ width = '100%', height = 8, radius = 4 }) {
   );
 }
 
-/* ─── Label ─── */
+/* ─── Section label ─── */
 function Label({ children }) {
   return (
     <p style={{
-      margin: '0 0 10px',
-      fontSize: 10, fontWeight: 700,
-      letterSpacing: '0.10em', textTransform: 'uppercase',
-      color: 'var(--text-tertiary)',
+      margin: '0 0 14px',
+      fontSize: 11, fontWeight: 700,
+      letterSpacing: '0.08em', textTransform: 'uppercase',
+      color: 'var(--text-secondary)',
     }}>
       {children}
     </p>
   );
 }
 
+/* ─── Smooth path helpers ─── */
+function catmullRom(pts, tension = 0.4) {
+  if (pts.length < 2) return '';
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const cp1x = p1[0] + (p2[0] - p0[0]) * tension;
+    const cp1y = p1[1] + (p2[1] - p0[1]) * tension;
+    const cp2x = p2[0] - (p3[0] - p1[0]) * tension;
+    const cp2y = p2[1] - (p3[1] - p1[1]) * tension;
+    d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  return d;
+}
+
 /* ─── Trend line chart ─── */
 function TrendChart({ data, loading }) {
+  const [hoveredIdx, setHoveredIdx] = useState(null);
   const W = 560, H = 160;
-  const pad = { t: 10, r: 8, b: 30, l: 34 };
+  const pad = { t: 14, r: 10, b: 32, l: 34 };
   const cW = W - pad.l - pad.r;
   const cH = H - pad.t - pad.b;
 
   if (loading) {
     return (
-      <div style={{ height: H, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10, padding: '0 4px' }}>
-        <Skeleton height={2} />
-        <Skeleton height={2} width="80%" />
-        <Skeleton height={2} width="60%" />
+      <div style={{ height: H, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12, padding: '0 4px' }}>
+        <Skeleton height={2} radius={2} />
+        <Skeleton height={2} width="75%" radius={2} />
+        <Skeleton height={2} width="55%" radius={2} />
       </div>
     );
   }
@@ -56,49 +76,109 @@ function TrendChart({ data, loading }) {
   const minR = Math.min(...ratios);
   const range = maxR - minR || 1;
 
-  const x = (i) => pad.l + (i / (data.length - 1)) * cW;
-  const y = (r) => pad.t + cH * (1 - (r - minR) / range);
-  const pts = data.map((d, i) => [x(i), y(d.ratio)]);
-  const linePath = pts.map(([px, py], i) => `${i === 0 ? 'M' : 'L'}${px.toFixed(1)},${py.toFixed(1)}`).join(' ');
+  const px = (i) => pad.l + (i / (data.length - 1)) * cW;
+  const py = (r) => pad.t + cH * (1 - (r - minR) / range);
+  const pts = data.map((d, i) => [px(i), py(d.ratio)]);
+
+  const linePath = catmullRom(pts);
   const areaPath = `${linePath} L${pts[pts.length - 1][0].toFixed(1)},${(pad.t + cH).toFixed(1)} L${pad.l},${(pad.t + cH).toFixed(1)}Z`;
 
-  const step = Math.max(1, Math.floor(data.length / 4));
-  const xIdxs = [...new Set([0, step, step * 2, step * 3, data.length - 1])];
+  const step = Math.max(1, Math.floor(data.length / 5));
+  const xIdxs = [...new Set([0, step, step * 2, step * 3, step * 4, data.length - 1])].filter(i => i < data.length);
   const yTicks = [0, 0.5, 1].map((r) => ({
     py: pad.t + cH * (1 - r),
     label: Math.round(minR + range * r),
   }));
 
+  const handleMouseMove = (e) => {
+    const svgEl = e.currentTarget.ownerSVGElement;
+    const rect = svgEl.getBoundingClientRect();
+    const svgX = (e.clientX - rect.left) * (W / rect.width);
+    let closest = 0, minDist = Infinity;
+    pts.forEach(([px], i) => {
+      const d = Math.abs(px - svgX);
+      if (d < minDist) { minDist = d; closest = i; }
+    });
+    setHoveredIdx(closest);
+  };
+
+  const hovered = hoveredIdx !== null ? hoveredIdx : null;
+  const [hx, hy] = hovered !== null ? pts[hovered] : [0, 0];
+  const tooltipW = 88;
+  const tx = Math.min(Math.max(hx - tooltipW / 2, pad.l + 2), W - pad.r - tooltipW - 2);
+  const ty = Math.max(hy - 36, pad.t + 2);
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}>
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}
+    >
       <defs>
         <linearGradient id="kip-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(10,132,255,0.22)" />
+          <stop offset="0%" stopColor="rgba(10,132,255,0.28)" />
           <stop offset="100%" stopColor="rgba(10,132,255,0.00)" />
         </linearGradient>
       </defs>
-      {yTicks.map(({ py, label }) => (
-        <g key={py}>
-          <line x1={pad.l} y1={py} x2={pad.l + cW} y2={py} stroke="var(--border)" strokeWidth="1" />
-          <text x={pad.l - 5} y={py + 3.5} textAnchor="end" fontSize="9" fill="var(--text-tertiary)">{label}</text>
+
+      {/* Grid lines */}
+      {yTicks.map(({ py: gridY, label }) => (
+        <g key={gridY}>
+          <line x1={pad.l} y1={gridY} x2={pad.l + cW} y2={gridY}
+            stroke="var(--border)" strokeWidth="1" />
+          <text x={pad.l - 6} y={gridY + 4}
+            textAnchor="end" fontSize="9" fill="var(--text-tertiary)">{label}</text>
         </g>
       ))}
+
+      {/* Area fill */}
       <path d={areaPath} fill="url(#kip-grad)" />
-      <path d={linePath} fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+
+      {/* Line */}
+      <path d={linePath} fill="none" stroke="var(--accent)"
+        strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+
+      {/* X-axis labels */}
       {xIdxs.map((i) => (
-        <text key={i} x={x(i)} y={H - 4} textAnchor="middle" fontSize="9" fill="var(--text-tertiary)">
+        <text key={i} x={pts[i][0]} y={H - 5}
+          textAnchor="middle" fontSize="9" fill="var(--text-tertiary)">
           {data[i].period.slice(5)}
         </text>
       ))}
+
+      {/* Hover overlay */}
+      <rect
+        x={pad.l} y={pad.t} width={cW} height={cH}
+        fill="transparent" style={{ cursor: 'crosshair' }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setHoveredIdx(null)}
+      />
+
+      {/* Hover indicator */}
+      {hovered !== null && (
+        <g>
+          <line x1={hx} y1={pad.t} x2={hx} y2={pad.t + cH}
+            stroke="var(--border)" strokeWidth="1" strokeDasharray="4,3" />
+          <circle cx={hx} cy={hy} r={5}
+            fill="var(--accent)" stroke="var(--bg-base)" strokeWidth="2.5" />
+          <rect x={tx} y={ty} width={tooltipW} height={24}
+            rx={8} fill="var(--bg-overlay)"
+            style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}
+          />
+          <text x={tx + tooltipW / 2} y={ty + 15.5}
+            textAnchor="middle" fontSize="10.5" fontWeight="600" fill="var(--text-primary)">
+            {data[hovered].period.slice(5)} · {data[hovered].ratio.toFixed(1)}
+          </text>
+        </g>
+      )}
     </svg>
   );
 }
 
-/* ─── Vertical bar chart — used for day-of-week, gender, age ─── */
-function VBarChart({ items, loading, height = 110, count = 7 }) {
-  const LABEL_H = 18;
+/* ─── Vertical bar chart ─── */
+function VBarChart({ items, loading, height = 110, count = 7, unit = '' }) {
+  const [hoveredKey, setHoveredKey] = useState(null);
+  const LABEL_H = 20;
   const BAR_AREA = height - LABEL_H;
-  // Max bar width so bars never become wide horizontal blocks
   const MAX_BAR_W = 52;
   const GAP = 6;
 
@@ -109,10 +189,10 @@ function VBarChart({ items, loading, height = 110, count = 7 }) {
         {placeholders.map((h, i) => (
           <div key={i} style={{
             width: MAX_BAR_W, flexShrink: 0,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, justifyContent: 'flex-end',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, justifyContent: 'flex-end',
           }}>
-            <Skeleton height={Math.round((h / 100) * BAR_AREA)} radius={3} />
-            <Skeleton height={8} width="70%" radius={2} />
+            <Skeleton height={Math.round((h / 100) * BAR_AREA)} radius={8} />
+            <Skeleton height={8} width="65%" radius={3} />
           </div>
         ))}
       </div>
@@ -133,31 +213,70 @@ function VBarChart({ items, loading, height = 110, count = 7 }) {
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: GAP, height, justifyContent: 'center' }}>
       {items.map(({ label, value, color }) => {
         const v = value ?? 0;
-        const barH = Math.max(3, Math.round((v / max) * BAR_AREA));
+        const barH = Math.max(4, Math.round((v / max) * BAR_AREA));
         const isMax = v === max;
+        const isHovered = hoveredKey === label;
         const barColor = color ?? 'var(--accent)';
+        const tooltipVal = unit === '%' ? `${Math.round(v)}%` : v.toFixed(1);
+
         return (
-          <div key={label} style={{
-            width: MAX_BAR_W, flexShrink: 0,
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: 4,
-            height: '100%',
-          }}>
+          <div
+            key={label}
+            style={{
+              width: MAX_BAR_W, flexShrink: 0,
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'flex-end',
+              height: '100%',
+              position: 'relative',
+              cursor: 'default',
+            }}
+            onMouseEnter={() => setHoveredKey(label)}
+            onMouseLeave={() => setHoveredKey(null)}
+          >
+            {/* Spacer */}
             <div style={{ flex: 1 }} />
+
+            {/* Tooltip */}
+            {isHovered && (
+              <div style={{
+                position: 'absolute',
+                bottom: LABEL_H + barH + 8,
+                left: '50%', transform: 'translateX(-50%)',
+                background: 'var(--bg-overlay)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                padding: '4px 9px',
+                fontSize: 11, fontWeight: 700,
+                color: 'var(--text-primary)',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                zIndex: 20,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              }}>
+                {tooltipVal}
+              </div>
+            )}
+
+            {/* Bar */}
             <div style={{
-              width: '100%',
+              width: '78%',
               height: barH,
               background: barColor,
-              opacity: isMax ? 1 : 0.42,
-              borderRadius: '3px 3px 0 0',
-              transition: 'height 0.4s cubic-bezier(0.4,0,0.2,1)',
+              opacity: isHovered ? 1 : (isMax ? 0.9 : 0.42),
+              borderRadius: '8px 8px 0 0',
+              transition: 'opacity 0.15s, height 0.45s cubic-bezier(0.34,1.56,0.64,1)',
+              boxShadow: isHovered ? `0 0 12px ${barColor}55` : 'none',
             }} />
+
+            {/* Label */}
             <span style={{
-              fontSize: 10, color: 'var(--text-tertiary)',
+              fontSize: 10.5, color: isHovered ? 'var(--text-secondary)' : 'var(--text-tertiary)',
               lineHeight: 1, textAlign: 'center',
               height: LABEL_H, display: 'flex', alignItems: 'center',
               whiteSpace: 'nowrap', flexShrink: 0,
+              transition: 'color 0.15s',
             }}>
               {label}
             </span>
@@ -203,7 +322,6 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
     { label: '효율 점수',     value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—' },
   ];
 
-  // Gender as vertical bar items
   const genderItems = insights?.gender != null
     ? [
         { label: '남성', value: insights.gender.male,   color: 'var(--accent)' },
@@ -211,15 +329,14 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       ]
     : null;
 
-  // Age as vertical bar items
   const ageItems = insights?.age?.map((a) => ({ label: a.label, value: a.pct })) ?? null;
 
   return (
     <section className="mac-card mac-fade-in overflow-hidden">
       <style>{`
         @keyframes kip-pulse {
-          0%, 100% { opacity: 0.40; }
-          50%       { opacity: 0.85; }
+          0%, 100% { opacity: 0.35; }
+          50%       { opacity: 0.80; }
         }
       `}</style>
 
@@ -230,7 +347,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             flex: 1, padding: '16px 18px',
             borderRight: i < kpis.length - 1 ? '1px solid var(--border)' : 'none',
           }}>
-            <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: '0 0 5px', fontWeight: 500 }}>{label}</p>
+            <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 5px', fontWeight: 500 }}>{label}</p>
             <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: 0 }}>{value}</p>
           </div>
         ))}
@@ -242,20 +359,21 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       {/* Charts row */}
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
 
-        {/* Left: trend */}
+        {/* Left: trend — vertically centered */}
         <div style={{
-          flex: '2 1 320px', padding: '18px 20px',
+          flex: '2 1 320px', padding: '20px 22px',
           borderRight: '1px solid var(--border)',
           minWidth: 0,
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
-          <Label>검색 트렌드 (최근 90일)</Label>
+          <Label>검색 트렌드 (최근 30일)</Label>
           <TrendChart data={insights?.trend} loading={insightsLoading} />
         </div>
 
-        {/* Right: demographics — all vertical bar charts */}
+        {/* Right: demographics */}
         <div style={{
-          flex: '1 1 220px', padding: '18px 20px',
-          display: 'flex', flexDirection: 'column', gap: 24,
+          flex: '1 1 220px', padding: '20px 22px',
+          display: 'flex', flexDirection: 'column', gap: 26,
           minWidth: 0,
         }}>
 
@@ -266,6 +384,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
               loading={insightsLoading}
               height={110}
               count={7}
+              unit=""
             />
           </div>
 
@@ -276,6 +395,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
               loading={insightsLoading}
               height={110}
               count={2}
+              unit="%"
             />
           </div>
 
@@ -286,6 +406,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
               loading={insightsLoading}
               height={110}
               count={5}
+              unit="%"
             />
           </div>
 
