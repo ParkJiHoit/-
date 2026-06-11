@@ -114,25 +114,27 @@ export async function analyzeKeywordInsights(keyword) {
     value: counts[i] ? sums[i] / counts[i] : 0,
   }));
 
-  // Gender
-  const maleAvg = safeAvgRatio(maleSettled);
+  // Gender — null when either call failed so UI can show "no data" clearly
+  const genderAvailable = maleSettled.status === 'fulfilled' && femaleSettled.status === 'fulfilled';
+  const maleAvg   = safeAvgRatio(maleSettled);
   const femaleAvg = safeAvgRatio(femaleSettled);
   const gTotal = maleAvg + femaleAvg || 1;
-  const gender = {
-    male: Math.round((maleAvg / gTotal) * 100),
-    female: Math.round((femaleAvg / gTotal) * 100),
-  };
+  const gender = genderAvailable
+    ? { male: Math.round((maleAvg / gTotal) * 100), female: Math.round((femaleAvg / gTotal) * 100) }
+    : null;
 
-  // Age
+  // Age — null when all calls failed
+  const ageAvailable = ageSettled.some((s) => s.status === 'fulfilled');
   const ageRatios = ageSettled.map((s, i) => ({
     label: AGE_GROUPS[i].label,
     value: safeAvgRatio(s),
   }));
   const aTotal = ageRatios.reduce((s, a) => s + a.value, 0) || 1;
-  const age = ageRatios.map((a) => ({
-    label: a.label,
-    pct: Math.round((a.value / aTotal) * 100),
-  }));
+  const age = ageAvailable
+    ? ageRatios.map((a) => ({ label: a.label, pct: Math.round((a.value / aTotal) * 100) }))
+    : null;
+
+  console.log(`[DataLab] "${keyword}" → trend:${trend.length}pts gender:${JSON.stringify(gender)} age:${ageAvailable}`);
 
   // If every single call failed, propagate a clear error so the client shows guidance
   const allFailed = settled.every((s) => s.status === 'rejected');

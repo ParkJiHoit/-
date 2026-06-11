@@ -51,9 +51,12 @@ router.get('/insights', async (req, res, next) => {
   try {
     const keyword = String(req.query?.keyword || '').trim();
     if (!keyword) return res.status(400).json({ message: '키워드를 입력해 주세요.' });
+    console.log(`[insights] → "${keyword}"`);
     const result = await analyzeKeywordInsights(keyword);
+    console.log(`[insights] ✓ trend=${result.trend?.length}pts gender=${JSON.stringify(result.gender)}`);
     res.json(result);
   } catch (error) {
+    console.error(`[insights] ✗ ${error.status || 500}: ${error.message}`);
     next(error);
   }
 });
