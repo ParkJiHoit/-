@@ -93,6 +93,8 @@ async function fetchNaverNews(keyword) {
       axios.get(`${NAVER_SEARCH_URL}/news.json`, { headers, params: { query: keyword, display: 4, sort: 'date' }, timeout: 8000 }),
       axios.get(`${NAVER_SEARCH_URL}/blog.json`, { headers, params: { query: keyword, display: 3, sort: 'date' }, timeout: 8000 }),
     ]);
+    if (newsRes.status === 'rejected') console.error('[News] news API error:', newsRes.reason?.response?.status, newsRes.reason?.response?.data ?? newsRes.reason?.message);
+    if (blogRes.status === 'rejected') console.error('[News] blog API error:', blogRes.reason?.response?.status, blogRes.reason?.response?.data ?? blogRes.reason?.message);
     const stripHtml = (s) => String(s || '').replace(/<[^>]+>/g, '').trim();
     const newsItems = newsRes.status === 'fulfilled'
       ? (newsRes.value.data.items || []).map((it) => ({

@@ -48,7 +48,7 @@ function catmullRom(pts, tension = 0.4) {
 /* ─── Trend line chart ─── */
 function TrendChart({ data, loading, keyword = '' }) {
   const [hoveredIdx, setHoveredIdx] = useState(null);
-  const W = 560, H = 160;
+  const W = 560, H = 210;
   const pad = { t: 14, r: 10, b: 32, l: 34 };
   const cW = W - pad.l - pad.r;
   const cH = H - pad.t - pad.b;
@@ -187,8 +187,8 @@ function VBarChart({ items, loading, height = 110, count = 7, unit = '' }) {
   const [hoveredKey, setHoveredKey] = useState(null);
   const LABEL_H = 20;
   const BAR_AREA = height - LABEL_H;
-  const MAX_BAR_W = 36;
-  const GAP = 4;
+  const MAX_BAR_W = 24;
+  const GAP = 3;
 
   if (loading) {
     const placeholders = [72, 100, 85, 55, 78, 45, 60].slice(0, count);
@@ -519,6 +519,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         <div style={{
           flex: '1 1 160px', maxWidth: 210, padding: '20px 14px',
           display: 'flex', flexDirection: 'column', gap: 22, minWidth: 0,
+          overflow: 'hidden',
         }}>
           <div>
             <Label>요일별 검색 분포</Label>
