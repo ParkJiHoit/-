@@ -159,9 +159,9 @@ function HeroSection({ tab, hasResults, children }) {
               {tab === 'blog'     && 'Blog Analysis'}
             </p>
             <h1 style={{
-              fontSize: tab === 'analysis' ? 42 : 30,
+              fontSize: 42,
               fontWeight: 800,
-              letterSpacing: tab === 'analysis' ? '-1.2px' : '-0.5px',
+              letterSpacing: '-1.2px',
               color: 'var(--text-primary)', margin: 0,
               lineHeight: 1.22, textAlign: 'center'
             }}>
@@ -179,12 +179,25 @@ function HeroSection({ tab, hasResults, children }) {
                   </span>
                 </>
               )}
-              {tab === 'expansion' && '시드 키워드로 대량 발굴'}
-              {tab === 'blog'     && '블로그 기회를 찾아드립니다'}
+              {tab === 'expansion' && (
+                <>
+                  아직 발굴되지 않은
+                  <br />
+                  <span style={{
+                    background: 'linear-gradient(120deg, #BF5AF2 0%, #0A84FF 55%, #34C1FF 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}>
+                    키워드가 있습니다
+                  </span>
+                </>
+              )}
+              {tab === 'blog' && '블로그 기회를 찾아드립니다'}
             </h1>
             <p style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginTop: 10 }}>
               {tab === 'analysis' && '키워드를 분석하고, 가능성을 실험하는 공간'}
-              {tab === 'expansion' && '시드 키워드 기반으로 관련 키워드를 대량으로 발굴'}
+              {tab === 'expansion' && '시드 키워드로 숨겨진 틈새 키워드를 한 번에 찾아드립니다'}
               {tab === 'blog'     && '블로그 콘텐츠 경쟁도와 기회 점수를 분석'}
             </p>
           </div>

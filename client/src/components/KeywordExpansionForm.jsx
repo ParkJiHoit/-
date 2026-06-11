@@ -51,23 +51,28 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
       onFocus={handleFocusIn}
       onBlur={handleFocusOut}
     >
-      <form className="grid gap-3 xl:grid-cols-[1.1fr_1fr_1fr_auto]" onSubmit={submitExpansion}>
-        <WordArea label="시드 키워드" helper={`${seedKeywords.length}/3`}
-          placeholder="1줄에 1개 입력"
-          value={seedText} onChange={setSeedText} disabled={loading} tall />
+      <form onSubmit={submitExpansion}>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <WordArea label="시드 키워드" helper={`${seedKeywords.length}/3`}
+            placeholder="1줄에 1개 입력"
+            value={seedText} onChange={setSeedText} disabled={loading} tall />
 
-        <WordArea label="포함할 단어" helper={`${includeWords.length}/5`}
-          placeholder=""
-          value={includeText} onChange={setIncludeText} disabled={loading} />
+          <WordArea label="포함할 단어" helper={`${includeWords.length}/5`}
+            placeholder=""
+            value={includeText} onChange={setIncludeText} disabled={loading} />
 
-        <WordArea label="제외할 단어" helper={`${excludeWords.length}/5`}
-          placeholder=""
-          value={excludeText} onChange={setExcludeText} disabled={loading} />
+          <WordArea label="제외할 단어" helper={`${excludeWords.length}/5`}
+            placeholder=""
+            value={excludeText} onChange={setExcludeText} disabled={loading} />
+        </div>
 
-        <div className="flex flex-col justify-end gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginTop: 14 }}>
           <label
-            className="flex cursor-pointer items-center gap-2 rounded-[10px] px-3 py-2.5"
-            style={{ border: '1px solid var(--border)', background: 'var(--bg-overlay)', fontSize: 13, color: 'var(--text-secondary)', minHeight: 42 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 13, color: 'var(--text-secondary)',
+              cursor: 'pointer', userSelect: 'none',
+            }}
           >
             <input
               className="mac-checkbox"
@@ -78,7 +83,7 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
             />
             고성능 확장
           </label>
-          <button className="mac-btn" type="submit" disabled={loading}>
+          <button className="mac-btn" type="submit" disabled={loading} style={{ height: 38, padding: '0 20px' }}>
             <Rocket className="h-4 w-4" />
             {loading ? '확장 중' : '확장하기'}
           </button>
