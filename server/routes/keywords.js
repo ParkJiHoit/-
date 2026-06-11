@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { analyzeKeywordInsights } from '../services/naverDatalabService.js';
 import { analyzeKeyword, expandKeyword } from '../services/naverKeywordService.js';
 
 const router = Router();
@@ -40,6 +41,17 @@ router.post('/expand', async (req, res, next) => {
       highQuality: Boolean(req.body?.highQuality)
     });
 
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/insights', async (req, res, next) => {
+  try {
+    const keyword = String(req.query?.keyword || '').trim();
+    if (!keyword) return res.status(400).json({ message: '키워드를 입력해 주세요.' });
+    const result = await analyzeKeywordInsights(keyword);
     res.json(result);
   } catch (error) {
     next(error);

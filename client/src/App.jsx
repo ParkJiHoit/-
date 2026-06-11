@@ -7,6 +7,7 @@ import BlogSummaryCards from './components/BlogSummaryCards';
 import ColumnVisibilitySettings from './components/ColumnVisibilitySettings';
 import KeywordExpansionForm from './components/KeywordExpansionForm';
 import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
+import KeywordInsightPanel from './components/KeywordInsightPanel';
 import KeywordSearchForm from './components/KeywordSearchForm';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
 import Navbar from './components/Navbar';
@@ -243,6 +244,8 @@ export default function App() {
   const [analysis,  setAnalysis]        = useState(null);
   const [expansion, setExpansion]       = useState(null);
   const [blogAnalysis, setBlogAnalysis] = useState(null);
+  const [insights, setInsights]         = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
   const [filters,  setFilters]          = useState(defaultFilters);
   const [sortConfig, setSortConfig]     = useState({ key: 'efficiencyScore', direction: 'desc' });
   const [visibleColumns, setVisibleColumns] = useState(getInitialVisibleColumns);
@@ -313,7 +316,20 @@ export default function App() {
     } finally { setLoading(false); }
   };
 
+  const fetchInsights = useCallback(async (keyword) => {
+    setInsightsLoading(true);
+    setInsights(null);
+    try {
+      const res = await fetch(`/api/keywords/insights?keyword=${encodeURIComponent(keyword)}`);
+      if (!res.ok) return;
+      setInsights(await res.json());
+    } catch { /* fail silently — insights are non-critical */ } finally {
+      setInsightsLoading(false);
+    }
+  }, []);
+
   const analyzeKeyword = async (keyword) => {
+    fetchInsights(keyword); // fire independently, doesn't block table
     const data = await requestKeywords('/api/keywords/analyze', { keyword },
       '키워드 데이터를 조회하지 못했습니다.', { key: 'efficiencyScore', direction: 'desc' });
     if (data) setAnalysis(data);
@@ -378,6 +394,7 @@ export default function App() {
 
   const switchTab = (next) => {
     setActiveTab(next); setError(''); setFilters(defaultFilters);
+    setInsights(null); setInsightsLoading(false);
     if (next === 'analysis')  setSortConfig({ key: 'efficiencyScore',  direction: 'desc' });
     if (next === 'expansion') setSortConfig({ key: 'discoveryScore',  direction: 'desc' });
   };
@@ -385,6 +402,8 @@ export default function App() {
   const goHome = () => {
     setActiveTab('analysis');
     setAnalysis(null);
+    setInsights(null);
+    setInsightsLoading(false);
     setError('');
     setFilters(defaultFilters);
     setSortConfig({ key: 'efficiencyScore', direction: 'desc' });
@@ -443,6 +462,19 @@ export default function App() {
         {/* Keyword results */}
         {isKeywordTab && activeResult && !loading && (
           <div className="mac-fade-in flex flex-col gap-5">
+            {activeTab === 'analysis' && (
+              <KeywordInsightPanel
+                baseKeyword={activeResult.baseKeyword}
+                keywordRow={
+                  activeResult.keywords?.find(
+                    (r) => r.keyword?.toLowerCase().replace(/\s+/g, '') ===
+                           (activeResult.baseKeyword || '').toLowerCase().replace(/\s+/g, '')
+                  ) || activeResult.keywords?.[0]
+                }
+                insights={insights}
+                insightsLoading={insightsLoading}
+              />
+            )}
             {activeTab === 'analysis' && (
               <SummaryCards summary={currentSummary} />
             )}
