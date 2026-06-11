@@ -57,11 +57,10 @@ function MiniSparkline({ data, positive }) {
     (i / (data.length - 1)) * W,
     H - 4 - ((d.ratio - min) / range) * (H - 8),
   ]);
-  const path = catmullRom(pts, 0.35);
-  const color = positive === true ? '#30D158' : positive === false ? '#FF375F' : 'var(--accent)';
+  const path = catmullRom(pts, 0.2);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: W, height: H, flexShrink: 0, opacity: 0.85 }}>
-      <path d={path} fill="none" stroke={color} strokeWidth="1.5"
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: W, height: H, flexShrink: 0 }}>
+      <path d={path} fill="none" stroke="rgba(120,120,128,0.55)" strokeWidth="1.5"
         strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
@@ -70,17 +69,21 @@ function MiniSparkline({ data, positive }) {
 /* ─── Trend stats helper ─── */
 function computeTrendStats(trend) {
   if (!trend?.length) return {};
-  const n = trend.length;
-  const half = Math.floor(n / 2);
-  const prevHalf = trend.slice(0, half);
-  const currHalf = trend.slice(half);
-  const prevAvg = prevHalf.reduce((s, d) => s + d.ratio, 0) / (prevHalf.length || 1);
-  const currAvg = currHalf.reduce((s, d) => s + d.ratio, 0) / (currHalf.length || 1);
-  const changePercent = prevAvg > 0 ? ((currAvg - prevAvg) / prevAvg) * 100 : null;
 
-  const thisWeek = trend.slice(-7);
-  const prevWeek = trend.slice(-14, -7);
-  const weekSum  = thisWeek.reduce((s, d) => s + d.ratio, 0);
+  // True MoM: last 30 days vs previous 30 days (requires 60+ days of data)
+  const last30 = trend.slice(-30);
+  const prev30 = trend.slice(-60, -30);
+  let changePercent = null;
+  if (prev30.length >= 15) {
+    const prevAvg = prev30.reduce((s, d) => s + d.ratio, 0) / prev30.length;
+    const currAvg = last30.reduce((s, d) => s + d.ratio, 0) / last30.length;
+    changePercent = prevAvg > 0 ? ((currAvg - prevAvg) / prevAvg) * 100 : null;
+  }
+
+  // Weekly: last 7 days vs previous 7 days
+  const thisWeek  = trend.slice(-7);
+  const prevWeek  = trend.slice(-14, -7);
+  const weekSum   = thisWeek.reduce((s, d) => s + d.ratio, 0);
   const prevWeekSum = prevWeek.reduce((s, d) => s + d.ratio, 0);
   const weekChange = prevWeekSum > 0 ? ((weekSum - prevWeekSum) / prevWeekSum) * 100 : null;
 
@@ -121,7 +124,7 @@ function TrendChart({ data, loading, keyword = '' }) {
   const py = (r) => pad.t + cH * (1 - r / maxR);
   const pts = data.map((d, i) => [px(i), py(d.ratio)]);
 
-  const linePath = catmullRom(pts);
+  const linePath = catmullRom(pts, 0.18);
   const areaPath = `${linePath} L${pts[pts.length - 1][0].toFixed(1)},${(pad.t + cH).toFixed(1)} L${pad.l},${(pad.t + cH).toFixed(1)}Z`;
 
   const step = Math.max(1, Math.floor(data.length / 5));
@@ -565,7 +568,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             {weekSum != null && (
               <div style={{ textAlign: 'right' }}>
                 <p style={{ margin: 0, fontSize: 15, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text-primary)' }}>
-                  주간 지수 {weekSum.toFixed(0)}
+                  주간 검색량 합계 {weekSum.toFixed(0)}
                 </p>
                 {weekChange != null && (
                   <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 600, color: weekChange >= 0 ? '#30D158' : '#FF375F' }}>

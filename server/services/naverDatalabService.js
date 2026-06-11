@@ -132,7 +132,7 @@ export async function analyzeKeywordInsights(keyword) {
   const cached = insightCache.get(cacheKey);
   if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.data;
 
-  const PERIOD_DAYS = 30;
+  const PERIOD_DAYS = 90;
   const { startDate, endDate } = getDateRange(PERIOD_DAYS);
   const keywordGroups = [{ groupName: 'kw', keywords: [keyword] }];
   const base = { startDate, endDate, keywordGroups, timeUnit: 'date', device: '' };
