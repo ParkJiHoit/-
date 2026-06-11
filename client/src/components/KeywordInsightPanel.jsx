@@ -545,19 +545,38 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
   ];
   const activePeriod = PERIOD_OPTIONS.find((p) => p.key === trendPeriod) || PERIOD_OPTIONS[0];
 
-  // Dynamic right-side stats — always shows PREVIOUS period, all values from real API data
+  // Scale DataLab ratios → actual search counts using Search Ad API monthly total as anchor.
+  // dailyScale: totalSearch ÷ prev-month daily ratio sum  (for weekly/monthly stats)
+  // monthlyScale: totalSearch ÷ prev-month trendMonthly ratio  (for yearly stats)
+  const { dailyScale, monthlyScale } = (() => {
+    const actual = keywordRow?.totalSearch;
+    if (!actual || !insights?.trend?.length) return {};
+    const now = new Date();
+    const prevM     = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+    const prevMYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+
+    const prevDailySum = insights.trend
+      .filter((pt) => { const d = new Date(pt.period); return d.getFullYear() === prevMYear && d.getMonth() === prevM; })
+      .reduce((s, pt) => s + pt.ratio, 0);
+    const dailyScale = prevDailySum > 0 ? actual / prevDailySum : null;
+
+    const prevMonthStr = `${prevMYear}-${String(prevM + 1).padStart(2, '0')}`;
+    const prevMonthEntry = insights.trendMonthly?.find((d) => d.period.startsWith(prevMonthStr));
+    const monthlyScale = prevMonthEntry?.ratio > 0 ? actual / prevMonthEntry.ratio : null;
+
+    return { dailyScale, monthlyScale };
+  })();
+
+  // Dynamic right-side stats — shows PREVIOUS period, scaled to actual search counts
   const periodStats = (() => {
     if (trendPeriod === 'daily') {
-      // Previous week = trend.slice(-14, -7); current week = trend.slice(-7)
       if (!prevWeekSum) return null;
-      return {
-        label: '전주 검색량 합계',
-        value: Math.round(prevWeekSum).toString(),
-        change: weekChange,
-      };
+      const value = dailyScale
+        ? formatNumber(Math.round(prevWeekSum * dailyScale))
+        : Math.round(prevWeekSum).toString();
+      return { label: '전주 검색량', value, change: weekChange };
     }
     if (trendPeriod === 'monthly') {
-      // Compare prevMonth vs prevPrevMonth — both complete, avoids partial-month distortion
       const d = insights?.trend;
       if (!d?.length) return null;
       const now = new Date();
@@ -565,26 +584,18 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       const prevMYear  = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
       const prevPrevM      = prevM === 0 ? 11 : prevM - 1;
       const prevPrevMYear  = prevM === 0 ? prevMYear - 1 : prevMYear;
-      const prevData = d.filter((pt) => {
-        const dt = new Date(pt.period);
-        return dt.getFullYear() === prevMYear && dt.getMonth() === prevM;
-      });
-      const prevPrevData = d.filter((pt) => {
-        const dt = new Date(pt.period);
-        return dt.getFullYear() === prevPrevMYear && dt.getMonth() === prevPrevM;
-      });
+      const prevData     = d.filter((pt) => { const dt = new Date(pt.period); return dt.getFullYear() === prevMYear && dt.getMonth() === prevM; });
+      const prevPrevData = d.filter((pt) => { const dt = new Date(pt.period); return dt.getFullYear() === prevPrevMYear && dt.getMonth() === prevPrevM; });
       if (!prevData.length) return null;
       const prevSum     = prevData.reduce((s, pt) => s + pt.ratio, 0);
       const prevPrevSum = prevPrevData.reduce((s, pt) => s + pt.ratio, 0);
       const change = prevPrevSum > 0 ? ((prevSum - prevPrevSum) / prevPrevSum) * 100 : null;
-      return {
-        label: '전월 검색량 합계',
-        value: Math.round(prevSum).toString(),
-        change,
-      };
+      const value = dailyScale
+        ? formatNumber(Math.round(prevSum * dailyScale))
+        : Math.round(prevSum).toString();
+      return { label: '전월 검색량', value, change };
     }
     if (trendPeriod === 'yearly') {
-      // Compare prevYear vs prevPrevYear — both complete, avoids partial-year distortion
       if (!yearlyData.length) return null;
       const now = new Date();
       const prevYear     = (now.getFullYear() - 1).toString();
@@ -592,14 +603,13 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       const prevEntry     = yearlyData.find((d) => d.period === prevYear);
       const prevPrevEntry = yearlyData.find((d) => d.period === prevPrevYear);
       if (!prevEntry) return null;
-      const prevSum     = Math.round(prevEntry.sum ?? 0);
-      const prevPrevSum = Math.round(prevPrevEntry?.sum ?? 0);
-      const change = prevPrevSum > 0 ? ((prevSum - prevPrevSum) / prevPrevSum) * 100 : null;
-      return {
-        label: '전년 검색량 합계',
-        value: prevSum.toString(),
-        change,
-      };
+      const prevRawSum     = prevEntry.sum ?? 0;
+      const prevPrevRawSum = prevPrevEntry?.sum ?? 0;
+      const change = prevPrevRawSum > 0 ? ((prevRawSum - prevPrevRawSum) / prevPrevRawSum) * 100 : null;
+      const value = monthlyScale
+        ? formatNumber(Math.round(prevRawSum * monthlyScale))
+        : Math.round(prevRawSum).toString();
+      return { label: '전년 검색량', value, change };
     }
     return null;
   })();

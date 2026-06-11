@@ -53,16 +53,70 @@ function getDateRange(days = 90) {
   return { startDate: fmt(start), endDate: fmt(end) };
 }
 
-// periodDays: total days in the query window (not just days with data).
-// The DataLab API omits days with ratio=0, so dividing by data.length
-// inflates sparse segments (e.g. a single spike → avg 100 for 10대).
-// Dividing by the full period normalises correctly across all age groups.
-function safeAvgRatio(settled, periodDays = null) {
-  if (settled.status !== 'fulfilled') return 0;
-  const data = settled.value?.results?.[0]?.data;
-  if (!data?.length) return 0;
-  const sum = data.reduce((s, d) => s + (d.ratio || 0), 0);
-  return sum / (periodDays ?? data.length);
+function getRatioMap(settled) {
+  if (settled.status !== 'fulfilled') return new Map();
+  const data = settled.value?.results?.[0]?.data || [];
+  return new Map(data.map((d) => [d.period, d.ratio || 0]));
+}
+
+// OLS regression: find k ≥ 0 such that Σ k_i * X_i ≈ y (overall trend).
+// Each gender/age DataLab series is independently normalised 0–100, so their
+// averages are not directly comparable. OLS with the combined series as target
+// recovers the implied scale factor for each group, letting us compute true
+// proportions from k_i * mean(X_i).
+function solveOLS(y, predictors) {
+  const m = predictors.length;
+  if (m === 0) return [];
+
+  // Augmented matrix [XᵀX | Xᵀy] for the normal equations
+  const A = Array.from({ length: m }, (_, i) =>
+    Array.from({ length: m + 1 }, (_, j) =>
+      j < m
+        ? predictors[i].reduce((s, v, t) => s + v * predictors[j][t], 0)
+        : predictors[i].reduce((s, v, t) => s + v * y[t], 0)
+    )
+  );
+
+  // Gauss-Jordan elimination with partial pivoting
+  for (let col = 0; col < m; col++) {
+    let maxRow = col;
+    for (let row = col + 1; row < m; row++) {
+      if (Math.abs(A[row][col]) > Math.abs(A[maxRow][col])) maxRow = row;
+    }
+    if (maxRow !== col) [A[col], A[maxRow]] = [A[maxRow], A[col]];
+    if (Math.abs(A[col][col]) < 1e-10) continue;
+    for (let row = 0; row < m; row++) {
+      if (row === col) continue;
+      const f = A[row][col] / A[col][col];
+      for (let c = col; c <= m; c++) A[row][c] -= f * A[col][c];
+    }
+  }
+
+  return A.map((row, i) => Math.max(0, Math.abs(A[i][i]) > 1e-10 ? row[m] / A[i][i] : 0));
+}
+
+// Compute proportions for each series relative to the overall trend using OLS.
+// overallMap: Map<period, ratio> from the no-filter DataLab call
+// seriesList: [{ label, map: Map<period, ratio> }, ...]
+// Days missing in a series are filled with 0 (series had no searches that day).
+function olsProportions(overallMap, seriesList) {
+  const dates = [...overallMap.keys()];
+  if (dates.length < seriesList.length + 1) return null;
+
+  const y = dates.map((p) => overallMap.get(p));
+  const predictors = seriesList.map(({ map }) => dates.map((p) => map.get(p) ?? 0));
+
+  const k = solveOLS(y, predictors);
+
+  const scores = seriesList.map(({ map }, i) => {
+    const avg = dates.reduce((s, p) => s + (map.get(p) ?? 0), 0) / dates.length;
+    return k[i] * avg;
+  });
+
+  const total = scores.reduce((s, v) => s + v, 0);
+  if (total === 0) return null;
+
+  return seriesList.map(({ label }, i) => ({ label, proportion: scores[i] / total }));
 }
 
 function relativeTime(pubDateStr) {
@@ -206,27 +260,39 @@ export async function analyzeKeywordInsights(keyword) {
     value: counts[i] ? sums[i] / counts[i] : 0,
   }));
 
-  // Gender — null when either call failed so UI can show "no data" clearly
+  // Build ratio maps for OLS (overall trend is the regression target)
+  const overallMap = getRatioMap(trendSettled);
+  const maleMap    = getRatioMap(maleSettled);
+  const femaleMap  = getRatioMap(femaleSettled);
+  const ageMaps    = ageSettled.map(getRatioMap);
+
+  // Gender — OLS recovers true proportion by fitting male+female series to overall trend
   const genderAvailable = maleSettled.status === 'fulfilled' && femaleSettled.status === 'fulfilled';
-  const maleAvg   = safeAvgRatio(maleSettled, PERIOD_DAYS);
-  const femaleAvg = safeAvgRatio(femaleSettled, PERIOD_DAYS);
-  const gTotal = maleAvg + femaleAvg || 1;
-  const gender = genderAvailable
-    ? { male: Math.round((maleAvg / gTotal) * 100), female: Math.round((femaleAvg / gTotal) * 100) }
+  const genderProps = genderAvailable
+    ? olsProportions(overallMap, [
+        { label: 'male',   map: maleMap },
+        { label: 'female', map: femaleMap },
+      ])
+    : null;
+  const gender = genderProps
+    ? {
+        male:   Math.round(genderProps.find((g) => g.label === 'male').proportion   * 100),
+        female: Math.round(genderProps.find((g) => g.label === 'female').proportion * 100),
+      }
     : null;
 
-  // Age — null when all calls failed
+  // Age — same OLS approach for all 5 age groups simultaneously
   const ageAvailable = ageSettled.some((s) => s.status === 'fulfilled');
-  const ageRatios = ageSettled.map((s, i) => ({
-    label: AGE_GROUPS[i].label,
-    value: safeAvgRatio(s, PERIOD_DAYS),
-  }));
-  const aTotal = ageRatios.reduce((s, a) => s + a.value, 0) || 1;
-  const age = ageAvailable
-    ? ageRatios.map((a) => ({ label: a.label, pct: Math.round((a.value / aTotal) * 100) }))
+  const ageProps = ageAvailable
+    ? olsProportions(overallMap, AGE_GROUPS.map((g, i) => ({ label: g.label, map: ageMaps[i] })))
+    : null;
+  const age = ageProps
+    ? ageProps.map(({ label, proportion }) => ({ label, pct: Math.round(proportion * 100) }))
     : null;
 
-  const ageDebug = ageRatios.map(a => `${a.label}=${a.value.toFixed(1)}`).join(' ');
+  const ageDebug = ageProps
+    ? ageProps.map((a) => `${a.label}=${(a.proportion * 100).toFixed(1)}%`).join(' ')
+    : 'unavailable';
   console.log(`[DataLab] "${keyword}" → trend:${trend.length}pts gender:${JSON.stringify(gender)} age:[${ageDebug}]`);
 
   // If every DataLab call failed, propagate a clear error
