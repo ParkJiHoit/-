@@ -1,5 +1,5 @@
 import { Rocket } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 function parseWords(value, max) {
   return value.split(/\n|,/).map((w) => w.trim()).filter(Boolean).slice(0, max);
@@ -11,6 +11,8 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
   const [excludeText, setExcludeText] = useState('');
   const [highQuality, setHighQuality] = useState(true);
   const [validationMessage, setValidationMessage] = useState('');
+  const [anyFocused, setAnyFocused] = useState(false);
+  const blurTimer = useRef(null);
 
   const seedKeywords  = useMemo(() => parseWords(seedText,    3), [seedText]);
   const includeWords  = useMemo(() => parseWords(includeText, 5), [includeText]);
@@ -23,19 +25,43 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
     onSubmit({ seedKeywords, includeWords, excludeWords, highQuality });
   };
 
+  const handleFocusIn = () => {
+    clearTimeout(blurTimer.current);
+    setAnyFocused(true);
+  };
+  const handleFocusOut = () => {
+    blurTimer.current = setTimeout(() => setAnyFocused(false), 60);
+  };
+
   return (
-    <div className="mac-card px-4 py-4">
+    <div
+      style={{
+        width: '100%',
+        background: 'rgba(255,255,255,0.03)',
+        borderRadius: 18,
+        border: anyFocused
+          ? '1.5px solid rgba(10,180,255,0.60)'
+          : '1.5px solid rgba(255,255,255,0.10)',
+        boxShadow: anyFocused
+          ? '0 0 0 3px rgba(10,180,255,0.12), 0 0 40px rgba(10,180,255,0.22), 0 0 80px rgba(10,180,255,0.09)'
+          : '0 2px 20px rgba(0,0,0,0.4), 0 0 18px rgba(10,180,255,0.07), 0 0 48px rgba(10,180,255,0.04)',
+        transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
+        padding: '20px 22px 18px',
+      }}
+      onFocus={handleFocusIn}
+      onBlur={handleFocusOut}
+    >
       <form className="grid gap-3 xl:grid-cols-[1.1fr_1fr_1fr_auto]" onSubmit={submitExpansion}>
         <WordArea label="시드 키워드" helper={`${seedKeywords.length}/3`}
-          placeholder={"1줄에 1개 입력"}
+          placeholder="1줄에 1개 입력"
           value={seedText} onChange={setSeedText} disabled={loading} tall />
 
         <WordArea label="포함할 단어" helper={`${includeWords.length}/5`}
-          placeholder={""}
+          placeholder=""
           value={includeText} onChange={setIncludeText} disabled={loading} />
 
         <WordArea label="제외할 단어" helper={`${excludeWords.length}/5`}
-          placeholder={""}
+          placeholder=""
           value={excludeText} onChange={setExcludeText} disabled={loading} />
 
         <div className="flex flex-col justify-end gap-2">
@@ -71,6 +97,7 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
 }
 
 function WordArea({ label, helper, placeholder, value, onChange, disabled, tall = false }) {
+  const [focused, setFocused] = useState(false);
   return (
     <label className="block">
       <span
@@ -82,10 +109,23 @@ function WordArea({ label, helper, placeholder, value, onChange, disabled, tall 
       </span>
       <textarea
         className="mac-input"
-        style={{ resize: 'none', height: tall ? 108 : 94, fontSize: tall ? 15 : 13, padding: '10px 12px' }}
+        style={{
+          resize: 'none',
+          height: tall ? 108 : 94,
+          fontSize: tall ? 15 : 13,
+          padding: '10px 12px',
+          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+          ...(focused ? {
+            borderColor: 'rgba(10,180,255,0.65)',
+            boxShadow: '0 0 0 2px rgba(10,180,255,0.15)',
+            outline: 'none',
+          } : {}),
+        }}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         disabled={disabled}
       />
     </label>
