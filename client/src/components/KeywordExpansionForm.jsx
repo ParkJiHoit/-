@@ -55,7 +55,7 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
         <div className="grid gap-3 sm:grid-cols-3">
           <WordArea label="시드 키워드" helper={`${seedKeywords.length}/3`}
             placeholder="1줄에 1개 입력"
-            value={seedText} onChange={setSeedText} disabled={loading} tall />
+            value={seedText} onChange={setSeedText} disabled={loading} />
 
           <WordArea label="포함할 단어" helper={`${includeWords.length}/5`}
             placeholder=""
@@ -102,7 +102,7 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
   );
 }
 
-function WordArea({ label, helper, placeholder, value, onChange, disabled, tall = false }) {
+function WordArea({ label, helper, placeholder, value, onChange, disabled }) {
   const [focused, setFocused] = useState(false);
   return (
     <label className="block">
@@ -117,8 +117,8 @@ function WordArea({ label, helper, placeholder, value, onChange, disabled, tall 
         className="mac-input"
         style={{
           resize: 'none',
-          height: tall ? 108 : 94,
-          fontSize: tall ? 15 : 13,
+          height: 100,
+          fontSize: 13,
           padding: '10px 12px',
           transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           ...(focused ? {
