@@ -46,7 +46,7 @@ function catmullRom(pts, tension = 0.4) {
 }
 
 /* ─── Trend line chart ─── */
-function TrendChart({ data, loading }) {
+function TrendChart({ data, loading, keyword = '' }) {
   const [hoveredIdx, setHoveredIdx] = useState(null);
   const W = 560, H = 160;
   const pad = { t: 14, r: 10, b: 32, l: 34 };
@@ -73,11 +73,10 @@ function TrendChart({ data, loading }) {
 
   const ratios = data.map((d) => d.ratio);
   const maxR = Math.max(...ratios) || 1;
-  const minR = Math.min(...ratios);
-  const range = maxR - minR || 1;
 
+  // Y-axis always starts at 0 so visual scale is accurate
   const px = (i) => pad.l + (i / (data.length - 1)) * cW;
-  const py = (r) => pad.t + cH * (1 - (r - minR) / range);
+  const py = (r) => pad.t + cH * (1 - r / maxR);
   const pts = data.map((d, i) => [px(i), py(d.ratio)]);
 
   const linePath = catmullRom(pts);
@@ -86,8 +85,8 @@ function TrendChart({ data, loading }) {
   const step = Math.max(1, Math.floor(data.length / 5));
   const xIdxs = [...new Set([0, step, step * 2, step * 3, step * 4, data.length - 1])].filter(i => i < data.length);
   const yTicks = [0, 0.5, 1].map((r) => ({
-    py: pad.t + cH * (1 - r),
-    label: Math.round(minR + range * r),
+    gridY: pad.t + cH * (1 - r),
+    label: Math.round(maxR * r),
   }));
 
   const handleMouseMove = (e) => {
@@ -104,9 +103,11 @@ function TrendChart({ data, loading }) {
 
   const hovered = hoveredIdx !== null ? hoveredIdx : null;
   const [hx, hy] = hovered !== null ? pts[hovered] : [0, 0];
-  const tooltipW = 88;
+  const tooltipLabel = keyword || '검색량';
+  const tooltipW = Math.max(110, tooltipLabel.length * 10 + 64);
+  const tooltipH = 44;
   const tx = Math.min(Math.max(hx - tooltipW / 2, pad.l + 2), W - pad.r - tooltipW - 2);
-  const ty = Math.max(hy - 36, pad.t + 2);
+  const ty = Math.max(hy - tooltipH - 10, pad.t + 2);
 
   return (
     <svg
@@ -121,7 +122,7 @@ function TrendChart({ data, loading }) {
       </defs>
 
       {/* Grid lines */}
-      {yTicks.map(({ py: gridY, label }) => (
+      {yTicks.map(({ gridY, label }) => (
         <g key={gridY}>
           <line x1={pad.l} y1={gridY} x2={pad.l + cW} y2={gridY}
             stroke="var(--border)" strokeWidth="1" />
@@ -160,13 +161,20 @@ function TrendChart({ data, loading }) {
             stroke="var(--border)" strokeWidth="1" strokeDasharray="4,3" />
           <circle cx={hx} cy={hy} r={5}
             fill="var(--accent)" stroke="var(--bg-base)" strokeWidth="2.5" />
-          <rect x={tx} y={ty} width={tooltipW} height={24}
-            rx={8} fill="var(--bg-overlay)"
-            style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.35))' }}
+          <rect x={tx} y={ty} width={tooltipW} height={tooltipH}
+            rx={9} fill="var(--bg-overlay)"
+            style={{ filter: 'drop-shadow(0 2px 10px rgba(0,0,0,0.4))' }}
           />
-          <text x={tx + tooltipW / 2} y={ty + 15.5}
-            textAnchor="middle" fontSize="10.5" fontWeight="600" fill="var(--text-primary)">
-            {data[hovered].period.slice(5)} · {data[hovered].ratio.toFixed(1)}
+          {/* Date line */}
+          <text x={tx + 11} y={ty + 14}
+            fontSize="10" fill="var(--text-tertiary)" fontWeight="500">
+            {data[hovered].period.slice(5)}
+          </text>
+          {/* Dot + keyword: value */}
+          <circle cx={tx + 14} cy={ty + 29} r={4} fill="var(--accent)" />
+          <text x={tx + 23} y={ty + 33}
+            fontSize="10.5" fontWeight="700" fill="var(--text-primary)">
+            {tooltipLabel}: {Math.round(data[hovered].ratio)}회
           </text>
         </g>
       )}
@@ -179,8 +187,8 @@ function VBarChart({ items, loading, height = 110, count = 7, unit = '' }) {
   const [hoveredKey, setHoveredKey] = useState(null);
   const LABEL_H = 20;
   const BAR_AREA = height - LABEL_H;
-  const MAX_BAR_W = 52;
-  const GAP = 6;
+  const MAX_BAR_W = 36;
+  const GAP = 4;
 
   if (loading) {
     const placeholders = [72, 100, 85, 55, 78, 45, 60].slice(0, count);
@@ -418,13 +426,13 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
           <Label>검색 트렌드 (최근 30일)</Label>
-          <TrendChart data={insights?.trend} loading={insightsLoading} />
+          <TrendChart data={insights?.trend} loading={insightsLoading} keyword={baseKeyword} />
         </div>
 
         {/* Right: demographics */}
         <div style={{
-          flex: '1 1 220px', padding: '20px 22px',
-          display: 'flex', flexDirection: 'column', gap: 26,
+          flex: '1 1 180px', maxWidth: 210, padding: '20px 14px',
+          display: 'flex', flexDirection: 'column', gap: 22,
           minWidth: 0,
         }}>
 
