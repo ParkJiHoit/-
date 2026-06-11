@@ -542,6 +542,32 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
   ];
   const activePeriod = PERIOD_OPTIONS.find((p) => p.key === trendPeriod) || PERIOD_OPTIONS[0];
 
+  // Dynamic right-side stats for the trend chart header
+  const periodStats = (() => {
+    if (trendPeriod === 'daily') {
+      if (weekSum == null) return null;
+      return { label: '주간 검색량 합계', value: weekSum.toFixed(0), change: weekChange, compareLabel: '전주 대비' };
+    }
+    if (trendPeriod === 'monthly') {
+      const d = insights?.trendMonthly;
+      if (!d?.length) return null;
+      const last = d[d.length - 1];
+      const prev = d.length >= 2 ? d[d.length - 2] : null;
+      const month = parseInt(last.period.slice(5, 7), 10);
+      const change = prev?.ratio > 0 ? ((last.ratio - prev.ratio) / prev.ratio) * 100 : null;
+      return { label: `${month}월 검색량 합계`, value: last.ratio.toFixed(0), change, compareLabel: '전월 대비' };
+    }
+    if (trendPeriod === 'yearly') {
+      if (!yearlyData.length) return null;
+      const last = yearlyData[yearlyData.length - 1];
+      const prev = yearlyData.length >= 2 ? yearlyData[yearlyData.length - 2] : null;
+      const yr = last.period.slice(2);
+      const change = prev?.ratio > 0 ? ((last.ratio - prev.ratio) / prev.ratio) * 100 : null;
+      return { label: `${yr}년 검색량 합계`, value: last.ratio.toFixed(0), change, compareLabel: '전년 대비' };
+    }
+    return null;
+  })();
+
   const genderItems = insights?.gender != null
     ? [
         { label: '남성', value: insights.gender.male,   color: 'var(--accent)' },
@@ -627,25 +653,24 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
                 ))}
               </div>
             </div>
-            {/* Weekly stats — only shown in daily mode */}
-            {trendPeriod === 'daily' && weekSum != null && (
+            {/* Period-aware right stats */}
+            {periodStats ? (
               <div style={{ textAlign: 'right' }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text-primary)' }}>
-                  주간 검색량 합계 {weekSum.toFixed(0)}
+                  {periodStats.label} {periodStats.value}
                 </p>
-                {weekChange != null && (
-                  <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 600, color: weekChange >= 0 ? '#30D158' : '#FF375F' }}>
-                    {weekChange >= 0 ? '▲' : '▼'} {Math.abs(weekChange).toFixed(1)}% 전주 대비
+                {periodStats.change != null && (
+                  <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 600, color: periodStats.change >= 0 ? '#30D158' : '#FF375F' }}>
+                    {periodStats.change >= 0 ? '▲' : '▼'} {Math.abs(periodStats.change).toFixed(1)}% {periodStats.compareLabel}
                   </p>
                 )}
               </div>
-            )}
-            {trendPeriod === 'daily' && weekSum == null && insightsLoading && (
-              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <Skeleton height={14} width={100} radius={4} />
-                <Skeleton height={10} width={70} radius={4} />
+            ) : insightsLoading ? (
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-end' }}>
+                <Skeleton height={14} width={110} radius={4} />
+                <Skeleton height={10} width={75} radius={4} />
               </div>
-            )}
+            ) : null}
           </div>
           <div style={{ overflow: 'hidden' }}>
             <TrendChart data={activePeriod.data} loading={insightsLoading} keyword={baseKeyword} />
