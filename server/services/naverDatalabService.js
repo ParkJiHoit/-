@@ -24,15 +24,24 @@ function assertCredentials() {
 
 async function datalabPost(body) {
   assertCredentials();
-  const { data } = await axios.post(DATALAB_URL, body, {
-    headers: {
-      'X-Naver-Client-Id': process.env.NAVER_OPEN_API_CLIENT_ID,
-      'X-Naver-Client-Secret': process.env.NAVER_OPEN_API_CLIENT_SECRET,
-      'Content-Type': 'application/json',
-    },
-    timeout: 12000,
-  });
-  return data;
+  try {
+    const { data } = await axios.post(DATALAB_URL, body, {
+      headers: {
+        'X-Naver-Client-Id': process.env.NAVER_OPEN_API_CLIENT_ID,
+        'X-Naver-Client-Secret': process.env.NAVER_OPEN_API_CLIENT_SECRET,
+        'Content-Type': 'application/json',
+      },
+      timeout: 12000,
+    });
+    return data;
+  } catch (err) {
+    console.error(
+      '[DataLab] API 오류',
+      err.response?.status,
+      JSON.stringify(err.response?.data ?? err.message)
+    );
+    throw err;
+  }
 }
 
 function getDateRange(days = 90) {
@@ -43,16 +52,16 @@ function getDateRange(days = 90) {
   return { startDate: fmt(start), endDate: fmt(end) };
 }
 
-function avgRatio(results) {
-  const data = results?.[0]?.data;
+function safeAvgRatio(settled) {
+  if (settled.status !== 'fulfilled') return 0;
+  const data = settled.value?.results?.[0]?.data;
   if (!data?.length) return 0;
   return data.reduce((s, d) => s + (d.ratio || 0), 0) / data.length;
 }
 
 function getDow(dateStr) {
-  // "YYYY-MM-DD" → 0(Sun)…6(Sat)
   const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d).getDay();
+  return new Date(y, m - 1, d).getDay(); // 0=Sun..6=Sat
 }
 
 export async function analyzeKeywordInsights(keyword) {
@@ -64,9 +73,8 @@ export async function analyzeKeywordInsights(keyword) {
 
   const { startDate, endDate } = getDateRange(90);
   const keywordGroups = [{ groupName: 'kw', keywords: [keyword] }];
-  const base = { startDate, endDate, keywordGroups, timeUnit: 'date' };
+  const base = { startDate, endDate, keywordGroups, timeUnit: 'date', device: '' };
 
-  // Naver age codes: 2=13~18, 3=19~24, 4=25~29, 5=30~34, 6=35~39, 7=40~44, 8=45~49, 9=50~54, 10=55~59, 11=60+
   const AGE_GROUPS = [
     { label: '10대', ages: ['2'] },
     { label: '20대', ages: ['3', '4'] },
@@ -75,27 +83,29 @@ export async function analyzeKeywordInsights(keyword) {
     { label: '50대+', ages: ['9', '10', '11'] },
   ];
 
-  // 8 parallel calls: 1 trend + 2 gender + 5 age
-  const [trendRes, maleRes, femaleRes, ...ageRes] = await Promise.all([
+  // allSettled: partial failures don't kill the whole response
+  const settled = await Promise.allSettled([
     datalabPost(base),
     datalabPost({ ...base, gender: 'm' }),
     datalabPost({ ...base, gender: 'f' }),
     ...AGE_GROUPS.map((g) => datalabPost({ ...base, ages: g.ages })),
   ]);
 
-  // Trend (daily, 90 data points)
-  const trend = (trendRes.results?.[0]?.data || []).map((d) => ({
-    period: d.period,
-    ratio: d.ratio,
-  }));
+  const [trendSettled, maleSettled, femaleSettled, ...ageSettled] = settled;
 
-  // Day-of-week: group daily ratios by weekday, Mon-first display order
+  // Trend (daily)
+  const rawTrend = trendSettled.status === 'fulfilled'
+    ? (trendSettled.value?.results?.[0]?.data || [])
+    : [];
+  const trend = rawTrend.map((d) => ({ period: d.period, ratio: d.ratio }));
+
+  // Day-of-week (Mon=0..Sun=6 for display)
   const DOW_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
   const sums = new Array(7).fill(0);
   const counts = new Array(7).fill(0);
   trend.forEach(({ period, ratio }) => {
-    const jsDay = getDow(period); // 0=Sun..6=Sat
-    const idx = jsDay === 0 ? 6 : jsDay - 1; // Mon=0..Sun=6
+    const jsDay = getDow(period);
+    const idx = jsDay === 0 ? 6 : jsDay - 1;
     sums[idx] += ratio;
     counts[idx]++;
   });
@@ -105,8 +115,8 @@ export async function analyzeKeywordInsights(keyword) {
   }));
 
   // Gender
-  const maleAvg = avgRatio(maleRes.results);
-  const femaleAvg = avgRatio(femaleRes.results);
+  const maleAvg = safeAvgRatio(maleSettled);
+  const femaleAvg = safeAvgRatio(femaleSettled);
   const gTotal = maleAvg + femaleAvg || 1;
   const gender = {
     male: Math.round((maleAvg / gTotal) * 100),
@@ -114,15 +124,26 @@ export async function analyzeKeywordInsights(keyword) {
   };
 
   // Age
-  const ageRatios = ageRes.map((res, i) => ({
+  const ageRatios = ageSettled.map((s, i) => ({
     label: AGE_GROUPS[i].label,
-    value: avgRatio(res.results),
+    value: safeAvgRatio(s),
   }));
   const aTotal = ageRatios.reduce((s, a) => s + a.value, 0) || 1;
   const age = ageRatios.map((a) => ({
     label: a.label,
     pct: Math.round((a.value / aTotal) * 100),
   }));
+
+  // If all calls failed, propagate a clear error so the client can show guidance
+  if (!trend.length && maleAvg === 0 && femaleAvg === 0 && aTotal === 1) {
+    const firstError = settled.find((s) => s.status === 'rejected');
+    const msg = firstError?.reason?.response?.data?.errorMessage
+      || firstError?.reason?.message
+      || 'DataLab API 오류';
+    const e = new Error(msg);
+    e.status = firstError?.reason?.response?.status || 500;
+    throw e;
+  }
 
   const data = { keyword, trend, dayOfWeek, gender, age };
   insightCache.set(cacheKey, { createdAt: Date.now(), data });

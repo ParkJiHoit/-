@@ -246,6 +246,7 @@ export default function App() {
   const [blogAnalysis, setBlogAnalysis] = useState(null);
   const [insights, setInsights]         = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError]     = useState(null);
   const [filters,  setFilters]          = useState(defaultFilters);
   const [sortConfig, setSortConfig]     = useState({ key: 'efficiencyScore', direction: 'desc' });
   const [visibleColumns, setVisibleColumns] = useState(getInitialVisibleColumns);
@@ -319,11 +320,18 @@ export default function App() {
   const fetchInsights = useCallback(async (keyword) => {
     setInsightsLoading(true);
     setInsights(null);
+    setInsightsError(null);
     try {
       const res = await fetch(`/api/keywords/insights?keyword=${encodeURIComponent(keyword)}`);
-      if (!res.ok) return;
-      setInsights(await res.json());
-    } catch { /* fail silently — insights are non-critical */ } finally {
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setInsightsError(data?.message || `DataLab API 오류 (${res.status})`);
+        return;
+      }
+      setInsights(data);
+    } catch (e) {
+      setInsightsError(e.message || '네트워크 오류');
+    } finally {
       setInsightsLoading(false);
     }
   }, []);
@@ -394,7 +402,7 @@ export default function App() {
 
   const switchTab = (next) => {
     setActiveTab(next); setError(''); setFilters(defaultFilters);
-    setInsights(null); setInsightsLoading(false);
+    setInsights(null); setInsightsLoading(false); setInsightsError(null);
     if (next === 'analysis')  setSortConfig({ key: 'efficiencyScore',  direction: 'desc' });
     if (next === 'expansion') setSortConfig({ key: 'discoveryScore',  direction: 'desc' });
   };
@@ -404,6 +412,7 @@ export default function App() {
     setAnalysis(null);
     setInsights(null);
     setInsightsLoading(false);
+    setInsightsError(null);
     setError('');
     setFilters(defaultFilters);
     setSortConfig({ key: 'efficiencyScore', direction: 'desc' });
@@ -473,6 +482,7 @@ export default function App() {
                 }
                 insights={insights}
                 insightsLoading={insightsLoading}
+                insightsError={insightsError}
               />
             )}
             {activeTab === 'analysis' && (

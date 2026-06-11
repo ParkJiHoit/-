@@ -101,15 +101,18 @@ function TrendChart({ data, loading }) {
 }
 
 /* ─── Vertical bar chart ─── */
-function VBarChart({ items, loading, height = 68 }) {
-  const barH = height - 18;
+function VBarChart({ items, loading, height = 80 }) {
+  const barAreaH = height - 20;
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height }}>
-        {[55, 90, 70, 40, 65, 45, 30].slice(0, 7).map((h, i) => (
-          <div key={i} style={{ flex: 1 }}>
-            <Skeleton height={Math.round((h / 100) * barH)} radius={3} />
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height }}>
+        {[55, 90, 70, 40, 65, 45, 30].slice(0, items?.length || 7).map((h, i) => (
+          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: '100%' }}>
+              <Skeleton height={Math.round((h / 100) * barAreaH)} radius={3} />
+            </div>
+            <Skeleton height={8} width="80%" radius={2} />
           </div>
         ))}
       </div>
@@ -118,22 +121,29 @@ function VBarChart({ items, loading, height = 68 }) {
 
   if (!items?.length) return null;
 
-  const max = Math.max(...items.map((i) => i.value), 1);
+  const max = Math.max(...items.map((i) => i.value ?? i.pct ?? 0), 1);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height }}>
-      {items.map(({ label, value }) => {
-        const isMax = value === max;
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height }}>
+      {items.map(({ label, value, pct }) => {
+        const v = value ?? pct ?? 0;
+        const ratio = v / max;
+        const isMax = v === max;
+        const barH = Math.max(3, Math.round(ratio * barAreaH));
         return (
           <div key={label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
             <div style={{
               width: '100%',
-              height: Math.max(2, Math.round((value / max) * barH)),
-              background: 'var(--accent)',
-              opacity: isMax ? 0.90 : 0.32,
+              height: barH,
+              background: isMax
+                ? 'var(--accent)'
+                : 'color-mix(in srgb, var(--accent) 40%, transparent)',
               borderRadius: '3px 3px 0 0',
+              transition: 'height 0.4s ease',
             }} />
-            <span style={{ fontSize: 10, color: 'var(--text-tertiary)', lineHeight: 1 }}>{label}</span>
+            <span style={{ fontSize: 10, color: 'var(--text-tertiary)', lineHeight: 1, textAlign: 'center', whiteSpace: 'nowrap' }}>
+              {label}
+            </span>
           </div>
         );
       })}
@@ -153,10 +163,10 @@ function GenderChart({ data, loading }) {
       {rows.map(({ label, pct, color }) => (
         <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ width: 26, fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0 }}>{label}</span>
-          <div style={{ flex: 1, height: 5, background: 'var(--bg-overlay)', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{ flex: 1, height: 6, background: 'var(--bg-overlay)', borderRadius: 99, overflow: 'hidden' }}>
             {loading
-              ? <Skeleton height={5} radius={99} />
-              : <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99 }} />
+              ? <Skeleton height={6} radius={99} />
+              : <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 99, transition: 'width 0.4s ease' }} />
             }
           </div>
           <span style={{ width: 30, fontSize: 11, color: 'var(--text-secondary)', textAlign: 'right', flexShrink: 0 }}>
@@ -168,8 +178,36 @@ function GenderChart({ data, loading }) {
   );
 }
 
+/* ─── Error notice ─── */
+function InsightsErrorNotice({ message }) {
+  const isPermissionError = message?.includes('401') || message?.includes('403') ||
+    message?.includes('permission') || message?.includes('오픈API 권한') ||
+    message?.includes('인증') || message?.includes('403');
+
+  return (
+    <div style={{
+      padding: '14px 18px',
+      borderBottom: '1px solid var(--border)',
+      background: 'rgba(255, 149, 0, 0.06)',
+      display: 'flex', alignItems: 'flex-start', gap: 10,
+    }}>
+      <span style={{ fontSize: 14, lineHeight: 1, marginTop: 1, flexShrink: 0 }}>⚠️</span>
+      <div>
+        <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+          트렌드 데이터를 불러올 수 없습니다
+        </p>
+        <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
+          {isPermissionError
+            ? '네이버 개발자 센터 → 내 애플리케이션 → 사용 API에서 "데이터랩(검색어트렌드)"를 추가해 주세요.'
+            : message}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Panel ─── */
-export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading }) {
+export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError }) {
   const kpis = [
     { label: '월간 총 검색량', value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—' },
     { label: 'PC 검색량',     value: keywordRow ? formatNumber(keywordRow.monthlyPcSearch) : '—' },
@@ -204,6 +242,9 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         ))}
       </div>
 
+      {/* Error notice (shown when DataLab call failed) */}
+      {insightsError && !insightsLoading && <InsightsErrorNotice message={insightsError} />}
+
       {/* Charts row */}
       <div style={{ display: 'flex', flexWrap: 'wrap' }}>
         {/* Left: trend */}
@@ -218,13 +259,13 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
         {/* Right: demographics */}
         <div style={{
-          flex: '1 1 180px', padding: '18px 20px',
-          display: 'flex', flexDirection: 'column', gap: 20,
+          flex: '1 1 200px', padding: '18px 20px',
+          display: 'flex', flexDirection: 'column', gap: 22,
           minWidth: 0,
         }}>
           <div>
             <Label>요일별 검색 분포</Label>
-            <VBarChart items={insights?.dayOfWeek} loading={insightsLoading} height={72} />
+            <VBarChart items={insights?.dayOfWeek} loading={insightsLoading} height={80} />
           </div>
 
           <div>
@@ -237,7 +278,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             <VBarChart
               items={insights?.age?.map((a) => ({ label: a.label, value: a.pct }))}
               loading={insightsLoading}
-              height={72}
+              height={80}
             />
           </div>
         </div>
