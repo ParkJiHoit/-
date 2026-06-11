@@ -448,7 +448,7 @@ export default function App() {
       </HeroSection>
 
       {/* Results */}
-      <div className="mx-auto w-full max-w-[1560px] px-5 pb-20 lg:px-8">
+      <div className="mx-auto w-full max-w-[1560px] px-6 pb-20 lg:px-14">
         {loading && (
           <div className="mb-5">
             <LoadingRow label={

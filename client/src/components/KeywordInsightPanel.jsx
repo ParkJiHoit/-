@@ -491,34 +491,49 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       {/* Error banner */}
       {insightsError && !insightsLoading && <InsightsErrorNotice message={insightsError} />}
 
-      {/* Trend chart — full width */}
-      <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)' }}>
-        <Label>일별 트렌드 추이</Label>
-        <div style={{ overflow: 'hidden' }}>
-          <TrendChart data={insights?.trend} loading={insightsLoading} keyword={baseKeyword} />
-        </div>
-      </div>
+      {/* 3-column charts row: trend | news | demographics */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch' }}>
 
-      {/* News / Blog — between trend and demographics */}
-      <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--border)' }}>
-        <Label>관련 기사 · 블로그</Label>
-        <NewsSection items={insights?.news} loading={insightsLoading} />
-      </div>
+        {/* Col 1: Trend chart */}
+        <div style={{
+          flex: '2 1 300px', padding: '20px 22px',
+          borderRight: '1px solid var(--border)', minWidth: 0,
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <Label>일별 트렌드 추이</Label>
+          <div style={{ overflow: 'hidden' }}>
+            <TrendChart data={insights?.trend} loading={insightsLoading} keyword={baseKeyword} />
+          </div>
+        </div>
 
-      {/* Demographics — horizontal row */}
-      <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 160px', padding: '16px 18px', borderRight: '1px solid var(--border)', minWidth: 0 }}>
-          <Label>요일별 검색 분포</Label>
-          <VBarChart items={insights?.dayOfWeek} loading={insightsLoading} height={100} count={7} unit="" />
+        {/* Col 2: News / Blog */}
+        <div style={{
+          flex: '1.5 1 200px', padding: '20px 18px',
+          borderRight: '1px solid var(--border)', minWidth: 0,
+        }}>
+          <Label>관련 기사 · 블로그</Label>
+          <NewsSection items={insights?.news} loading={insightsLoading} />
         </div>
-        <div style={{ flex: '0 0 160px', padding: '16px 18px', borderRight: '1px solid var(--border)' }}>
-          <Label>성별 분포</Label>
-          <GenderBars gender={insights?.gender} loading={insightsLoading} />
+
+        {/* Col 3: Demographics */}
+        <div style={{
+          flex: '1 1 160px', maxWidth: 210, padding: '20px 14px',
+          display: 'flex', flexDirection: 'column', gap: 22, minWidth: 0,
+        }}>
+          <div>
+            <Label>요일별 검색 분포</Label>
+            <VBarChart items={insights?.dayOfWeek} loading={insightsLoading} height={110} count={7} unit="" />
+          </div>
+          <div>
+            <Label>성별 분포</Label>
+            <GenderBars gender={insights?.gender} loading={insightsLoading} />
+          </div>
+          <div>
+            <Label>연령별 분포</Label>
+            <VBarChart items={ageItems} loading={insightsLoading} height={110} count={5} unit="%" />
+          </div>
         </div>
-        <div style={{ flex: '1 1 160px', padding: '16px 18px', minWidth: 0 }}>
-          <Label>연령별 분포</Label>
-          <VBarChart items={ageItems} loading={insightsLoading} height={100} count={5} unit="%" />
-        </div>
+
       </div>
     </section>
   );
