@@ -46,7 +46,7 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
           ? '0 0 0 3px rgba(10,180,255,0.12), 0 0 40px rgba(10,180,255,0.22), 0 0 80px rgba(10,180,255,0.09)'
           : '0 2px 20px rgba(0,0,0,0.4), 0 0 18px rgba(10,180,255,0.07), 0 0 48px rgba(10,180,255,0.04)',
         transition: 'box-shadow 0.3s ease, border-color 0.3s ease',
-        padding: '20px 22px 18px',
+        padding: '22px',
       }}
       onFocus={handleFocusIn}
       onBlur={handleFocusOut}
@@ -66,37 +66,38 @@ export default function KeywordExpansionForm({ onSubmit, loading }) {
             value={excludeText} onChange={setExcludeText} disabled={loading} />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginTop: 14 }}>
-          <label
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              fontSize: 13, color: 'var(--text-secondary)',
-              cursor: 'pointer', userSelect: 'none',
-            }}
-          >
-            <input
-              className="mac-checkbox"
-              type="checkbox"
-              checked={highQuality}
-              onChange={(e) => setHighQuality(e.target.checked)}
-              disabled={loading}
-            />
-            고성능 확장
-          </label>
-          <button className="mac-btn" type="submit" disabled={loading} style={{ height: 38, padding: '0 20px' }}>
-            <Rocket className="h-4 w-4" />
-            {loading ? '확장 중' : '확장하기'}
-          </button>
+        {validationMessage && (
+          <p style={{ fontSize: 12, color: 'var(--destructive)', margin: '8px 0 0' }}>{validationMessage}</p>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 14 }}>
+          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: 0, lineHeight: 1.5 }}>
+            시드 키워드 최대 3개, 포함/제외 단어 최대 5개 — 줄바꿈 또는 쉼표로 구분
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <label
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                fontSize: 13, color: 'var(--text-secondary)',
+                cursor: 'pointer', userSelect: 'none',
+              }}
+            >
+              <input
+                className="mac-checkbox"
+                type="checkbox"
+                checked={highQuality}
+                onChange={(e) => setHighQuality(e.target.checked)}
+                disabled={loading}
+              />
+              고성능 확장
+            </label>
+            <button className="mac-btn" type="submit" disabled={loading} style={{ height: 38, padding: '0 20px' }}>
+              <Rocket className="h-4 w-4" />
+              {loading ? '확장 중' : '확장하기'}
+            </button>
+          </div>
         </div>
       </form>
-
-      {validationMessage && (
-        <p style={{ fontSize: 12, color: 'var(--destructive)', marginTop: 8 }}>{validationMessage}</p>
-      )}
-
-      <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 10, lineHeight: 1.6 }}>
-        시드 키워드 최대 3개, 포함/제외 단어 최대 5개 — 줄바꿈 또는 쉼표로 구분
-      </p>
     </div>
   );
 }
