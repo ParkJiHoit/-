@@ -134,14 +134,15 @@ export async function analyzeKeywordInsights(keyword) {
     pct: Math.round((a.value / aTotal) * 100),
   }));
 
-  // If all calls failed, propagate a clear error so the client can show guidance
-  if (!trend.length && maleAvg === 0 && femaleAvg === 0 && aTotal === 1) {
-    const firstError = settled.find((s) => s.status === 'rejected');
-    const msg = firstError?.reason?.response?.data?.errorMessage
-      || firstError?.reason?.message
+  // If every single call failed, propagate a clear error so the client shows guidance
+  const allFailed = settled.every((s) => s.status === 'rejected');
+  if (allFailed) {
+    const firstError = settled[0]?.reason;
+    const msg = firstError?.response?.data?.errorMessage
+      || firstError?.message
       || 'DataLab API 오류';
     const e = new Error(msg);
-    e.status = firstError?.reason?.response?.status || 500;
+    e.status = firstError?.response?.status || 500;
     throw e;
   }
 
