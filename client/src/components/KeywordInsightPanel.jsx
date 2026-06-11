@@ -48,7 +48,7 @@ function catmullRom(pts, tension = 0.4) {
 /* ─── Trend line chart ─── */
 function TrendChart({ data, loading, keyword = '' }) {
   const [hoveredIdx, setHoveredIdx] = useState(null);
-  const W = 560, H = 210;
+  const W = 560, H = 240;
   const pad = { t: 14, r: 10, b: 32, l: 34 };
   const cW = W - pad.l - pad.r;
   const cH = H - pad.t - pad.b;
@@ -450,11 +450,10 @@ function InsightsErrorNotice({ message }) {
 /* ─── Main Panel ─── */
 export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError }) {
   const kpis = [
-    { label: '월간 총 검색량', value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—' },
-    { label: 'PC 검색량',     value: keywordRow ? formatNumber(keywordRow.monthlyPcSearch) : '—' },
-    { label: '모바일 검색량',  value: keywordRow ? formatNumber(keywordRow.monthlyMobileSearch) : '—' },
-    { label: '모바일 비중',    value: keywordRow ? formatPercent(keywordRow.mobileRatio) : '—' },
-    { label: '효율 점수',     value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—' },
+    { label: '총 검색량',   value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—' },
+    { label: '모바일 비중', value: keywordRow ? formatPercent(keywordRow.mobileRatio) : '—' },
+    { label: '평균 CTR',   value: keywordRow ? formatPercent(keywordRow.averageCtr) : '—' },
+    { label: '효율 점수',  value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—' },
   ];
 
   const genderItems = insights?.gender != null
@@ -475,15 +474,23 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         }
       `}</style>
 
-      {/* KPI strip */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
-        {kpis.map(({ label, value }, i) => (
+      {/* KPI cards */}
+      <div style={{
+        display: 'flex', gap: 12, padding: '16px 20px',
+        borderBottom: '1px solid var(--border)',
+      }}>
+        {kpis.map(({ label, value }) => (
           <div key={label} style={{
-            flex: 1, padding: '16px 18px',
-            borderRight: i < kpis.length - 1 ? '1px solid var(--border)' : 'none',
+            flex: 1,
+            padding: '18px 14px',
+            background: 'var(--bg-overlay)',
+            border: '1px solid var(--border)',
+            borderRadius: 14,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
           }}>
-            <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 5px', fontWeight: 500 }}>{label}</p>
-            <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: 0 }}>{value}</p>
+            <p style={{ fontSize: 10.5, color: 'var(--text-secondary)', margin: 0, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{label}</p>
+            <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: 0 }}>{value}</p>
           </div>
         ))}
       </div>
@@ -496,9 +503,9 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
         {/* Col 1: Trend chart */}
         <div style={{
-          flex: '2 1 300px', padding: '20px 22px',
+          flex: '2 1 300px', padding: '24px 28px',
           borderRight: '1px solid var(--border)', minWidth: 0,
-          display: 'flex', flexDirection: 'column',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
           <Label>일별 트렌드 추이</Label>
           <div style={{ overflow: 'hidden' }}>
