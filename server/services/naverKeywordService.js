@@ -247,6 +247,36 @@ function sortKeywordRows(baseKeyword, rows, sortMode = 'analysis') {
   });
 }
 
+/**
+ * Derives additional hint keywords for broader API coverage.
+ * Uses proportional character-prefix splits — no hardcoded vocabulary.
+ *
+ * Korean compound keywords form as [entity] + [descriptor]:
+ *   "옆커폰창업" → prefix at 60% = "옆커폰" → reveals the entire keyword family
+ *   "소자본창업1000만원" → prefix at 60% = "소자본창업" → meaningful unit
+ *
+ * Searching only at these breakpoints keeps API calls to ≤3 while covering
+ * the head morpheme that indexes the broader family.
+ */
+function deriveAnalysisHints(keyword) {
+  const clean = sanitizeNaverHintKeyword(keyword);
+  if (!clean) return [];
+
+  const hints = new Set([clean]);
+  const len = clean.length;
+
+  if (len >= 4) {
+    for (const ratio of [0.6, 0.45]) {
+      const prefixLen = Math.round(len * ratio);
+      if (prefixLen >= 2 && prefixLen < len) {
+        hints.add(clean.slice(0, prefixLen));
+      }
+    }
+  }
+
+  return [...hints];
+}
+
 function containsAny(keyword, words) {
   const normalizedKeyword = normalizeText(keyword);
   return words.some((word) => normalizedKeyword.includes(normalizeText(word)));
@@ -273,7 +303,16 @@ function normalizeWordList(words) {
 
 export async function analyzeKeyword(baseKeyword) {
   try {
-    const rawKeywords = await fetchNaverKeywordTool(baseKeyword);
+    const hints = deriveAnalysisHints(baseKeyword);
+
+    const responses = await Promise.all(
+      hints.map(async (hint) => ({
+        hint,
+        rows: await fetchNaverKeywordTool(hint)
+      }))
+    );
+
+    const rawKeywords = responses.flatMap(({ rows }) => rows);
     const normalizedRows = dedupeKeywords(rawKeywords.map((row) => normalizeKeywordRow(row, baseKeyword)));
     const keywords = sortKeywordRows(baseKeyword, normalizedRows);
 
