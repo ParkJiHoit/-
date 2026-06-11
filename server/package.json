@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "refresh-history": "node jobs/refreshKeywordHistory.js"
+    "refresh-history": "node jobs/refreshKeywordHistory.js",
+    "seed": "node jobs/seedKeywordHistory.js"
   },
   "dependencies": {
     "axios": "^1.7.9",
