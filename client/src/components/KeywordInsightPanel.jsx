@@ -57,7 +57,7 @@ function weeklyAggregate(trend) {
   return result;
 }
 
-/* ─── Yearly aggregate helper (monthly data → per-year average) ─── */
+/* ─── Yearly aggregate helper (monthly data → per-year average + sum) ─── */
 function aggregateByYear(monthlyData) {
   if (!monthlyData?.length) return [];
   const map = new Map();
@@ -67,7 +67,7 @@ function aggregateByYear(monthlyData) {
     const e = map.get(yr); e.sum += d.ratio; e.n++;
   });
   return Array.from(map.entries())
-    .map(([period, { sum, n }]) => ({ period, ratio: sum / n }))
+    .map(([period, { sum, n }]) => ({ period, ratio: sum / n, sum }))
     .sort((a, b) => a.period.localeCompare(b.period));
 }
 
@@ -113,7 +113,7 @@ function computeTrendStats(trend) {
   const prevWeekSum = prevWeek.reduce((s, d) => s + d.ratio, 0);
   const weekChange = prevWeekSum > 0 ? ((weekSum - prevWeekSum) / prevWeekSum) * 100 : null;
 
-  return { changePercent, weekSum, weekChange };
+  return { changePercent, weekSum, prevWeekSum, weekChange };
 }
 
 /* ─── Trend line chart ─── */
@@ -528,7 +528,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
     { label: '효율 점수',  value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—' },
   ];
 
-  const { changePercent, weekSum, weekChange } = computeTrendStats(insights?.trend);
+  const { changePercent, weekSum, prevWeekSum, weekChange } = computeTrendStats(insights?.trend);
 
   // Weekly-aggregated sparkline data (90 daily → ~13 weekly points, much smoother)
   const sparklineData = weeklyAggregate(insights?.trend);
@@ -542,28 +542,62 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
   ];
   const activePeriod = PERIOD_OPTIONS.find((p) => p.key === trendPeriod) || PERIOD_OPTIONS[0];
 
-  // Dynamic right-side stats for the trend chart header
+  // Dynamic right-side stats — always shows PREVIOUS period, all values from real API data
   const periodStats = (() => {
     if (trendPeriod === 'daily') {
-      if (weekSum == null) return null;
-      return { label: '주간 검색량 합계', value: weekSum.toFixed(0), change: weekChange, compareLabel: '전주 대비' };
+      // Previous week = trend.slice(-14, -7); current week = trend.slice(-7)
+      if (!prevWeekSum) return null;
+      return {
+        label: '전주 검색량 합계',
+        value: Math.round(prevWeekSum).toString(),
+        change: weekChange,
+        compareLabel: '전주 대비',
+      };
     }
     if (trendPeriod === 'monthly') {
-      const d = insights?.trendMonthly;
+      // Sum daily ratios for the previous calendar month from 90-day trend data
+      const d = insights?.trend;
       if (!d?.length) return null;
-      const last = d[d.length - 1];
-      const prev = d.length >= 2 ? d[d.length - 2] : null;
-      const month = parseInt(last.period.slice(5, 7), 10);
-      const change = prev?.ratio > 0 ? ((last.ratio - prev.ratio) / prev.ratio) * 100 : null;
-      return { label: `${month}월 검색량 합계`, value: last.ratio.toFixed(0), change, compareLabel: '전월 대비' };
+      const now = new Date();
+      const prevM = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+      const prevMYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+      const prevData = d.filter((pt) => {
+        const dt = new Date(pt.period);
+        return dt.getFullYear() === prevMYear && dt.getMonth() === prevM;
+      });
+      const currData = d.filter((pt) => {
+        const dt = new Date(pt.period);
+        return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth();
+      });
+      if (!prevData.length) return null;
+      const prevSum = prevData.reduce((s, pt) => s + pt.ratio, 0);
+      const currSum = currData.reduce((s, pt) => s + pt.ratio, 0);
+      const change = prevSum > 0 ? ((currSum - prevSum) / prevSum) * 100 : null;
+      return {
+        label: '전월 검색량 합계',
+        value: Math.round(prevSum).toString(),
+        change,
+        compareLabel: '전월 대비',
+      };
     }
     if (trendPeriod === 'yearly') {
+      // Sum monthly ratios for the previous calendar year from yearlyData
       if (!yearlyData.length) return null;
-      const last = yearlyData[yearlyData.length - 1];
-      const prev = yearlyData.length >= 2 ? yearlyData[yearlyData.length - 2] : null;
-      const yr = last.period.slice(2);
-      const change = prev?.ratio > 0 ? ((last.ratio - prev.ratio) / prev.ratio) * 100 : null;
-      return { label: `${yr}년 검색량 합계`, value: last.ratio.toFixed(0), change, compareLabel: '전년 대비' };
+      const now = new Date();
+      const prevYear = (now.getFullYear() - 1).toString();
+      const currYear = now.getFullYear().toString();
+      const prevEntry = yearlyData.find((d) => d.period === prevYear);
+      const currEntry = yearlyData.find((d) => d.period === currYear);
+      if (!prevEntry) return null;
+      const prevSum = Math.round(prevEntry.sum ?? 0);
+      const currSum = Math.round(currEntry?.sum ?? 0);
+      const change = prevSum > 0 ? ((currSum - prevSum) / prevSum) * 100 : null;
+      return {
+        label: '전년 검색량 합계',
+        value: prevSum.toString(),
+        change,
+        compareLabel: '전년 대비',
+      };
     }
     return null;
   })();
