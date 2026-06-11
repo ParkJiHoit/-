@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { analyzeKeywordInsights } from '../services/naverDatalabService.js';
 import { analyzeKeyword, expandKeyword } from '../services/naverKeywordService.js';
+import { getSearchHistory, recordMonthlySearch } from '../services/keywordHistoryService.js';
 
 const router = Router();
 
@@ -19,6 +20,15 @@ router.post('/analyze', async (req, res, next) => {
 
     const result = await analyzeKeyword(keyword);
     console.log(`[analyze] ✓ "${keyword}" → ${result.keywords?.length} keywords`);
+
+    // 베이스 키워드 행 찾아서 이달 검색량 DB에 기록 (비동기, 응답 블락 안 함)
+    const baseRow = result.keywords?.find(
+      (r) => r.keyword?.toLowerCase().replace(/\s+/g, '') === keyword.toLowerCase().replace(/\s+/g, '')
+    ) || result.keywords?.[0];
+    if (baseRow) {
+      recordMonthlySearch(keyword, baseRow.monthlyPcSearch, baseRow.monthlyMobileSearch);
+    }
+
     res.json(result);
   } catch (error) {
     console.error(`[analyze] ✗ "${req.body?.keyword}" → ${error.status || 500}: ${error.message}`);
@@ -54,9 +64,12 @@ router.get('/insights', async (req, res, next) => {
     const keyword = String(req.query?.keyword || '').trim();
     if (!keyword) return res.status(400).json({ message: '키워드를 입력해 주세요.' });
     console.log(`[insights] → "${keyword}"`);
-    const result = await analyzeKeywordInsights(keyword);
-    console.log(`[insights] ✓ trend=${result.trend?.length}pts gender=${JSON.stringify(result.gender)}`);
-    res.json(result);
+    const [result, searchHistory] = await Promise.all([
+      analyzeKeywordInsights(keyword),
+      getSearchHistory(keyword),
+    ]);
+    console.log(`[insights] ✓ trend=${result.trend?.length}pts history=${searchHistory.length}개월`);
+    res.json({ ...result, searchHistory });
   } catch (error) {
     console.error(`[insights] ✗ ${error.status || 500}: ${error.message}`);
     next(error);

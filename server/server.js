@@ -4,6 +4,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { initDb } from './db/index.js';
 import blogRoutes from './routes/blog.js';
 import keywordRoutes from './routes/keywords.js';
 
@@ -56,6 +57,8 @@ app.use((error, _req, res, _next) => {
     message: error.message || '키워드 분석 중 오류가 발생했습니다.'
   });
 });
+
+initDb().catch((err) => console.error('[DB] 초기화 실패:', err.message));
 
 app.listen(port, () => {
   console.log(`Keyword dashboard server listening on port ${port}`);
