@@ -291,36 +291,57 @@ button, input, select, textarea { font: inherit; }
 .mac-checkbox {
   -webkit-appearance: none;
   appearance: none;
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   border: 1.5px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: 5px;
   background: transparent;
   cursor: pointer;
   position: relative;
   flex-shrink: 0;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  vertical-align: middle;
+}
+
+.mac-checkbox:hover:not(:checked):not(:disabled) {
+  border-color: rgba(255,255,255,0.30);
+  background: rgba(255,255,255,0.05);
+}
+
+.mac-checkbox:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(10,132,255,0.32);
 }
 
 .mac-checkbox:checked {
   background: var(--accent);
   border-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6.2l2.8 2.8 5.2-5.2' stroke='%23fff' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px 10px;
+  box-shadow: 0 0 0 3px rgba(10,132,255,0.20);
 }
 
-.mac-checkbox:checked::after {
-  content: '';
-  position: absolute;
-  left: 3.5px;
-  top: 1px;
-  width: 5px;
-  height: 8px;
-  border: 1.5px solid #fff;
-  border-top: none;
-  border-left: none;
-  transform: rotate(45deg);
+.mac-checkbox:checked:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
-.mac-checkbox:disabled { opacity: 0.4; cursor: not-allowed; }
+.mac-checkbox:disabled { opacity: 0.38; cursor: not-allowed; }
+
+[data-theme="light"] .mac-checkbox:hover:not(:checked):not(:disabled) {
+  border-color: rgba(0,0,0,0.30);
+  background: rgba(0,0,0,0.04);
+}
+
+[data-theme="light"] .mac-checkbox:focus-visible {
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.25);
+}
+
+[data-theme="light"] .mac-checkbox:checked {
+  box-shadow: 0 0 0 3px rgba(0,122,255,0.18);
+}
 
 /* ─── Scrollbar ─── */
 .mac-scroll::-webkit-scrollbar            { width: 6px; height: 6px; }
