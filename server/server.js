@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { initDb } from './db/index.js';
 import blogRoutes from './routes/blog.js';
+import jobRoutes from './routes/jobs.js';
 import keywordRoutes from './routes/keywords.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,6 +32,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/keywords', keywordRoutes);
 app.use('/api/blog', blogRoutes);
+app.use('/api/jobs', jobRoutes);
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ message: '존재하지 않는 API 경로입니다.' });

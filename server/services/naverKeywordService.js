@@ -361,6 +361,18 @@ async function fetchNaverAutoComplete(keyword) {
   }
 }
 
+// DB 갱신 job용 — 단일 키워드의 이번달 검색량만 가져옴
+export async function fetchKeywordVolume(keyword) {
+  const rows = await fetchNaverKeywordTool(keyword);
+  const clean = normalizeText(keyword);
+  const row = rows.find((r) => normalizeText(r.relKeyword || '') === clean) || rows[0];
+  if (!row) return null;
+  return {
+    pcSearch:     parseNaverNumber(row.monthlyPcQcCnt),
+    mobileSearch: parseNaverNumber(row.monthlyMobileQcCnt),
+  };
+}
+
 export async function analyzeKeyword(baseKeyword) {
   try {
     const hints = await deriveAnalysisHints(baseKeyword);
