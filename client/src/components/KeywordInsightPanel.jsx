@@ -639,15 +639,6 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
     return null;
   })();
 
-  const genderItems = insights?.gender != null
-    ? [
-        { label: '남성', value: insights.gender.male,   color: 'var(--accent)' },
-        { label: '여성', value: insights.gender.female, color: '#BF5AF2' },
-      ]
-    : null;
-
-  const ageItems = insights?.age?.map((a) => ({ label: a.label, value: a.pct })) ?? null;
-
   return (
     <div className="mac-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <style>{`
@@ -768,14 +759,6 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
           <div>
             <Label>요일별 검색 분포 <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: 'none', opacity: 0.55 }}>(90일 기준)</span></Label>
             <VBarChart items={insights?.dayOfWeek} loading={insightsLoading} height={110} count={7} unit="" />
-          </div>
-          <div>
-            <Label>성별 분포</Label>
-            <GenderBars gender={insights?.gender} loading={insightsLoading} />
-          </div>
-          <div>
-            <Label>연령별 분포</Label>
-            <VBarChart items={ageItems} loading={insightsLoading} height={110} count={5} unit="%" />
           </div>
         </div>
 
