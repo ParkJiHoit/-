@@ -578,7 +578,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       const value = dailyScale
         ? formatNumber(Math.round(prevWeekSum * dailyScale))
         : Math.round(prevWeekSum).toString();
-      return { label: '전주 검색량', value, change: weekChange };
+      // 주간은 항상 DataLab 스케일링 (Search Ad API가 주간 단위 미제공)
+      return { label: '전주 검색량', value, change: weekChange, isEstimate: true };
     }
     if (trendPeriod === 'monthly') {
       const now = new Date();
@@ -594,7 +595,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         const prevTotal     = dbPrev.total_search;
         const prevPrevTotal = dbPrevPrev?.total_search ?? 0;
         const change = prevPrevTotal > 0 ? ((prevTotal - prevPrevTotal) / prevPrevTotal) * 100 : null;
-        return { label: '전월 검색량', value: formatNumber(prevTotal), change };
+        return { label: '전월 검색량', value: formatNumber(prevTotal), change, isEstimate: false };
       }
 
       // 폴백: DataLab 스케일링
@@ -607,7 +608,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       const prevPrevSum = prevPrevData.reduce((s, pt) => s + pt.ratio, 0);
       const change = prevPrevSum > 0 ? ((prevSum - prevPrevSum) / prevPrevSum) * 100 : null;
       const value = dailyScale ? formatNumber(Math.round(prevSum * dailyScale)) : Math.round(prevSum).toString();
-      return { label: '전월 검색량', value, change };
+      return { label: '전월 검색량', value, change, isEstimate: true };
     }
     if (trendPeriod === 'yearly') {
       const now = new Date();
@@ -621,7 +622,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         const prevTotal     = dbPrevYear.reduce((s, h) => s + h.total_search, 0);
         const prevPrevTotal = dbPrevPrevYear.reduce((s, h) => s + h.total_search, 0);
         const change = prevPrevTotal > 0 ? ((prevTotal - prevPrevTotal) / prevPrevTotal) * 100 : null;
-        return { label: '전년 검색량', value: formatNumber(prevTotal), change };
+        return { label: '전년 검색량', value: formatNumber(prevTotal), change, isEstimate: false };
       }
 
       // 폴백: DataLab 스케일링
@@ -633,7 +634,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       const prevPrevRawSum = prevPrevEntry?.sum ?? 0;
       const change = prevPrevRawSum > 0 ? ((prevRawSum - prevPrevRawSum) / prevPrevRawSum) * 100 : null;
       const value = monthlyScale ? formatNumber(Math.round(prevRawSum * monthlyScale)) : Math.round(prevRawSum).toString();
-      return { label: '전년 검색량', value, change };
+      return { label: '전년 검색량', value, change, isEstimate: true };
     }
     return null;
   })();
@@ -728,6 +729,9 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
               <div style={{ textAlign: 'right' }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text-primary)' }}>
                   {periodStats.label} {periodStats.value}
+                  {periodStats.isEstimate && (
+                    <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 4 }}>(추정)</span>
+                  )}
                 </p>
                 {periodStats.change != null && (
                   <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: 600, color: periodStats.change >= 0 ? '#30D158' : '#FF375F' }}>
