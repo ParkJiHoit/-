@@ -93,12 +93,13 @@ export default function BlogAnalysisForm({ onSubmit, loading }) {
             flexShrink: 0, marginRight: 10,
             width: 44, height: 44, borderRadius: 999,
             border: 'none',
-            background: focused ? 'var(--accent)' : 'rgba(255,255,255,0.10)',
+            background: focused ? 'var(--accent)' : 'var(--search-btn-bg)',
             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background 0.15s', color: '#fff'
+            transition: 'background 0.15s, color 0.15s',
+            color: focused ? '#fff' : 'var(--search-btn-icon)',
           }}
-          onMouseEnter={(e) => !focused && (e.currentTarget.style.background = 'rgba(255,255,255,0.16)')}
-          onMouseLeave={(e) => !focused && (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
+          onMouseEnter={(e) => { if (!focused) e.currentTarget.style.background = 'var(--search-btn-hover)'; }}
+          onMouseLeave={(e) => { if (!focused) e.currentTarget.style.background = 'var(--search-btn-bg)'; }}
         >
           <Search style={{ width: 18, height: 18 }} />
         </button>
