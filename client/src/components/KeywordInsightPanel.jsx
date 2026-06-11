@@ -426,9 +426,8 @@ function GenderBars({ gender, loading }) {
 function InsightsErrorNotice({ message }) {
   const isAuth = /401|403|권한|인증/i.test(message ?? '');
   return (
-    <div style={{
+    <div className="mac-card" style={{
       padding: '12px 18px',
-      borderBottom: '1px solid var(--border)',
       background: 'rgba(255,149,0,0.06)',
       display: 'flex', alignItems: 'flex-start', gap: 10,
     }}>
@@ -466,7 +465,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
   const ageItems = insights?.age?.map((a) => ({ label: a.label, value: a.pct })) ?? null;
 
   return (
-    <section className="mac-card mac-fade-in overflow-hidden">
+    <div className="mac-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <style>{`
         @keyframes kip-pulse {
           0%, 100% { opacity: 0.35; }
@@ -474,20 +473,12 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         }
       `}</style>
 
-      {/* KPI cards */}
-      <div style={{
-        display: 'flex', gap: 12, padding: '16px 20px',
-        borderBottom: '1px solid var(--border)',
-      }}>
+      {/* Row 1: KPI — 4 independent floating cards */}
+      <div style={{ display: 'flex', gap: 10 }}>
         {kpis.map(({ label, value }) => (
-          <div key={label} style={{
-            flex: 1,
-            padding: '18px 14px',
-            background: 'var(--bg-overlay)',
-            border: '1px solid var(--border)',
-            borderRadius: 14,
+          <div key={label} className="mac-card" style={{
+            flex: 1, padding: '18px 14px',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
           }}>
             <p style={{ fontSize: 10.5, color: 'var(--text-secondary)', margin: 0, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{label}</p>
             <p style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: 0 }}>{value}</p>
@@ -498,14 +489,13 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       {/* Error banner */}
       {insightsError && !insightsLoading && <InsightsErrorNotice message={insightsError} />}
 
-      {/* 3-column charts row: trend | news | demographics */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch' }}>
+      {/* Row 2: trend | news | demographics — each its own floating card */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'stretch' }}>
 
-        {/* Col 1: Trend chart */}
-        <div style={{
+        {/* Trend chart card */}
+        <div className="mac-card" style={{
           flex: '2 1 300px', padding: '24px 28px',
-          borderRight: '1px solid var(--border)', minWidth: 0,
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
           <Label>일별 트렌드 추이</Label>
           <div style={{ overflow: 'hidden' }}>
@@ -513,20 +503,19 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
           </div>
         </div>
 
-        {/* Col 2: News / Blog */}
-        <div style={{
-          flex: '1.5 1 200px', padding: '20px 18px',
-          borderRight: '1px solid var(--border)', minWidth: 0,
+        {/* News card */}
+        <div className="mac-card" style={{
+          flex: '1.5 1 200px', padding: '20px 18px', minWidth: 0,
         }}>
           <Label>관련 기사 · 블로그</Label>
           <NewsSection items={insights?.news} loading={insightsLoading} />
         </div>
 
-        {/* Col 3: Demographics */}
-        <div style={{
+        {/* Demographics card */}
+        <div className="mac-card" style={{
           flex: '1 1 160px', maxWidth: 210, padding: '20px 14px',
-          display: 'flex', flexDirection: 'column', gap: 22, minWidth: 0,
-          overflow: 'hidden',
+          display: 'flex', flexDirection: 'column', gap: 22,
+          minWidth: 0, overflow: 'hidden',
         }}>
           <div>
             <Label>요일별 검색 분포</Label>
@@ -543,6 +532,6 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         </div>
 
       </div>
-    </section>
+    </div>
   );
 }
