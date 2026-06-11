@@ -52,11 +52,16 @@ function getDateRange(days = 90) {
   return { startDate: fmt(start), endDate: fmt(end) };
 }
 
-function safeAvgRatio(settled) {
+// periodDays: total days in the query window (not just days with data).
+// The DataLab API omits days with ratio=0, so dividing by data.length
+// inflates sparse segments (e.g. a single spike → avg 100 for 10대).
+// Dividing by the full period normalises correctly across all age groups.
+function safeAvgRatio(settled, periodDays = null) {
   if (settled.status !== 'fulfilled') return 0;
   const data = settled.value?.results?.[0]?.data;
   if (!data?.length) return 0;
-  return data.reduce((s, d) => s + (d.ratio || 0), 0) / data.length;
+  const sum = data.reduce((s, d) => s + (d.ratio || 0), 0);
+  return sum / (periodDays ?? data.length);
 }
 
 function getDow(dateStr) {
@@ -71,7 +76,8 @@ export async function analyzeKeywordInsights(keyword) {
   const cached = insightCache.get(cacheKey);
   if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.data;
 
-  const { startDate, endDate } = getDateRange(30);
+  const PERIOD_DAYS = 30;
+  const { startDate, endDate } = getDateRange(PERIOD_DAYS);
   const keywordGroups = [{ groupName: 'kw', keywords: [keyword] }];
   const base = { startDate, endDate, keywordGroups, timeUnit: 'date', device: '' };
 
@@ -116,8 +122,8 @@ export async function analyzeKeywordInsights(keyword) {
 
   // Gender — null when either call failed so UI can show "no data" clearly
   const genderAvailable = maleSettled.status === 'fulfilled' && femaleSettled.status === 'fulfilled';
-  const maleAvg   = safeAvgRatio(maleSettled);
-  const femaleAvg = safeAvgRatio(femaleSettled);
+  const maleAvg   = safeAvgRatio(maleSettled, PERIOD_DAYS);
+  const femaleAvg = safeAvgRatio(femaleSettled, PERIOD_DAYS);
   const gTotal = maleAvg + femaleAvg || 1;
   const gender = genderAvailable
     ? { male: Math.round((maleAvg / gTotal) * 100), female: Math.round((femaleAvg / gTotal) * 100) }
@@ -127,14 +133,15 @@ export async function analyzeKeywordInsights(keyword) {
   const ageAvailable = ageSettled.some((s) => s.status === 'fulfilled');
   const ageRatios = ageSettled.map((s, i) => ({
     label: AGE_GROUPS[i].label,
-    value: safeAvgRatio(s),
+    value: safeAvgRatio(s, PERIOD_DAYS),
   }));
   const aTotal = ageRatios.reduce((s, a) => s + a.value, 0) || 1;
   const age = ageAvailable
     ? ageRatios.map((a) => ({ label: a.label, pct: Math.round((a.value / aTotal) * 100) }))
     : null;
 
-  console.log(`[DataLab] "${keyword}" → trend:${trend.length}pts gender:${JSON.stringify(gender)} age:${ageAvailable}`);
+  const ageDebug = ageRatios.map(a => `${a.label}=${a.value.toFixed(1)}`).join(' ');
+  console.log(`[DataLab] "${keyword}" → trend:${trend.length}pts gender:${JSON.stringify(gender)} age:[${ageDebug}]`);
 
   // If every single call failed, propagate a clear error so the client shows guidance
   const allFailed = settled.every((s) => s.status === 'rejected');

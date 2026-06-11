@@ -287,6 +287,57 @@ function VBarChart({ items, loading, height = 110, count = 7, unit = '' }) {
   );
 }
 
+/* ─── Horizontal gender bars ─── */
+function GenderBars({ gender, loading }) {
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {[['남성', '65%'], ['여성', '45%']].map(([label, w]) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)', width: 26, textAlign: 'right' }}>{label}</span>
+            <Skeleton height={14} width={w} radius={6} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!gender) {
+    return (
+      <div style={{ height: 44, display: 'flex', alignItems: 'center' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>데이터 없음</span>
+      </div>
+    );
+  }
+
+  const rows = [
+    { label: '남성', pct: gender.male,   color: 'var(--accent)' },
+    { label: '여성', pct: gender.female, color: '#BF5AF2' },
+  ];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      {rows.map(({ label, pct, color }) => (
+        <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-secondary)', width: 26, textAlign: 'right', flexShrink: 0 }}>
+            {label}
+          </span>
+          <div style={{ flex: 1, height: 14, background: 'var(--bg-overlay)', borderRadius: 6, overflow: 'hidden' }}>
+            <div style={{
+              width: `${pct}%`, height: '100%',
+              background: color, borderRadius: 6,
+              transition: 'width 0.55s cubic-bezier(0.34,1.2,0.64,1)',
+            }} />
+          </div>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', width: 32, textAlign: 'right', flexShrink: 0 }}>
+            {pct}%
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ─── Error notice ─── */
 function InsightsErrorNotice({ message }) {
   const isAuth = /401|403|권한|인증/i.test(message ?? '');
@@ -390,13 +441,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
           <div>
             <Label>성별 분포</Label>
-            <VBarChart
-              items={genderItems}
-              loading={insightsLoading}
-              height={110}
-              count={2}
-              unit="%"
-            />
+            <GenderBars gender={insights?.gender} loading={insightsLoading} />
           </div>
 
           <div>
