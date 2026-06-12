@@ -232,27 +232,68 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
       </button>
 
       {/* 가입하기 */}
-      <button
-        onClick={onMockAction}
-        style={{
-          borderRadius: 999,
-          padding: '6px 14px',
-          border: 'none',
-          background: 'var(--accent)',
-          color: '#fff',
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: '0.04em',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          transition: 'background 0.15s',
-          flexShrink: 0,
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
-      >
-        가입하기
-      </button>
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <button
+          onClick={onMockAction}
+          style={{
+            borderRadius: 999,
+            padding: '6px 14px',
+            border: 'none',
+            background: 'var(--accent)',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            transition: 'background 0.15s',
+            display: 'block',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
+        >
+          가입하기
+        </button>
+
+        {/* 둥실둥실 7일 무료체험 뱃지 */}
+        {/* 외부 div: 위치 잡기 (transform으로 정렬) — 애니메이션 없음 */}
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 12px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          pointerEvents: 'none',
+          whiteSpace: 'nowrap',
+          zIndex: 10,
+        }}>
+          {/* 내부 div: 둥실 애니메이션만 담당 */}
+          <div className="float-bob" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {/* 말풍선 꼬리 */}
+            <div style={{
+              width: 0, height: 0,
+              borderLeft: '5px solid transparent',
+              borderRight: '5px solid transparent',
+              borderBottom: '6px solid #FF9F0A',
+              marginBottom: -1,
+            }} />
+            <div style={{
+              background: 'linear-gradient(135deg, #FF9F0A 0%, #FF6B35 100%)',
+              borderRadius: 20,
+              padding: '5px 12px',
+              fontSize: 11,
+              fontWeight: 800,
+              color: '#fff',
+              letterSpacing: '0.02em',
+              boxShadow: '0 4px 16px rgba(255,159,10,0.5), 0 2px 4px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+              🎁 7일 무료체험
+            </div>
+          </div>
+        </div>
+      </div>
     </nav>
   );
 }

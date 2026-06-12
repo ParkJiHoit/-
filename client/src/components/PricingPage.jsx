@@ -12,7 +12,7 @@ const FEATURES = [
 
 const OTHERS = [
   { name: '로땡떙', price: '49,000', emoji: '🫠' },
-  { name: '블떙떙', price: '39,000', emoji: '😵' },
+  { name: '블땡땡', price: '39,000', emoji: '😵' },
 ];
 
 export default function PricingPage({ onMockAction }) {
@@ -65,7 +65,7 @@ export default function PricingPage({ onMockAction }) {
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
-        }}>1,000원</span>으로<br />다 됩니다
+        }}>1,000원</span>으로 다 됩니다
       </h1>
 
       <p style={{ fontSize: 16, color: 'var(--text-secondary)', textAlign: 'center', margin: '0 0 48px', lineHeight: 1.6, maxWidth: 480 }}>
@@ -227,7 +227,7 @@ export default function PricingPage({ onMockAction }) {
       {/* 하단 안내 */}
       <p style={{ marginTop: 48, fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.7 }}>
         * 아직 베타 서비스입니다. 정식 출시 시 요금제가 확정됩니다.<br />
-        * "로땡떙", "블떙떙" 은 실제 서비스명이 아닌 가명입니다.
+        * "로땡떙", "블땡땡" 은 실제 서비스명이 아닌 가명입니다.
       </p>
     </div>
   );
