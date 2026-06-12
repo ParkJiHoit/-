@@ -261,10 +261,8 @@ export default function BlogRankingTable({ baseKeyword }) {
   return (
     <div>
       {/* 헤더 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-          블로그탭 순위
-        </span>
+      <p style={{ margin: '0 0 14px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+        <span>블로그탭 순위</span>
         {enriched?.length ? (
           <button
             onClick={() => downloadCSV(enriched, baseKeyword)}
@@ -280,7 +278,7 @@ export default function BlogRankingTable({ baseKeyword }) {
             <Download size={10} /> CSV
           </button>
         ) : null}
-      </div>
+      </p>
 
       {/* 테이블 */}
       <div style={{ overflowX: 'auto', borderRadius: 8, border: '1px solid var(--border)' }}>

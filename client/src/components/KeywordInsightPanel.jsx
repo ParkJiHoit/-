@@ -377,12 +377,44 @@ function sourceColor(source) {
   return SOURCE_COLORS[h % SOURCE_COLORS.length];
 }
 
+function getDomain(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
+}
+
+function SourceIcon({ url, source, size = 28 }) {
+  const [err, setErr] = useState(false);
+  const domain = getDomain(url);
+  const color = sourceColor(source || domain || '?');
+  const initial = (source || domain || '?')[0].toUpperCase();
+  if (!err && domain) {
+    return (
+      <img
+        src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+        width={size} height={size}
+        alt={source}
+        onError={() => setErr(true)}
+        style={{ borderRadius: 7, flexShrink: 0, objectFit: 'contain', background: color + '18', border: `1px solid ${color}30` }}
+      />
+    );
+  }
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 7, flexShrink: 0,
+      background: color + '22', border: `1px solid ${color}44`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 11, fontWeight: 800, color,
+    }}>
+      {initial}
+    </div>
+  );
+}
+
 function NewsSection({ items, loading }) {
   const newsOnly = items?.filter((it) => it.type !== 'blog');
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {[90, 75, 85, 70].map((w, i) => (
+        {[90, 75, 85, 70, 80, 68, 88, 72].map((w, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Skeleton width={28} height={28} radius={8} />
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -405,44 +437,32 @@ function NewsSection({ items, loading }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {newsOnly.map((item, i) => {
-        const color = sourceColor(item.source || String(i));
-        const initial = (item.source || '?')[0].toUpperCase();
-        return (
-          <a
-            key={i}
-            href={item.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 8, transition: 'background 0.12s' }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-overlay)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-          >
-            <div style={{
-              width: 28, height: 28, borderRadius: 7, flexShrink: 0,
-              background: color + '22', border: `1px solid ${color}44`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 800, color,
+      {newsOnly.map((item, i) => (
+        <a
+          key={i}
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 8, transition: 'background 0.12s' }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-overlay)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        >
+          <SourceIcon url={item.link} source={item.source} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{
+              margin: 0, fontSize: 12, fontWeight: 500,
+              color: 'var(--text-primary)', lineHeight: 1.4,
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}>
-              {initial}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{
-                margin: 0, fontSize: 12, fontWeight: 500,
-                color: 'var(--text-primary)', lineHeight: 1.4,
-                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }}>
-                {item.title}
-              </p>
-              <p style={{ margin: '2px 0 0', fontSize: 10.5, color: 'var(--text-tertiary)' }}>
-                {item.time}{item.time && item.source ? ' · ' : ''}{item.source}
-                {item.type === 'blog' && <span style={{ marginLeft: 4, fontSize: 9.5, color: '#30D158', fontWeight: 600 }}>블로그</span>}
-              </p>
-            </div>
-          </a>
-        );
-      })}
+              {item.title}
+            </p>
+            <p style={{ margin: '2px 0 0', fontSize: 10.5, color: 'var(--text-tertiary)' }}>
+              {item.time}{item.time && item.source ? ' · ' : ''}{item.source}
+            </p>
+          </div>
+        </a>
+      ))}
     </div>
   );
 }

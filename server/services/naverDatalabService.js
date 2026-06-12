@@ -144,7 +144,7 @@ async function fetchNaverNews(keyword) {
       'X-Naver-Client-Secret': process.env.NAVER_OPEN_API_CLIENT_SECRET,
     };
     const [newsRes, blogRes] = await Promise.allSettled([
-      axios.get(`${NAVER_SEARCH_URL}/news.json`, { headers, params: { query: keyword, display: 4, sort: 'date' }, timeout: 8000 }),
+      axios.get(`${NAVER_SEARCH_URL}/news.json`, { headers, params: { query: keyword, display: 8, sort: 'date' }, timeout: 8000 }),
       axios.get(`${NAVER_SEARCH_URL}/blog.json`, { headers, params: { query: keyword, display: 3, sort: 'date' }, timeout: 8000 }),
     ]);
     if (newsRes.status === 'rejected') console.error('[News] news API error:', newsRes.reason?.response?.status, newsRes.reason?.response?.data ?? newsRes.reason?.message);
