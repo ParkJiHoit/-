@@ -74,10 +74,10 @@ function followRedirect(url, maxRedirects = 6) {
 }
 
 // ── Chrome 경로 확인 ───────────────────────────────────────────────────────
-function logChromeInfo() {
+async function logChromeInfo() {
   try {
-    const execPath = puppeteer.executablePath();
-    const exists = fs.existsSync(execPath);
+    const execPath = await Promise.resolve(puppeteer.executablePath());
+    const exists = typeof execPath === 'string' && fs.existsSync(execPath);
     console.log(`[blog-rankings] Chrome: ${execPath} (exists=${exists})`);
   } catch (e) {
     console.log(`[blog-rankings] Chrome path error: ${e.message}`);
