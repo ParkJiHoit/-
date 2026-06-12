@@ -5,6 +5,7 @@ import axios from 'axios';
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const cache = new Map();
+const pending = new Map(); // 동일 키워드 동시 요청 dedup
 
 const LAUNCH_ARGS = [
   '--no-sandbox',
@@ -184,29 +185,41 @@ async function fetchDailyVisitors(blogId) {
 
 export async function fetchBlogRankings(keyword) {
   const cacheKey = keyword.toLowerCase().trim();
+
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.data;
 
-  // 실패 시 1회 재시도
-  let scraped = [];
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      scraped = await scrapeBlogTab(keyword, 8);
-      if (scraped.length > 0) break;
-    } catch (err) {
-      console.error(`[blog-rankings] scrape attempt ${attempt} failed: ${err.message}`);
-      if (attempt === 2) return [];
+  // 동일 키워드가 이미 처리 중이면 그 결과를 공유 (puppeteer 중복 실행 방지)
+  if (pending.has(cacheKey)) return pending.get(cacheKey);
+
+  const promise = (async () => {
+    let scraped = [];
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        scraped = await scrapeBlogTab(keyword, 8);
+        if (scraped.length > 0) break;
+      } catch (err) {
+        console.error(`[blog-rankings] scrape attempt ${attempt} failed: ${err.message}`);
+        if (attempt === 2) return [];
+      }
     }
+    if (!scraped.length) return [];
+
+    const rankings = await Promise.all(
+      scraped.map(async (item) => {
+        const dailyVisitors = await fetchDailyVisitors(item.blogId);
+        return { ...item, dailyVisitors };
+      })
+    );
+
+    cache.set(cacheKey, { data: rankings, createdAt: Date.now() });
+    return rankings;
+  })();
+
+  pending.set(cacheKey, promise);
+  try {
+    return await promise;
+  } finally {
+    pending.delete(cacheKey);
   }
-  if (!scraped.length) return [];
-
-  const rankings = await Promise.all(
-    scraped.map(async (item) => {
-      const dailyVisitors = await fetchDailyVisitors(item.blogId);
-      return { ...item, dailyVisitors };
-    })
-  );
-
-  cache.set(cacheKey, { data: rankings, createdAt: Date.now() });
-  return rankings;
 }
