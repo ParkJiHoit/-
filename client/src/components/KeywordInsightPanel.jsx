@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatNumber, formatPercent, formatScore } from '../utils/formatters';
 
 /* ─── Skeleton ─── */
@@ -377,6 +377,7 @@ function sourceColor(source) {
 }
 
 function NewsSection({ items, loading }) {
+  const newsOnly = items?.filter((it) => it.type !== 'blog');
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -393,7 +394,7 @@ function NewsSection({ items, loading }) {
     );
   }
 
-  if (!items?.length) {
+  if (!newsOnly?.length) {
     return (
       <div style={{ padding: '10px 0', fontSize: 12, color: 'var(--text-tertiary)' }}>
         관련 기사를 불러올 수 없습니다
@@ -403,7 +404,7 @@ function NewsSection({ items, loading }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {items.map((item, i) => {
+      {newsOnly.map((item, i) => {
         const color = sourceColor(item.source || String(i));
         const initial = (item.source || '?')[0].toUpperCase();
         return (
@@ -427,8 +428,9 @@ function NewsSection({ items, loading }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{
                 margin: 0, fontSize: 12, fontWeight: 500,
-                color: 'var(--text-primary)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                color: 'var(--text-primary)', lineHeight: 1.4,
+                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
               }}>
                 {item.title}
               </p>
@@ -519,9 +521,84 @@ function InsightsErrorNotice({ message }) {
   );
 }
 
+/* ─── Blog ranking table ─── */
+function BlogRankingSection({ rankings, loading }) {
+  const rankColor = (r) => r === 1 ? '#FFD60A' : r === 2 ? '#A1A1A6' : r === 3 ? '#C96B2E' : 'var(--text-tertiary)';
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '20px 1fr 48px 52px', gap: '0 8px', padding: '0 4px 7px', borderBottom: '1px solid var(--border)', marginBottom: 3 }}>
+          {['#', '제목 · 작성자', '발행일', '방문자/일'].map((h, i) => (
+            <span key={h} style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: i > 1 ? 'right' : 'left' }}>{h}</span>
+          ))}
+        </div>
+        {[92, 78, 85, 70, 88, 75, 82].map((w, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '20px 1fr 48px 52px', gap: '0 8px', padding: '7px 4px', alignItems: 'center' }}>
+            <Skeleton width={16} height={14} radius={3} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Skeleton height={10} width={`${w}%`} radius={3} />
+              <Skeleton height={8} width="38%" radius={3} />
+            </div>
+            <Skeleton height={9} width="90%" radius={3} />
+            <Skeleton height={9} width="80%" radius={3} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!rankings?.length) {
+    return <div style={{ fontSize: 11, color: 'var(--text-tertiary)', padding: '12px 0' }}>데이터를 불러올 수 없습니다</div>;
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '20px 1fr 48px 52px', gap: '0 8px', padding: '0 4px 7px', borderBottom: '1px solid var(--border)', marginBottom: 3 }}>
+        {['#', '제목 · 작성자', '발행일', '방문자/일'].map((h, i) => (
+          <span key={h} style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: i > 1 ? 'right' : 'left' }}>{h}</span>
+        ))}
+      </div>
+      {rankings.map((item) => (
+        <a
+          key={item.rank}
+          href={item.postLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none', display: 'grid', gridTemplateColumns: '20px 1fr 48px 52px', gap: '0 8px', padding: '6px 4px', borderRadius: 6, alignItems: 'center', transition: 'background 0.12s' }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-overlay)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        >
+          <span style={{ fontSize: 11, fontWeight: 800, color: rankColor(item.rank), textAlign: 'center', lineHeight: 1 }}>{item.rank}</span>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
+            <p style={{ margin: '2px 0 0', fontSize: 9.5, color: 'var(--text-tertiary)', lineHeight: 1 }}>{item.author}</p>
+          </div>
+          <span style={{ fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'right' }}>{item.date}</span>
+          <span style={{ fontSize: 11, fontWeight: item.dailyVisitors ? 600 : 400, color: item.dailyVisitors ? 'var(--text-primary)' : 'var(--text-tertiary)', textAlign: 'right' }}>
+            {item.dailyVisitors != null ? formatNumber(item.dailyVisitors) : '—'}
+          </span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 /* ─── Main Panel ─── */
 export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError }) {
   const [trendPeriod, setTrendPeriod] = useState('daily');
+  const [blogRankings, setBlogRankings] = useState(null);
+  const [blogRankingsLoading, setBlogRankingsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!baseKeyword) return;
+    setBlogRankings(null);
+    setBlogRankingsLoading(true);
+    fetch(`/api/keywords/blog-rankings?keyword=${encodeURIComponent(baseKeyword)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => { setBlogRankings(data); setBlogRankingsLoading(false); })
+      .catch(() => setBlogRankingsLoading(false));
+  }, [baseKeyword]);
 
   // changePercent reflects MoM search trend index — only meaningful for "총 검색량"
   const kpis = [
@@ -744,46 +821,18 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
         {/* News card */}
         <div className="mac-card" style={{
-          flex: '1.5 1 200px', padding: '20px 18px', minWidth: 0,
+          flex: '1 1 180px', padding: '20px 18px', minWidth: 0,
         }}>
-          <Label>관련 기사 · 블로그</Label>
+          <Label>관련 기사</Label>
           <NewsSection items={insights?.news} loading={insightsLoading} />
         </div>
 
-        {/* Demographics card */}
+        {/* Blog ranking card */}
         <div className="mac-card" style={{
-          flex: '1 1 160px', maxWidth: 210, padding: '20px 14px',
-          display: 'flex', flexDirection: 'column', gap: 22,
-          minWidth: 0, overflow: 'hidden',
+          flex: '1.6 1 240px', padding: '20px 18px', minWidth: 0, overflow: 'hidden',
         }}>
-          <div>
-            <Label>요일별 검색 분포 <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: 'none', opacity: 0.55 }}>(90일 기준)</span></Label>
-            <VBarChart items={insights?.dayOfWeek} loading={insightsLoading} height={110} count={7} unit="" />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Label>콘텐츠 문서 수</Label>
-            {insightsLoading ? (
-              <>
-                <Skeleton height={13} width="80%" radius={4} />
-                <Skeleton height={13} width="70%" radius={4} />
-              </>
-            ) : (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>블로그</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {insights?.contentCounts?.blog != null ? formatNumber(insights.contentCounts.blog) : '—'}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>카페</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    {insights?.contentCounts?.cafe != null ? formatNumber(insights.contentCounts.cafe) : '—'}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
+          <Label>블로그 탭 순위</Label>
+          <BlogRankingSection rankings={blogRankings} loading={blogRankingsLoading} />
         </div>
 
       </div>

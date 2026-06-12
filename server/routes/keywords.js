@@ -3,6 +3,7 @@ import { analyzeKeywordInsights } from '../services/naverDatalabService.js';
 import { analyzeKeyword, expandKeyword } from '../services/naverKeywordService.js';
 import { getSearchHistory, recordMonthlySearch } from '../services/keywordHistoryService.js';
 import { fetchContentCounts } from '../services/naverSearchService.js';
+import { fetchBlogRankings } from '../services/blogRankingService.js';
 
 const router = Router();
 
@@ -74,6 +75,20 @@ router.get('/insights', async (req, res, next) => {
     res.json({ ...result, searchHistory, contentCounts });
   } catch (error) {
     console.error(`[insights] ✗ ${error.status || 500}: ${error.message}`);
+    next(error);
+  }
+});
+
+router.get('/blog-rankings', async (req, res, next) => {
+  try {
+    const keyword = String(req.query?.keyword || '').trim();
+    if (!keyword) return res.status(400).json({ message: '키워드를 입력해 주세요.' });
+    console.log(`[blog-rankings] → "${keyword}"`);
+    const rankings = await fetchBlogRankings(keyword);
+    console.log(`[blog-rankings] ✓ ${rankings.length}개`);
+    res.json(rankings);
+  } catch (error) {
+    console.error(`[blog-rankings] ✗ ${error.message}`);
     next(error);
   }
 });
