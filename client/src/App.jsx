@@ -11,6 +11,7 @@ import KeywordInsightPanel from './components/KeywordInsightPanel';
 import KeywordSearchForm from './components/KeywordSearchForm';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
 import Navbar from './components/Navbar';
+import PricingPage from './components/PricingPage';
 import SummaryCards from './components/SummaryCards';
 import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
@@ -401,6 +402,10 @@ export default function App() {
   };
 
   const switchTab = (next) => {
+    if (next === 'blog') {
+      showToast('🚧 블로그 분석은 준비 중이에요 — 조금만 기다려주세요!');
+      return;
+    }
     setActiveTab(next); setError(''); setFilters(defaultFilters);
     setInsights(null); setInsightsLoading(false); setInsightsError(null);
     if (next === 'analysis')  setSortConfig({ key: 'efficiencyScore',  direction: 'desc' });
@@ -432,6 +437,11 @@ export default function App() {
       />
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
+      {activeTab === 'pricing' ? (
+        <PricingPage onMockAction={handleMockAction} />
+      ) : (
+      <>
+
       {/* Hero search */}
       <HeroSection tab={activeTab} hasResults={hasResults}>
         {activeTab === 'analysis' && (
@@ -441,9 +451,6 @@ export default function App() {
         )}
         {activeTab === 'expansion' && (
           <KeywordExpansionForm onSubmit={expandKeyword} loading={loading} />
-        )}
-        {activeTab === 'blog' && (
-          <BlogAnalysisForm onSubmit={analyzeBlog} loading={loading} />
         )}
       </HeroSection>
 
@@ -578,6 +585,8 @@ export default function App() {
           </div>
         )}
       </div>
+
+      </> )} {/* end pricing conditional */}
 
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
     </div>

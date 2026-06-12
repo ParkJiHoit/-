@@ -187,7 +187,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
         style={pillItem('pricing')}
         onMouseEnter={() => setHoveredNav('pricing')}
         onMouseLeave={() => setHoveredNav(null)}
-        onClick={onMockAction}
+        onClick={() => onSwitchTab('pricing')}
       >
         요금제
       </button>
