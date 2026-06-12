@@ -760,6 +760,30 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             <Label>요일별 검색 분포 <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: 'none', opacity: 0.55 }}>(90일 기준)</span></Label>
             <VBarChart items={insights?.dayOfWeek} loading={insightsLoading} height={110} count={7} unit="" />
           </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Label>콘텐츠 문서 수</Label>
+            {insightsLoading ? (
+              <>
+                <Skeleton height={13} width="80%" radius={4} />
+                <Skeleton height={13} width="70%" radius={4} />
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>블로그</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {insights?.contentCounts?.blog != null ? formatNumber(insights.contentCounts.blog) : '—'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>카페</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {insights?.contentCounts?.cafe != null ? formatNumber(insights.contentCounts.cafe) : '—'}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
       </div>

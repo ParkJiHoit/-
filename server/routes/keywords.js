@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { analyzeKeywordInsights } from '../services/naverDatalabService.js';
 import { analyzeKeyword, expandKeyword } from '../services/naverKeywordService.js';
 import { getSearchHistory, recordMonthlySearch } from '../services/keywordHistoryService.js';
+import { fetchContentCounts } from '../services/naverSearchService.js';
 
 const router = Router();
 
@@ -64,12 +65,13 @@ router.get('/insights', async (req, res, next) => {
     const keyword = String(req.query?.keyword || '').trim();
     if (!keyword) return res.status(400).json({ message: '키워드를 입력해 주세요.' });
     console.log(`[insights] → "${keyword}"`);
-    const [result, searchHistory] = await Promise.all([
+    const [result, searchHistory, contentCounts] = await Promise.all([
       analyzeKeywordInsights(keyword),
       getSearchHistory(keyword),
+      fetchContentCounts(keyword),
     ]);
-    console.log(`[insights] ✓ trend=${result.trend?.length}pts history=${searchHistory.length}개월`);
-    res.json({ ...result, searchHistory });
+    console.log(`[insights] ✓ trend=${result.trend?.length}pts history=${searchHistory.length}개월 blog=${contentCounts.blog}`);
+    res.json({ ...result, searchHistory, contentCounts });
   } catch (error) {
     console.error(`[insights] ✗ ${error.status || 500}: ${error.message}`);
     next(error);
