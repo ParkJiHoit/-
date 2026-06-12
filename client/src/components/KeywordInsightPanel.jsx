@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatNumber, formatPercent, formatScore } from '../utils/formatters';
+import BlogRankingTable from './BlogRankingTable';
 
 /* ─── Skeleton ─── */
 function Skeleton({ width = '100%', height = 8, radius = 6 }) {
@@ -521,86 +522,9 @@ function InsightsErrorNotice({ message }) {
   );
 }
 
-/* ─── Blog ranking table ─── */
-function BlogRankingSection({ rankings, loading }) {
-  const rankColor = (r) => r === 1 ? '#FFD60A' : r === 2 ? '#A1A1A6' : r === 3 ? '#C96B2E' : 'var(--text-tertiary)';
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '20px 1fr 48px 52px', gap: '0 8px', padding: '0 4px 7px', borderBottom: '1px solid var(--border)', marginBottom: 3 }}>
-          {['#', '제목 · 작성자', '발행일', '방문자/일'].map((h, i) => (
-            <span key={h} style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: i > 1 ? 'right' : 'left' }}>{h}</span>
-          ))}
-        </div>
-        {[92, 78, 85, 70, 88, 75, 82].map((w, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '20px 1fr 48px 52px', gap: '0 8px', padding: '7px 4px', alignItems: 'center' }}>
-            <Skeleton width={16} height={14} radius={3} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Skeleton height={10} width={`${w}%`} radius={3} />
-              <Skeleton height={8} width="38%" radius={3} />
-            </div>
-            <Skeleton height={9} width="90%" radius={3} />
-            <Skeleton height={9} width="80%" radius={3} />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (!rankings?.length) {
-    return <div style={{ fontSize: 11, color: 'var(--text-tertiary)', padding: '12px 0' }}>데이터를 불러올 수 없습니다</div>;
-  }
-
-  return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '20px 1fr 48px 52px', gap: '0 8px', padding: '0 4px 7px', borderBottom: '1px solid var(--border)', marginBottom: 3 }}>
-        {['#', '제목 · 작성자', '발행일', '방문자/일'].map((h, i) => (
-          <span key={h} style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: i > 1 ? 'right' : 'left' }}>{h}</span>
-        ))}
-      </div>
-      {rankings.map((item) => (
-        <a
-          key={item.rank}
-          href={item.postLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: 'none', display: 'grid', gridTemplateColumns: '20px 1fr 48px 52px', gap: '0 8px', padding: '6px 4px', borderRadius: 6, alignItems: 'center', transition: 'background 0.12s' }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-overlay)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-        >
-          <span style={{ fontSize: 11, fontWeight: 800, color: rankColor(item.rank), textAlign: 'center', lineHeight: 1 }}>{item.rank}</span>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
-            <p style={{ margin: '2px 0 0', fontSize: 9.5, color: 'var(--text-tertiary)', lineHeight: 1 }}>{item.author}</p>
-          </div>
-          <span style={{ fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'right' }}>{item.date}</span>
-          <span style={{ fontSize: 11, fontWeight: item.dailyVisitors ? 600 : 400, color: item.dailyVisitors ? 'var(--text-primary)' : 'var(--text-tertiary)', textAlign: 'right' }}>
-            {item.dailyVisitors != null ? formatNumber(item.dailyVisitors) : '—'}
-          </span>
-        </a>
-      ))}
-    </div>
-  );
-}
-
 /* ─── Main Panel ─── */
 export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError }) {
   const [trendPeriod, setTrendPeriod] = useState('daily');
-  const [blogRankings, setBlogRankings] = useState(null);
-  const [blogRankingsLoading, setBlogRankingsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!baseKeyword) return;
-    setBlogRankings(null);
-    setBlogRankingsLoading(true);
-    const controller = new AbortController();
-    fetch(`/api/keywords/blog-rankings?keyword=${encodeURIComponent(baseKeyword)}`, { signal: controller.signal })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => { setBlogRankings(data); setBlogRankingsLoading(false); })
-      .catch((e) => { if (e?.name !== 'AbortError') setBlogRankingsLoading(false); });
-    return () => controller.abort();
-  }, [baseKeyword]);
 
   // changePercent reflects MoM search trend index — only meaningful for "총 검색량"
   const kpis = [
@@ -833,8 +757,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         <div className="mac-card" style={{
           flex: '1.6 1 240px', padding: '20px 18px', minWidth: 0, overflow: 'hidden',
         }}>
-          <Label>블로그 탭 순위</Label>
-          <BlogRankingSection rankings={blogRankings} loading={blogRankingsLoading} />
+          <BlogRankingTable baseKeyword={baseKeyword} />
         </div>
 
       </div>
