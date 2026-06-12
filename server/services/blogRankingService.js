@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import axios from 'axios';
 import https from 'https';
 import http from 'http';
+import fs from 'fs';
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const cache = new Map();
@@ -70,6 +71,17 @@ function followRedirect(url, maxRedirects = 6) {
       resolve(null);
     }
   });
+}
+
+// ── Chrome 경로 확인 ───────────────────────────────────────────────────────
+function logChromeInfo() {
+  try {
+    const execPath = puppeteer.executablePath();
+    const exists = fs.existsSync(execPath);
+    console.log(`[blog-rankings] Chrome: ${execPath} (exists=${exists})`);
+  } catch (e) {
+    console.log(`[blog-rankings] Chrome path error: ${e.message}`);
+  }
 }
 
 // ── Puppeteer 크롤링 ───────────────────────────────────────────────────────
@@ -184,7 +196,9 @@ async function fetchDailyVisitors(blogId) {
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────
+let _chromeLogged = false;
 export async function fetchBlogRankings(keyword) {
+  if (!_chromeLogged) { _chromeLogged = true; logChromeInfo(); }
   const key = keyword.toLowerCase().trim();
 
   const cached = cache.get(key);
@@ -199,8 +213,9 @@ export async function fetchBlogRankings(keyword) {
       try {
         scraped = await scrapeBlogTab(keyword, 10);
         if (scraped.length) break;
+        console.warn(`[blog-rankings] attempt ${attempt}: scraped 0 results for "${keyword}"`);
       } catch (err) {
-        console.error(`[blog-rankings] attempt ${attempt} error: ${err.message}`);
+        console.error(`[blog-rankings] attempt ${attempt} failed: ${err.message}`);
         if (attempt === 2) return [];
       }
     }
