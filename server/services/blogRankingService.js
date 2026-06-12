@@ -111,7 +111,7 @@ async function scrapeBlogTab(keyword, limit = 8) {
           seenUrls.add(postLink);
 
           const title = (nblgEl.innerText || '').trim().replace(/\s+/g, ' ');
-          const blogId = postLink.match(/blog\.naver\.com\/(\w+)\//)?.[1] || '';
+          const blogId = postLink.match(/blog\.naver\.com\/([^/?#\s]+)\//)?.[1] || '';
           results.push({ title, author, date, postLink, blogId, aderUrl: null });
           continue;
         }
@@ -151,7 +151,7 @@ async function scrapeBlogTab(keyword, limit = 8) {
         author: item.author,
         date: formatDaysAgo(item.date),
         postLink: item.postLink,
-        blogId: item.blogId || item.postLink?.match(/blog\.naver\.com\/(\w+)\//)?.[1] || '',
+        blogId: item.blogId || item.postLink?.match(/blog\.naver\.com\/([^/?#\s]+)\//)?.[1] || '',
       }));
   } finally {
     if (browser) await browser.close().catch(() => {});
@@ -187,7 +187,18 @@ export async function fetchBlogRankings(keyword) {
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.data;
 
-  const scraped = await scrapeBlogTab(keyword, 8);
+  // 실패 시 1회 재시도
+  let scraped = [];
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      scraped = await scrapeBlogTab(keyword, 8);
+      if (scraped.length > 0) break;
+    } catch (err) {
+      console.error(`[blog-rankings] scrape attempt ${attempt} failed: ${err.message}`);
+      if (attempt === 2) return [];
+    }
+  }
+  if (!scraped.length) return [];
 
   const rankings = await Promise.all(
     scraped.map(async (item) => {

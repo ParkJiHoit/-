@@ -594,10 +594,12 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
     if (!baseKeyword) return;
     setBlogRankings(null);
     setBlogRankingsLoading(true);
-    fetch(`/api/keywords/blog-rankings?keyword=${encodeURIComponent(baseKeyword)}`)
+    const controller = new AbortController();
+    fetch(`/api/keywords/blog-rankings?keyword=${encodeURIComponent(baseKeyword)}`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => { setBlogRankings(data); setBlogRankingsLoading(false); })
-      .catch(() => setBlogRankingsLoading(false));
+      .catch((e) => { if (e?.name !== 'AbortError') setBlogRankingsLoading(false); });
+    return () => controller.abort();
   }, [baseKeyword]);
 
   // changePercent reflects MoM search trend index — only meaningful for "총 검색량"
