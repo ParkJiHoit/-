@@ -711,7 +711,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         {/* Trend chart card */}
         <div className="mac-card" style={{
           flex: '2 1 300px', padding: '20px 28px',
-          minWidth: 0, display: 'flex', flexDirection: 'column',
+          minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
           {/* Header: title + period buttons + weekly stats */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
