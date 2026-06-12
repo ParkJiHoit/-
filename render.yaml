@@ -3,7 +3,7 @@ services:
     name: naver-keyword-dashboard
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build && cd server && npx puppeteer browsers install chrome
+    buildCommand: npm install && npm run build && (cd server && npx puppeteer browsers install chrome)
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
