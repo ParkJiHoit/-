@@ -129,7 +129,7 @@ function TrendChart({ data, loading, keyword = '' }) {
 
   if (loading) {
     return (
-      <div style={{ height: H, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12, padding: '0 4px' }}>
+      <div style={{ height: '100%', minHeight: H, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 12, padding: '0 4px' }}>
         <Skeleton height={2} radius={2} />
         <Skeleton height={2} width="75%" radius={2} />
         <Skeleton height={2} width="55%" radius={2} />
@@ -139,7 +139,7 @@ function TrendChart({ data, loading, keyword = '' }) {
 
   if (!data?.length) {
     return (
-      <div style={{ height: H, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: '100%', minHeight: H, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>데이터를 불러올 수 없습니다</span>
       </div>
     );
@@ -186,7 +186,7 @@ function TrendChart({ data, loading, keyword = '' }) {
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}
+      style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible' }}
     >
       <defs>
         <linearGradient id="kip-grad" x1="0" y1="0" x2="0" y2="1">
@@ -710,8 +710,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
         {/* Trend chart card */}
         <div className="mac-card" style={{
-          flex: '2 1 300px', padding: '24px 28px',
-          minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          flex: '2 1 300px', padding: '20px 28px',
+          minWidth: 0, display: 'flex', flexDirection: 'column',
         }}>
           {/* Header: title + period buttons + weekly stats */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -760,7 +760,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
               </div>
             ) : null}
           </div>
-          <div style={{ overflow: 'hidden' }}>
+          <div style={{ flex: 1, overflow: 'hidden', minHeight: 200 }}>
             <TrendChart data={activePeriod.data} loading={insightsLoading} keyword={baseKeyword} />
           </div>
         </div>
