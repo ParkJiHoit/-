@@ -1,5 +1,6 @@
 import { ChevronDown, FileText, Search, Sparkles, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { LiquidMetalButton } from './ui/liquid-metal-button';
 
 const NOTION_UPDATE_URL =
   'https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link';
@@ -219,41 +220,23 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
       {divider}
 
       {/* 로그인 */}
-      <button
+      <LiquidMetalButton
+        label="로그인"
         onClick={onMockAction}
-        style={{
-          ...pillItem('login'),
-          padding: hoveredNav === 'login' ? '6px 16px' : '6px 10px',
-        }}
-        onMouseEnter={() => setHoveredNav('login')}
-        onMouseLeave={() => setHoveredNav(null)}
-      >
-        로그인
-      </button>
+        viewMode="text"
+        height={34}
+        width={82}
+      />
 
       {/* 가입하기 */}
       <div style={{ position: 'relative', flexShrink: 0 }}>
-        <button
+        <LiquidMetalButton
+          label="가입하기"
           onClick={onMockAction}
-          style={{
-            borderRadius: 999,
-            padding: '6px 14px',
-            border: 'none',
-            background: 'var(--accent)',
-            color: '#fff',
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            transition: 'background 0.15s',
-            display: 'block',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
-        >
-          가입하기
-        </button>
+          viewMode="text"
+          height={34}
+          width={96}
+        />
 
         {/* 둥실둥실 7일 무료체험 뱃지 */}
         {/* 외부 div: 위치 잡기 (transform으로 정렬) — 애니메이션 없음 */}
