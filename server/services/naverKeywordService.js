@@ -251,7 +251,8 @@ function sortKeywordRows(baseKeyword, rows, sortMode = 'analysis') {
   });
 }
 
-const INTENT_SUFFIXES = ['방법', '후기', '비용', '추천', '수익', '가격', '단점', '뜻'];
+// 접미어 목록 — 항상 힌트로 추가 (long-tail 변형 커버)
+const INTENT_SUFFIXES = ['비용', '교육', '후기', '방법', '단점', '문의', '조건', '수익'];
 
 const SERP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 const SERP_RELATED_SELECTORS = [
@@ -296,21 +297,20 @@ async function fetchNaverRelatedSearches(keyword) {
 }
 
 /**
- * SERP 기반 힌트 도출 전략:
- *  1순위: 네이버 자동완성 + SERP 연관검색어 (병렬)
- *  2순위: 접두어 분리 (SERP 시그널이 부족할 때)
- *  3순위: 인텐트 접미어 (최후 폴백)
- *  상한: MAX_HINTS = 8
+ * 힌트 도출 전략:
+ *  1순위: SERP 자동완성 + 연관검색어 — 시드를 포함하는 키워드 우선
+ *  2순위: "{키워드}비용", "{키워드}교육" 등 접미어 조합 — 항상 추가 (폴백 아님)
+ *         → Naver 광고 API가 기본 힌트에서 반환 못 하는 long-tail 키워드 커버
+ *  3순위: 접두어 분리 제거 (노이즈 원인) — SERP + 접미어로 충분
  */
 async function deriveAnalysisHints(keyword) {
   const clean = sanitizeNaverHintKeyword(keyword);
   if (!clean) return [];
 
-  const MAX_HINTS = 8;
   const seen = new Set([clean]);
   const hints = [clean];
 
-  // 1순위: 자동완성 + SERP 연관검색어 병렬
+  // 1순위: SERP 자동완성 + 연관검색어 병렬
   const [acResult, relatedResult] = await Promise.allSettled([
     fetchNaverAutoComplete(keyword),
     fetchNaverRelatedSearches(keyword),
@@ -319,51 +319,38 @@ async function deriveAnalysisHints(keyword) {
   const acSuggestions = acResult.status === 'fulfilled' ? acResult.value : [];
   const relatedSearches = relatedResult.status === 'fulfilled' ? relatedResult.value : [];
 
-  // 자동완성 우선, 연관검색어 후순위로 인터리빙
-  const serpSignals = [];
-  const maxLen = Math.max(acSuggestions.length, relatedSearches.length);
-  for (let i = 0; i < maxLen; i++) {
-    if (i < acSuggestions.length) serpSignals.push(acSuggestions[i]);
-    if (i < relatedSearches.length) serpSignals.push(relatedSearches[i]);
-  }
+  // 시드를 포함하거나 시드가 포함하는 SERP 신호 우선 (확장형: "옆커폰창업비용")
+  const serpAll = [...acSuggestions, ...relatedSearches];
+  const relevantSerp = serpAll.filter(s => {
+    const n = normalizeText(s);
+    return n.includes(clean) || clean.includes(n);
+  });
+  const otherSerp = serpAll.filter(s => {
+    const n = normalizeText(s);
+    return !n.includes(clean) && !clean.includes(n);
+  });
 
-  for (const suggestion of serpSignals) {
-    if (hints.length >= MAX_HINTS) break;
-    const sanitized = sanitizeNaverHintKeyword(suggestion);
-    if (sanitized && !seen.has(sanitized)) {
-      seen.add(sanitized);
-      hints.push(suggestion);
+  for (const s of [...relevantSerp, ...otherSerp].slice(0, 6)) {
+    const san = sanitizeNaverHintKeyword(s);
+    if (san && !seen.has(san)) {
+      seen.add(san);
+      hints.push(s);
     }
   }
 
-  // 2순위 폴백: SERP 시그널이 부족하면 접두어 분리
-  if (hints.length < 4 && clean.length >= 4) {
-    for (const ratio of [0.6, 0.45]) {
-      if (hints.length >= MAX_HINTS) break;
-      const prefixLen = Math.round(clean.length * ratio);
-      if (prefixLen >= 2 && prefixLen < clean.length) {
-        const prefix = clean.slice(0, prefixLen);
-        if (!seen.has(prefix)) {
-          seen.add(prefix);
-          hints.push(prefix);
-        }
-      }
+  // 2순위: 접미어 조합 — SERP 여부 무관하게 항상 추가
+  // Naver 광고 API는 베이스 힌트에서 "비용/교육/단점" 변형을 반환하지 않을 수 있음
+  // 각 접미어를 별도 힌트로 API에 직접 조회하면 해당 키워드가 결과에 포함됨
+  for (const suffix of INTENT_SUFFIXES) {
+    const combined = clean + suffix;
+    if (!seen.has(combined)) {
+      seen.add(combined);
+      hints.push(combined);
     }
   }
 
-  // 3순위 폴백: 여전히 부족하면 인텐트 접미어
-  if (hints.length < 3) {
-    for (const suffix of INTENT_SUFFIXES.slice(0, 3)) {
-      if (hints.length >= MAX_HINTS) break;
-      const combined = clean + suffix;
-      if (!seen.has(combined)) {
-        seen.add(combined);
-        hints.push(combined);
-      }
-    }
-  }
-
-  return hints;
+  console.log(`[hints] "${keyword}" → ${hints.length}개:`, hints);
+  return hints.slice(0, 14); // 최대 14개 (API 병렬 호출)
 }
 
 function containsAny(keyword, words) {
