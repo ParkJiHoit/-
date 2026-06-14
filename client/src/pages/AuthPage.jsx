@@ -164,21 +164,15 @@ function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
     <div style={{ width: '100%', maxWidth: 300 }}>
       <Logo isDark={isDark} />
       {/* VerticalCutReveal 타이틀 */}
-      <div style={{ textAlign: 'center', marginBottom: 28, color, fontSize: '1.55rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.3 }}>
+      <div style={{ marginBottom: 28, color, fontSize: '1.55rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.4 }}>
         <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="first" transition={tr}>
-          안녕하세요!
+          {`안녕하세요! RANKLET입니다.`}
         </VerticalCutReveal>
-        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="last" reverse={true} transition={{ ...tr, delay: 0.3 }}>
-          RANKLET입니다.
+        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="last" reverse={true} transition={{ ...tr, delay: 0.5 }}>
+          {`로그인 하셔서`}
         </VerticalCutReveal>
-        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="center" transition={{ ...tr, delay: 0.6 }}>
-          로그인 하셔서
-        </VerticalCutReveal>
-        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="first" reverse={true} transition={{ ...tr, delay: 0.9 }}>
-          키워드를 먼저
-        </VerticalCutReveal>
-        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="last" transition={{ ...tr, delay: 1.2 }}>
-          차지하세요!
+        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="center" transition={{ ...tr, delay: 1.1 }}>
+          {`키워드를 먼저 차지하세요!`}
         </VerticalCutReveal>
       </div>
 
