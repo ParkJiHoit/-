@@ -251,8 +251,7 @@ function sortKeywordRows(baseKeyword, rows, sortMode = 'analysis') {
   });
 }
 
-// 접미어 목록 — 항상 힌트로 추가 (long-tail 변형 커버)
-const INTENT_SUFFIXES = ['비용', '교육', '후기', '방법', '단점', '문의', '조건', '수익'];
+const INTENT_SUFFIXES = ['방법', '후기', '비용', '추천', '수익', '가격', '단점', '뜻'];
 
 const SERP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 const SERP_RELATED_SELECTORS = [
@@ -296,21 +295,39 @@ async function fetchNaverRelatedSearches(keyword) {
   }
 }
 
+// SERP 신호로 관련 추천 검색어 chips 생성
+function buildSerpChips(serpSignals, baseKeyword) {
+  const baseNorm = normalizeText(baseKeyword);
+  return [...new Set(serpSignals)]
+    .filter(s => s && normalizeText(s) !== baseNorm)
+    .map(s => {
+      const relevance = calculateKeywordRelevance(baseKeyword, s);
+      return { keyword: s, relevanceScore: relevance.relevanceScore, relevanceLevel: relevance.relevanceLevel };
+    })
+    .sort((a, b) => b.relevanceScore - a.relevanceScore)
+    .slice(0, 8);
+}
+
 /**
- * 힌트 도출 전략:
- *  1순위: SERP 자동완성 + 연관검색어 — 시드를 포함하는 키워드 우선
- *  2순위: "{키워드}비용", "{키워드}교육" 등 접미어 조합 — 항상 추가 (폴백 아님)
- *         → Naver 광고 API가 기본 힌트에서 반환 못 하는 long-tail 키워드 커버
- *  3순위: 접두어 분리 제거 (노이즈 원인) — SERP + 접미어로 충분
+ * 힌트 도출 전략 (원래대로):
+ *  1순위: 네이버 자동완성 + SERP 연관검색어 (병렬)
+ *  2순위: 접두어 분리 폴백 (SERP 시그널 < 4개일 때)
+ *  3순위: 인텐트 접미어 폴백 (최후 수단)
+ *  상한: MAX_HINTS = 8
+ *
+ *  반환: { hints, serpSignals }
+ *   - hints: 키워드 API 조회용
+ *   - serpSignals: 관련 추천 검색어 chips용 (SERP 원본 그대로)
  */
 async function deriveAnalysisHints(keyword) {
   const clean = sanitizeNaverHintKeyword(keyword);
-  if (!clean) return [];
+  if (!clean) return { hints: [], serpSignals: [] };
 
+  const MAX_HINTS = 8;
   const seen = new Set([clean]);
   const hints = [clean];
 
-  // 1순위: SERP 자동완성 + 연관검색어 병렬
+  // 1순위: 자동완성 + SERP 연관검색어 병렬
   const [acResult, relatedResult] = await Promise.allSettled([
     fetchNaverAutoComplete(keyword),
     fetchNaverRelatedSearches(keyword),
@@ -318,39 +335,47 @@ async function deriveAnalysisHints(keyword) {
 
   const acSuggestions = acResult.status === 'fulfilled' ? acResult.value : [];
   const relatedSearches = relatedResult.status === 'fulfilled' ? relatedResult.value : [];
+  const serpSignals = [...acSuggestions, ...relatedSearches];
 
-  // 시드를 포함하거나 시드가 포함하는 SERP 신호 우선 (확장형: "옆커폰창업비용")
-  const serpAll = [...acSuggestions, ...relatedSearches];
-  const relevantSerp = serpAll.filter(s => {
-    const n = normalizeText(s);
-    return n.includes(clean) || clean.includes(n);
-  });
-  const otherSerp = serpAll.filter(s => {
-    const n = normalizeText(s);
-    return !n.includes(clean) && !clean.includes(n);
-  });
-
-  for (const s of [...relevantSerp, ...otherSerp].slice(0, 6)) {
-    const san = sanitizeNaverHintKeyword(s);
-    if (san && !seen.has(san)) {
-      seen.add(san);
-      hints.push(s);
+  // 자동완성 우선, 연관검색어 후순위로 인터리빙
+  const maxLen = Math.max(acSuggestions.length, relatedSearches.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (hints.length >= MAX_HINTS) break;
+    for (const src of [acSuggestions, relatedSearches]) {
+      if (hints.length >= MAX_HINTS) break;
+      if (i < src.length) {
+        const sanitized = sanitizeNaverHintKeyword(src[i]);
+        if (sanitized && !seen.has(sanitized)) {
+          seen.add(sanitized);
+          hints.push(src[i]);
+        }
+      }
     }
   }
 
-  // 2순위: 접미어 조합 — SERP 여부 무관하게 항상 추가
-  // Naver 광고 API는 베이스 힌트에서 "비용/교육/단점" 변형을 반환하지 않을 수 있음
-  // 각 접미어를 별도 힌트로 API에 직접 조회하면 해당 키워드가 결과에 포함됨
-  for (const suffix of INTENT_SUFFIXES) {
-    const combined = clean + suffix;
-    if (!seen.has(combined)) {
-      seen.add(combined);
-      hints.push(combined);
+  // 2순위 폴백: SERP 시그널 부족 시 접두어 분리
+  if (hints.length < 4 && clean.length >= 4) {
+    for (const ratio of [0.6, 0.45]) {
+      if (hints.length >= MAX_HINTS) break;
+      const prefixLen = Math.round(clean.length * ratio);
+      if (prefixLen >= 2 && prefixLen < clean.length) {
+        const prefix = clean.slice(0, prefixLen);
+        if (!seen.has(prefix)) { seen.add(prefix); hints.push(prefix); }
+      }
+    }
+  }
+
+  // 3순위 폴백: 여전히 부족하면 인텐트 접미어
+  if (hints.length < 3) {
+    for (const suffix of INTENT_SUFFIXES.slice(0, 3)) {
+      if (hints.length >= MAX_HINTS) break;
+      const combined = clean + suffix;
+      if (!seen.has(combined)) { seen.add(combined); hints.push(combined); }
     }
   }
 
   console.log(`[hints] "${keyword}" → ${hints.length}개:`, hints);
-  return hints.slice(0, 14); // 최대 14개 (API 병렬 호출)
+  return { hints, serpSignals };
 }
 
 function containsAny(keyword, words) {
@@ -407,8 +432,7 @@ export async function fetchKeywordVolume(keyword) {
 
 export async function analyzeKeyword(baseKeyword) {
   try {
-    const hints = await deriveAnalysisHints(baseKeyword);
-    console.log(`[analyze] "${baseKeyword}" → hints(${hints.length}):`, hints);
+    const { hints, serpSignals } = await deriveAnalysisHints(baseKeyword);
 
     const settled = await Promise.allSettled(
       hints.map(async (hint) => ({
@@ -427,10 +451,16 @@ export async function analyzeKeyword(baseKeyword) {
     );
     const keywords = sortKeywordRows(baseKeyword, normalizedRows);
 
+    // chips: SERP 신호 기반 (autocomplete + 연관검색어)
+    // SERP 신호가 없으면 기존 키워드 API 기반으로 폴백
+    const searchSuggestions = serpSignals.length > 0
+      ? buildSerpChips(serpSignals, baseKeyword)
+      : buildSearchSuggestions(keywords, baseKeyword);
+
     return {
       baseKeyword,
       summary: buildSummary(keywords),
-      searchSuggestions: buildSearchSuggestions(keywords, baseKeyword),
+      searchSuggestions,
       keywords
     };
   } catch (error) {
