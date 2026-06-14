@@ -43,7 +43,7 @@ const INTENT_CLASS = {
   '일반 후보':  'mac-badge-gray'
 };
 
-export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns, headerSlot }) {
+export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns }) {
   const activeColumns = KEYWORD_TABLE_COLUMNS.filter(
     (col) => col.alwaysVisible || visibleColumns?.[col.key]
   );
@@ -62,7 +62,6 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns,
 
   return (
     <section className="mac-card overflow-hidden">
-      {headerSlot}
       <div className="mac-scroll" style={{ maxHeight: 620, overflowX: 'auto', overflowY: 'auto' }}>
         <table className="mac-table" style={{ minWidth }}>
           <thead>

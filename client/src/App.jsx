@@ -4,7 +4,6 @@ import * as XLSX from 'xlsx';
 import BlogAnalysisForm from './components/BlogAnalysisForm';
 import BlogAnalysisPanel from './components/BlogAnalysisPanel';
 import BlogSummaryCards from './components/BlogSummaryCards';
-import ClusterTabs from './components/ClusterTabs';
 import ColumnVisibilitySettings from './components/ColumnVisibilitySettings';
 import KeywordExpansionForm from './components/KeywordExpansionForm';
 import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
@@ -255,7 +254,6 @@ export default function App() {
   const [loading, setLoading]           = useState(false);
   const [error,   setError]             = useState('');
   const [toast,   setToast]             = useState('');
-  const [selectedCluster, setSelectedCluster] = useState(null);
   const toastRef = useRef(null);
 
   const isKeywordTab  = activeTab === 'analysis' || activeTab === 'expansion';
@@ -285,7 +283,6 @@ export default function App() {
   const filteredRows = useMemo(() => {
     if (!isKeywordTab) return [];
     const filtered = activeRows.filter((row) => {
-      if (selectedCluster && (row.sourceKeyword || row.baseKeyword) !== selectedCluster) return false;
       if (filters.excludeLowRelevance && row.relevanceLevel === '낮음') return false;
       if (filters.relevanceLevel && row.relevanceLevel !== filters.relevanceLevel) return false;
       if (filters.minRelevance && row.relevanceScore < Number(filters.minRelevance)) return false;
@@ -301,7 +298,7 @@ export default function App() {
       return true;
     });
     return sortKeywords(filtered, sortConfig);
-  }, [activeRows, filters, isKeywordTab, sortConfig, selectedCluster]);
+  }, [activeRows, filters, isKeywordTab, sortConfig]);
 
   const currentSummary = useMemo(() => buildSummary(filteredRows), [filteredRows]);
 
@@ -341,7 +338,6 @@ export default function App() {
   }, []);
 
   const analyzeKeyword = async (keyword) => {
-    setSelectedCluster(null);
     fetchInsights(keyword); // fire independently, doesn't block table
     const data = await requestKeywords('/api/keywords/analyze', { keyword },
       '키워드 데이터를 조회하지 못했습니다.', { key: 'efficiencyScore', direction: 'desc' });
@@ -411,7 +407,6 @@ export default function App() {
       return;
     }
     setActiveTab(next); setError(''); setFilters(defaultFilters);
-    setSelectedCluster(null);
     setInsights(null); setInsightsLoading(false); setInsightsError(null);
     if (next === 'analysis')  setSortConfig({ key: 'efficiencyScore',  direction: 'desc' });
     if (next === 'expansion') setSortConfig({ key: 'discoveryScore',  direction: 'desc' });
@@ -560,13 +555,6 @@ export default function App() {
               sortConfig={sortConfig}
               onSort={handleSort}
               visibleColumns={visibleColumns}
-              headerSlot={
-                <ClusterTabs
-                  keywords={activeRows}
-                  selected={selectedCluster}
-                  onChange={setSelectedCluster}
-                />
-              }
             />
           </div>
         )}
