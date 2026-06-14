@@ -551,6 +551,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
     {
       label: '총 검색량', value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—', showChange: true,
       sub: keywordRow ? `PC ${formatNumber(keywordRow.monthlyPcSearch)} · 모바일 ${formatNumber(keywordRow.monthlyMobileSearch)}` : null,
+      splitBar: keywordRow ? { pc: keywordRow.monthlyPcSearch, mobile: keywordRow.monthlyMobileSearch } : null,
     },
     {
       label: '모바일 비중', value: keywordRow ? formatPercent(keywordRow.mobileRatio) : '—', showChange: false,
@@ -688,8 +689,11 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
       {/* Row 1: KPI — 4 independent floating cards with sparkline */}
       <div style={{ display: 'flex', gap: 10 }}>
-        {kpis.map(({ label, value, showChange, sub, bar, barColor }) => {
+        {kpis.map(({ label, value, showChange, sub, bar, barColor, splitBar }) => {
           const isUp = showChange && changePercent != null ? changePercent >= 0 : null;
+          const splitTotal = splitBar ? (splitBar.pc + splitBar.mobile) || 1 : 1;
+          const pcPct     = splitBar ? (splitBar.pc / splitTotal) * 100 : 0;
+          const mobilePct = splitBar ? (splitBar.mobile / splitTotal) * 100 : 0;
           return (
             <div key={label} className="mac-card" style={{
               flex: 1, padding: '16px 18px', minWidth: 0,
@@ -701,28 +705,43 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
                 fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
               }}>{label}</p>
 
-              {/* 값 + 스파크라인 */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <p style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-1px', color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>{value}</p>
-                {showChange && <MiniSparkline data={sparklineData} />}
-              </div>
+              {/* 값 */}
+              <p style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-1px', color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>{value}</p>
 
-              {/* 진행 바 (모바일/CTR/효율) */}
-              {bar != null && (
+              {/* PC·모바일 split bar */}
+              {splitBar ? (
+                <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', display: 'flex', gap: 1 }}>
+                  <div style={{ width: `${pcPct}%`, height: '100%', background: '#5E5CE6', borderRadius: '2px 0 0 2px', transition: 'width 0.6s ease' }} />
+                  <div style={{ width: `${mobilePct}%`, height: '100%', background: '#0A84FF', borderRadius: '0 2px 2px 0', transition: 'width 0.6s ease' }} />
+                </div>
+              ) : bar != null ? (
                 <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(bar, 100)}%`, height: '100%', background: barColor, borderRadius: 2, transition: 'width 0.6s ease' }} />
                 </div>
-              )}
+              ) : null}
 
               {/* 보조 텍스트 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                {sub && <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>{sub}</p>}
+                {splitBar ? (
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: 1, background: '#5E5CE6', flexShrink: 0 }} />
+                      PC {Math.round(pcPct)}%
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: 1, background: '#0A84FF', flexShrink: 0 }} />
+                      모바일 {Math.round(mobilePct)}%
+                    </span>
+                  </div>
+                ) : (
+                  sub && <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>{sub}</p>
+                )}
                 {showChange && isUp !== null ? (
                   <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
                     {isUp ? '▲' : '▼'} {Math.abs(changePercent).toFixed(1)}%
                   </p>
                 ) : showChange && insightsLoading ? (
-                  <Skeleton height={10} width="50%" radius={4} />
+                  <Skeleton height={10} width="40%" radius={4} />
                 ) : null}
               </div>
             </div>
