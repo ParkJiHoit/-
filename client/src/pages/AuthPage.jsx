@@ -56,13 +56,13 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* 상단 컨트롤 바 — 뒤로가기 버튼 + 로고 */}
+          {/* 상단 컨트롤 바 — 뒤로가기 버튼 + 로고 중앙 */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             padding: '16px 20px 0',
             flexShrink: 0,
-            gap: 10,
+            position: 'relative',
           }}>
             <IconBtn
               onClick={mode === 'login' ? onClose : () => setMode('login')}
@@ -71,8 +71,13 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
             >
               <ArrowLeftIcon />
             </IconBtn>
-            {/* 로고 — 뒤로가기 버튼과 동일 선상 */}
-            <div style={{ width: 140, height: 34, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+            {/* 로고 — 좌우 중앙 절대 위치 */}
+            <div style={{
+              position: 'absolute', left: '50%', top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 140, height: 34, overflow: 'hidden',
+              pointerEvents: 'none',
+            }}>
               <img
                 src={isDark ? rankletLogoDark : rankletLogoLight}
                 alt="RANKLET"
