@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as cheerio from 'cheerio';
 import { classifyKeyword } from '../utils/keywordClassifier.js';
 import { classifyKeywordIntent } from '../utils/keywordIntent.js';
 import { calculateKeywordRelevance } from '../utils/keywordRelevance.js';
@@ -250,64 +251,108 @@ function sortKeywordRows(baseKeyword, rows, sortMode = 'analysis') {
   });
 }
 
-// Universal Korean search-intent suffixes — morphological intent markers common
-// to ALL Korean keyword domains. Applied as fallback when autocomplete is unavailable.
 const INTENT_SUFFIXES = ['방법', '후기', '비용', '추천', '수익', '가격', '단점', '뜻'];
 
+const SERP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+const SERP_RELATED_SELECTORS = [
+  '.related_srch .lst_related_srch a',
+  '.related_srch a',
+  '.keyword_area .keyword_lst li a',
+  '[class*="RelatedKeyword"] a',
+  '[class*="relate_lst"] a',
+];
+
+// Naver SERP 연관검색어 스크래핑
+async function fetchNaverRelatedSearches(keyword) {
+  try {
+    const url = `https://search.naver.com/search.naver?query=${encodeURIComponent(keyword)}`;
+    const { data } = await axios.get(url, {
+      headers: {
+        'User-Agent': SERP_UA,
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8',
+        'Accept': 'text/html,application/xhtml+xml,application/xhtml+xml;q=0.9,*/*;q=0.8',
+        'Referer': 'https://www.naver.com',
+      },
+      timeout: 8000,
+    });
+    const $ = cheerio.load(data);
+    const results = new Set();
+
+    for (const sel of SERP_RELATED_SELECTORS) {
+      $(sel).each((_, el) => {
+        const text = $(el).text().trim().replace(/\s+/g, ' ');
+        if (text && text.length >= 2 && text.length <= 30) results.add(text);
+      });
+      if (results.size >= 3) break;
+    }
+
+    const found = [...results].slice(0, 10);
+    if (found.length) console.log(`[relatedSearch] "${keyword}" → ${found.length}개:`, found.slice(0, 4));
+    return found;
+  } catch (err) {
+    console.warn(`[relatedSearch] "${keyword}" 실패:`, err.message);
+    return [];
+  }
+}
+
 /**
- * Derives hint keywords for broad API coverage.
- *
- * Strategy:
- *  1. Proportional prefix splits — uncovers the broader keyword family
- *  2. Naver autocomplete (primary) — dynamically discovers intent-suffix variants
- *  3. Universal intent-suffix fallback — when autocomplete is unavailable (server-side
- *     bot detection), attaches common Korean intent markers to the head morpheme
- *
- * Total keyword-tool calls are capped at MAX_HINTS (8).
+ * SERP 기반 힌트 도출 전략:
+ *  1순위: 네이버 자동완성 + SERP 연관검색어 (병렬)
+ *  2순위: 접두어 분리 (SERP 시그널이 부족할 때)
+ *  3순위: 인텐트 접미어 (최후 폴백)
+ *  상한: MAX_HINTS = 8
  */
 async function deriveAnalysisHints(keyword) {
   const clean = sanitizeNaverHintKeyword(keyword);
   if (!clean) return [];
 
-  const hints = [clean];
+  const MAX_HINTS = 8;
   const seen = new Set([clean]);
-  const len = clean.length;
-  const prefixes = [];
+  const hints = [clean];
 
-  if (len >= 4) {
+  // 1순위: 자동완성 + SERP 연관검색어 병렬
+  const [acResult, relatedResult] = await Promise.allSettled([
+    fetchNaverAutoComplete(keyword),
+    fetchNaverRelatedSearches(keyword),
+  ]);
+
+  const acSuggestions = acResult.status === 'fulfilled' ? acResult.value : [];
+  const relatedSearches = relatedResult.status === 'fulfilled' ? relatedResult.value : [];
+
+  // 자동완성 우선, 연관검색어 후순위로 인터리빙
+  const serpSignals = [];
+  const maxLen = Math.max(acSuggestions.length, relatedSearches.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (i < acSuggestions.length) serpSignals.push(acSuggestions[i]);
+    if (i < relatedSearches.length) serpSignals.push(relatedSearches[i]);
+  }
+
+  for (const suggestion of serpSignals) {
+    if (hints.length >= MAX_HINTS) break;
+    const sanitized = sanitizeNaverHintKeyword(suggestion);
+    if (sanitized && !seen.has(sanitized)) {
+      seen.add(sanitized);
+      hints.push(suggestion);
+    }
+  }
+
+  // 2순위 폴백: SERP 시그널이 부족하면 접두어 분리
+  if (hints.length < 4 && clean.length >= 4) {
     for (const ratio of [0.6, 0.45]) {
-      const prefixLen = Math.round(len * ratio);
-      if (prefixLen >= 2 && prefixLen < len) {
+      if (hints.length >= MAX_HINTS) break;
+      const prefixLen = Math.round(clean.length * ratio);
+      if (prefixLen >= 2 && prefixLen < clean.length) {
         const prefix = clean.slice(0, prefixLen);
         if (!seen.has(prefix)) {
-          hints.push(prefix);
           seen.add(prefix);
-          prefixes.push(prefix);
+          hints.push(prefix);
         }
       }
     }
   }
 
-  // Cap at 6: base(1) + prefixes(up to 2) + intent hints(up to 3)
-  // Keeps API call count manageable without hitting Naver rate limits
-  const MAX_HINTS = 6;
-
-  // Primary: autocomplete (parallel for full keyword + first prefix)
-  const acTargets = [keyword, ...(prefixes.length ? [prefixes[0]] : [])];
-  const acResults = await Promise.allSettled(acTargets.map(fetchNaverAutoComplete));
-  const acSuggestions = acResults.flatMap((r) => r.status === 'fulfilled' ? r.value : []);
-
-  if (acSuggestions.length > 0) {
-    for (const suggestion of acSuggestions) {
-      if (hints.length >= MAX_HINTS) break;
-      const sanitized = sanitizeNaverHintKeyword(suggestion);
-      if (sanitized && !seen.has(sanitized)) {
-        seen.add(sanitized);
-        hints.push(suggestion);
-      }
-    }
-  } else {
-    // Fallback: attach universal intent suffixes to the full keyword (max 3 extra calls)
+  // 3순위 폴백: 여전히 부족하면 인텐트 접미어
+  if (hints.length < 3) {
     for (const suffix of INTENT_SUFFIXES.slice(0, 3)) {
       if (hints.length >= MAX_HINTS) break;
       const combined = clean + suffix;
@@ -388,8 +433,11 @@ export async function analyzeKeyword(baseKeyword) {
       .filter((r) => r.status === 'fulfilled')
       .map((r) => r.value);
 
-    const rawKeywords = responses.flatMap(({ rows }) => rows);
-    const normalizedRows = dedupeKeywords(rawKeywords.map((row) => normalizeKeywordRow(row, baseKeyword)));
+    const normalizedRows = dedupeKeywords(
+      responses.flatMap(({ hint, rows }) =>
+        rows.map((row) => normalizeKeywordRow(row, baseKeyword, hint))
+      )
+    );
     const keywords = sortKeywordRows(baseKeyword, normalizedRows);
 
     return {
