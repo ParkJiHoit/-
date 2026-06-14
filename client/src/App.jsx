@@ -58,9 +58,35 @@ function Toast({ message, onDone }) {
 /* ── Loading ── */
 function LoadingRow({ label }) {
   return (
-    <div className="mac-fade-in mac-card flex items-center gap-3 px-5 py-4">
-      <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--accent)' }} />
-      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{label}</span>
+    <div className="mac-fade-in" style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: 10,
+        padding: '12px 22px', borderRadius: 999,
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+      }}>
+        <Loader2 className="h-4 w-4 animate-spin" style={{ color: 'var(--accent)', flexShrink: 0 }} />
+        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{label}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── 메인 페이지 전용 로딩 (블로그 첫 검색) ── */
+function MainPageLoading({ label }) {
+  return (
+    <div className="mac-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '48px 0' }}>
+      <div style={{
+        width: 44, height: 44, borderRadius: 999,
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+      }}>
+        <Loader2 className="h-5 w-5 animate-spin" style={{ color: 'var(--accent)' }} />
+      </div>
+      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{label}</span>
     </div>
   );
 }
@@ -217,7 +243,7 @@ export default function App() {
   const isKeywordTab  = activeTab === 'analysis' || activeTab === 'expansion';
   const activeResult  = activeTab === 'analysis' ? analysis : expansion;
   const activeRows    = activeResult?.keywords || [];
-  const hasResults    = (isKeywordTab && !!activeResult) || (activeTab === 'blog' && !!blogStructureKeyword);
+  const hasResults    = (isKeywordTab && !!activeResult) || (activeTab === 'blog' && !!blogStructure);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -310,7 +336,8 @@ export default function App() {
   const analyzeBlogStructure = async (keyword) => {
     if (!keyword) return;
     setBlogStructureKeyword(keyword);
-    setBlogStructure(null);
+    // 기존 결과가 있으면(재검색) 유지 — null로 지우면 hasResults가 false가 되어 메인으로 튕김
+    // 기존 결과가 없으면(첫 검색) 메인 페이지 로딩 인디케이터를 보여줘야 하므로 그대로 null 유지
     setLoading(true); setError('');
     try {
       const res  = await fetch('/api/blog/structure-analysis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword }) });
@@ -423,20 +450,42 @@ export default function App() {
         {activeTab === 'blog' && (
           <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} />
         )}
+        {/* 블로그 첫 검색 로딩: 메인 페이지에 중앙 표시 */}
+        {activeTab === 'blog' && loading && !blogStructure && (
+          <MainPageLoading label="상위 블로그 구조를 분석 중입니다…" />
+        )}
+        {/* 블로그 첫 검색 에러: 메인 페이지에 표시 */}
+        {activeTab === 'blog' && !blogStructure && error && (
+          <p className="mac-fade-in" style={{ fontSize: 13, color: 'var(--destructive)', textAlign: 'center', marginTop: 16 }}>
+            {error}
+          </p>
+        )}
       </HeroSection>
 
       <div className="mx-auto w-full max-w-[1560px] px-6 pb-20 lg:px-14">
-        {loading && (
+        {/* 키워드 분석/확장 탭 로딩 */}
+        {loading && isKeywordTab && (
           <div className="mb-5">
             <LoadingRow label={
               activeTab === 'analysis' ? '키워드 데이터를 분석 중입니다…' :
-              activeTab === 'expansion' ? '키워드를 확장 중입니다…' :
-              '상위 블로그 구조를 분석 중입니다…'
+              '키워드를 확장 중입니다…'
             } />
           </div>
         )}
+        {/* 블로그 재검색 로딩 (기존 결과 위에) */}
+        {loading && activeTab === 'blog' && blogStructure && (
+          <div className="mb-5">
+            <LoadingRow label="상위 블로그 구조를 분석 중입니다…" />
+          </div>
+        )}
 
-        {error && (
+        {error && isKeywordTab && (
+          <div className="mac-fade-in mac-card mb-5 px-5 py-4"
+            style={{ fontSize: 13, color: 'var(--destructive)', border: '1px solid rgba(255,69,58,0.25)' }}>
+            {error}
+          </div>
+        )}
+        {error && activeTab === 'blog' && blogStructure && (
           <div className="mac-fade-in mac-card mb-5 px-5 py-4"
             style={{ fontSize: 13, color: 'var(--destructive)', border: '1px solid rgba(255,69,58,0.25)' }}>
             {error}
@@ -507,7 +556,7 @@ export default function App() {
         )}
 
         {/* Blog structure results */}
-        {activeTab === 'blog' && blogStructure && !loading && (
+        {activeTab === 'blog' && blogStructure && (
           <div className="mac-fade-in flex flex-col gap-5">
             <BlogStructurePanel result={blogStructure} keyword={blogStructureKeyword} />
           </div>
