@@ -16,6 +16,7 @@ const SERVICES = [
 export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, onMockAction, theme }) {
   const [serviceOpen, setServiceOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
+  const [comingSoonVisible, setComingSoonVisible] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -29,6 +30,12 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
   }, []);
 
   const handleServiceClick = (id) => {
+    if (id === 'expansion') {
+      setServiceOpen(false);
+      setComingSoonVisible(true);
+      setTimeout(() => setComingSoonVisible(false), 2200);
+      return;
+    }
     onGoToService(id);
     setServiceOpen(false);
   };
@@ -217,6 +224,35 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       </a>
 
       {divider}
+
+      {/* 준비중 토스트 */}
+      {comingSoonVisible && (
+        <div style={{
+          position: 'fixed',
+          bottom: 32,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 9999,
+          background: isDark ? 'rgba(44,44,46,0.96)' : 'rgba(255,255,255,0.96)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
+          borderRadius: 999,
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+          padding: '10px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          animation: 'macFadeUp 0.2s ease',
+        }}>
+          <Sparkles style={{ width: 14, height: 14, color: 'var(--accent)', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+            키워드 확장 — 곧 출시 예정입니다
+          </span>
+        </div>
+      )}
 
       {/* 로그인 */}
       <button
