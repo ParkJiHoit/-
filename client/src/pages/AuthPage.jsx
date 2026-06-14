@@ -129,11 +129,11 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
 /* ─── 로고 ─── */
 function Logo({ isDark }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, marginTop: -16 }}>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, marginTop: 8 }}>
       {/* 이미지 캔버스 여백을 clip으로 제거 — 실제 로고는 세로 중앙 약 30% 영역 */}
       <div style={{
-        width: 220,
-        height: 56,
+        width: 190,
+        height: 48,
         overflow: 'hidden',
         position: 'relative',
         flexShrink: 0,
@@ -142,7 +142,7 @@ function Logo({ isDark }) {
           src={isDark ? rankletLogoDark : rankletLogoLight}
           alt="RANKLET"
           style={{
-            width: 220,
+            width: 190,
             position: 'absolute',
             top: '50%',
             left: '50%',
@@ -169,7 +169,7 @@ function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
           {`HI 👋, FRIEND!`}
         </VerticalCutReveal>
         <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="last" reverse={true} transition={{ ...tr, delay: 0.5 }}>
-          {`IT IS NICE ⇗ TO`}
+          {`🌤️ IT IS NICE ⇗ TO`}
         </VerticalCutReveal>
         <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="center" transition={{ ...tr, delay: 1.1 }}>
           {`MEET 😊 YOU.`}
