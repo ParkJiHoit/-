@@ -10,6 +10,7 @@ import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
 import KeywordInsightPanel from './components/KeywordInsightPanel';
 import KeywordSearchForm from './components/KeywordSearchForm';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
+import SerpKeywordSection from './components/SerpKeywordSection';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
 import SummaryCards from './components/SummaryCards';
@@ -494,6 +495,34 @@ export default function App() {
             )}
             {activeTab === 'analysis' && (
               <SummaryCards summary={currentSummary} />
+            )}
+
+            {/* SERP 연관 검색어 */}
+            {activeTab === 'analysis' && activeResult?.serpKeywords?.length > 0 && (
+              <SerpKeywordSection
+                serpKeywords={activeResult.serpKeywords}
+                onKeywordClick={analyzeKeyword}
+              />
+            )}
+
+            {/* 키워드 클러스터링 섹션 헤더 */}
+            {activeTab === 'analysis' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 4 }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                  textTransform: 'uppercase', color: 'var(--text-secondary)',
+                }}>
+                  키워드 클러스터링
+                </span>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.05em',
+                  padding: '2px 7px', borderRadius: 4,
+                  background: 'var(--bg-overlay)', color: 'var(--text-tertiary)',
+                  border: '1px solid var(--border)',
+                }}>
+                  연관 키워드
+                </span>
+              </div>
             )}
 
             {/* Unified compact toolbar */}

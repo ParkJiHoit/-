@@ -295,6 +295,41 @@ async function fetchNaverRelatedSearches(keyword) {
   }
 }
 
+// SERP 키워드에 API 지표 매핑 (검색량/경쟁도 등)
+function extractSerpKeywords(allRows, serpSignals, baseKeyword) {
+  if (!serpSignals?.length) return [];
+  const rowMap = new Map(allRows.map(r => [normalizeText(r.keyword), r]));
+  const seen = new Set();
+  const result = [];
+
+  for (const s of serpSignals) {
+    if (!s) continue;
+    const norm = normalizeText(s);
+    if (seen.has(norm)) continue;
+    seen.add(norm);
+
+    const apiRow = rowMap.get(norm);
+    if (apiRow) {
+      result.push(apiRow);
+    } else {
+      // SERP에는 있지만 API 결과에 없는 키워드 (검색량 극소)
+      const relevance = calculateKeywordRelevance(baseKeyword, s);
+      result.push({
+        keyword: s,
+        totalSearch: 0,
+        monthlyPcSearch: 0,
+        monthlyMobileSearch: 0,
+        competition: null,
+        efficiencyScore: 0,
+        saturationScore: 0,
+        relevanceScore: relevance.relevanceScore,
+        relevanceLevel: relevance.relevanceLevel,
+      });
+    }
+  }
+  return result;
+}
+
 // SERP 신호로 관련 추천 검색어 chips 생성
 function buildSerpChips(serpSignals, baseKeyword) {
   const baseNorm = normalizeText(baseKeyword);
@@ -454,15 +489,18 @@ export async function analyzeKeyword(baseKeyword) {
     const keywords = sortKeywordRows(baseKeyword, normalizedRows);
 
     // chips: SERP 신호 기반 (autocomplete + 연관검색어)
-    // SERP 신호가 없으면 기존 키워드 API 기반으로 폴백
     const searchSuggestions = serpSignals.length > 0
       ? buildSerpChips(serpSignals, baseKeyword)
       : buildSearchSuggestions(keywords, baseKeyword);
+
+    // SERP 키워드 테이블 (자동완성 + 연관검색어 키워드 + API 지표 매핑)
+    const serpKeywords = extractSerpKeywords(normalizedRows, serpSignals, baseKeyword);
 
     return {
       baseKeyword,
       summary: buildSummary(keywords),
       searchSuggestions,
+      serpKeywords,
       keywords
     };
   } catch (error) {
