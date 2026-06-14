@@ -157,8 +157,20 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
 
       // 가장 가까운 결과 컨테이너에서 author/date 추출
       const $item = $el.closest('[data-template-id], li, article').first();
-      const author  = ($item.find(SEL.author).first().text().trim())  || '';
-      const dateRaw = ($item.find(SEL.date).first().text().trim())    || '';
+
+      // author: VIEW탭은 articleSourceJSX_title, 카페탭은 카페 홈 링크에서 추출
+      let author = $item.find(SEL.author).first().text().trim();
+      if (!author) {
+        // 카페 홈 링크(게시글 ID가 없는 cafe.naver.com 링크) 에서 카페명 추출
+        $item.find('a[href*="cafe.naver.com"]').each((_, a) => {
+          if (author) return false;
+          const h = $(a).attr('href') || '';
+          if (/cafe\.naver\.com\/[^/?#]+\/?$/.test(h)) {
+            author = $(a).text().trim();
+          }
+        });
+      }
+      const dateRaw = ($item.find(SEL.date).first().text().trim()) || '';
 
       raw.push({ title, author, dateRaw, postLink: href, type: detectType(href), aderUrl: null });
     });

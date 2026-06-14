@@ -109,6 +109,7 @@ function TypeBadge({ type }) {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       padding: '1px 6px', borderRadius: 4,
       fontSize: 9, fontWeight: 700, letterSpacing: '0.04em',
+      whiteSpace: 'nowrap',
       background: isBlog ? '#0A84FF18' : '#30d15818',
       color: isBlog ? '#0A84FF' : '#30d158',
       border: `1px solid ${isBlog ? '#0A84FF30' : '#30d15830'}`,
