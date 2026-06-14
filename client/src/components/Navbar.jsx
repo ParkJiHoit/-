@@ -1,5 +1,6 @@
-import { ChevronDown, FileText, Search, Sparkles, TrendingUp } from 'lucide-react';
+import { ChevronDown, FileText, LogOut, Search, Sparkles, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../AuthContext';
 
 const NOTION_UPDATE_URL =
   'https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link';
@@ -13,17 +14,23 @@ const SERVICES = [
   { id: 'blog',      icon: FileText, label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' }
 ];
 
-export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, onMockAction, theme }) {
+export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, theme }) {
+  const { user, signInWithGoogle, signOut } = useAuth();
   const [serviceOpen, setServiceOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
   const [hoveredService, setHoveredService] = useState(null);
   const [comingSoonVisible, setComingSoonVisible] = useState(false);
   const dropdownRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setServiceOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -250,83 +257,125 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
 
       {divider}
 
-      {/* 로그인 */}
-      <button
-        onClick={onMockAction}
-        style={{
-          ...pillItem('login'),
-          padding: hoveredNav === 'login' ? '6px 16px' : '6px 10px',
-        }}
-        onMouseEnter={() => setHoveredNav('login')}
-        onMouseLeave={() => setHoveredNav(null)}
-      >
-        로그인
-      </button>
+      {user ? (
+        /* ── 로그인 상태: 아바타 + 드롭다운 ── */
+        <div style={{ position: 'relative', flexShrink: 0 }} ref={userMenuRef}>
+          <button
+            onClick={() => setUserMenuOpen((v) => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '4px 10px 4px 4px',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
+              borderRadius: 999,
+              background: userMenuOpen
+                ? isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)'
+                : 'transparent',
+              cursor: 'pointer',
+              transition: 'background 0.15s',
+              fontFamily: 'inherit',
+            }}
+          >
+            {user.user_metadata?.avatar_url ? (
+              <img
+                src={user.user_metadata.avatar_url}
+                alt="avatar"
+                style={{ width: 26, height: 26, borderRadius: 999, objectFit: 'cover', flexShrink: 0 }}
+              />
+            ) : (
+              <div style={{
+                width: 26, height: 26, borderRadius: 999, background: 'var(--accent)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0,
+              }}>
+                {(user.user_metadata?.full_name || user.email || '?')[0].toUpperCase()}
+              </div>
+            )}
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+            </span>
+            <ChevronDown style={{ width: 10, height: 10, opacity: 0.5, transform: userMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+          </button>
 
-      {/* 가입하기 */}
-      <div style={{ position: 'relative', flexShrink: 0 }}>
-        <button
-          onClick={onMockAction}
-          style={{
-            borderRadius: 999,
-            padding: '6px 14px',
-            border: 'none',
-            background: 'var(--accent)',
-            color: '#fff',
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            transition: 'background 0.15s',
-            display: 'block',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
-        >
-          가입하기
-        </button>
-
-        {/* 둥실둥실 7일 무료체험 뱃지 */}
-        {/* 외부 div: 위치 잡기 (transform으로 정렬) — 애니메이션 없음 */}
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 12px)',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          pointerEvents: 'none',
-          whiteSpace: 'nowrap',
-          zIndex: 10,
-        }}>
-          {/* 내부 div: 둥실 애니메이션만 담당 */}
-          <div className="float-bob" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* 말풍선 꼬리 */}
-            <div style={{
-              width: 0, height: 0,
-              borderLeft: '4px solid transparent',
-              borderRight: '4px solid transparent',
-              borderBottom: `5px solid ${isDark ? 'rgba(30,80,180,0.6)' : 'rgba(30,80,180,0.4)'}`,
-              marginBottom: -1,
-            }} />
-            <div style={{
-              background: isDark ? 'rgba(20,60,160,0.28)' : 'rgba(20,60,160,0.14)',
-              borderRadius: 20,
-              padding: '4px 11px',
-              fontSize: 10,
-              fontWeight: 600,
-              color: isDark ? 'rgba(150,190,255,0.95)' : 'rgba(30,80,200,0.9)',
-              letterSpacing: '0.04em',
-              border: `1px solid ${isDark ? 'rgba(60,120,240,0.4)' : 'rgba(60,120,240,0.3)'}`,
-              backdropFilter: 'blur(8px)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
+          {userMenuOpen && (
+            <div className="mac-dropdown p-1.5" style={{
+              position: 'absolute', right: 0, top: 'calc(100% + 10px)', minWidth: 180,
             }}>
-              7일 무료체험
+              <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {user.user_metadata?.full_name || '사용자'}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.email}
+                </p>
+              </div>
+              <button
+                onClick={() => { signOut(); setUserMenuOpen(false); }}
+                className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left"
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--destructive)' }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,69,58,0.08)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <LogOut style={{ width: 14, height: 14 }} />
+                <span style={{ fontSize: 13, fontWeight: 500 }}>로그아웃</span>
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ── 비로그인 상태: 로그인 + 가입하기 ── */
+        <>
+          <button
+            onClick={signInWithGoogle}
+            style={{
+              ...pillItem('login'),
+              padding: hoveredNav === 'login' ? '6px 16px' : '6px 12px',
+            }}
+            onMouseEnter={() => setHoveredNav('login')}
+            onMouseLeave={() => setHoveredNav(null)}
+          >
+            로그인
+          </button>
+
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={signInWithGoogle}
+              style={{
+                borderRadius: 999, padding: '6px 14px', border: 'none',
+                background: 'var(--accent)', color: '#fff',
+                fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
+                cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
+            >
+              가입하기
+            </button>
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 12px)', left: '50%',
+              transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10,
+            }}>
+              <div className="float-bob" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{
+                  width: 0, height: 0,
+                  borderLeft: '4px solid transparent', borderRight: '4px solid transparent',
+                  borderBottom: `5px solid ${isDark ? 'rgba(30,80,180,0.6)' : 'rgba(30,80,180,0.4)'}`,
+                  marginBottom: -1,
+                }} />
+                <div style={{
+                  background: isDark ? 'rgba(20,60,160,0.28)' : 'rgba(20,60,160,0.14)',
+                  borderRadius: 20, padding: '4px 11px', fontSize: 10, fontWeight: 600,
+                  color: isDark ? 'rgba(150,190,255,0.95)' : 'rgba(30,80,200,0.9)',
+                  letterSpacing: '0.04em',
+                  border: `1px solid ${isDark ? 'rgba(60,120,240,0.4)' : 'rgba(60,120,240,0.3)'}`,
+                  backdropFilter: 'blur(8px)',
+                }}>
+                  7일 무료체험
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </nav>
 
     {/* 준비중 토스트 — nav 바깥에서 렌더해야 fixed 위치가 정상 동작 */}

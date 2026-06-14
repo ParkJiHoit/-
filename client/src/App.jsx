@@ -440,7 +440,7 @@ export default function App() {
       )}
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-      <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} onMockAction={handleMockAction} theme={theme} />
+      <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} />
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
       {activeTab === 'pricing' ? (
