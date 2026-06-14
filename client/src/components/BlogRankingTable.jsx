@@ -287,15 +287,34 @@ const TABS = [
   { id: 'cafe', label: '카페' },
 ];
 
+const TAB_INDEX = { view: 0, blog: 1, cafe: 2 };
+
 function TabSwitcher({ active, onChange }) {
+  const idx = TAB_INDEX[active] ?? 0;
   return (
     <div style={{
       display: 'inline-flex',
-      background: 'var(--bg-overlay)',
+      position: 'relative',
+      background: 'rgba(255,255,255,0.06)',
+      border: '1px solid rgba(255,255,255,0.10)',
       borderRadius: 8,
-      padding: 2,
-      gap: 1,
+      padding: 3,
+      gap: 0,
     }}>
+      {/* 슬라이딩 배경 */}
+      <div style={{
+        position: 'absolute',
+        top: 3,
+        left: `calc(3px + ${idx} * (100% - 6px) / 3)`,
+        width: 'calc((100% - 6px) / 3)',
+        bottom: 3,
+        borderRadius: 6,
+        background: 'rgba(255,255,255,0.15)',
+        boxShadow: 'inset 1px 1px 1px rgba(255,255,255,0.20), inset -1px -1px 1px rgba(255,255,255,0.08), 0 1px 4px rgba(0,0,0,0.3)',
+        border: '1px solid rgba(255,255,255,0.16)',
+        transition: 'left 0.25s cubic-bezier(0.16,1,0.3,1)',
+        pointerEvents: 'none',
+      }} />
       {TABS.map(({ id, label }) => {
         const isActive = active === id;
         return (
@@ -303,17 +322,20 @@ function TabSwitcher({ active, onChange }) {
             key={id}
             onClick={() => onChange(id)}
             style={{
-              padding: '4px 10px',
+              position: 'relative',
+              flex: 1,
+              padding: '4px 12px',
               borderRadius: 6,
               border: 'none',
               cursor: 'pointer',
               fontFamily: 'inherit',
               fontSize: 10,
               fontWeight: isActive ? 700 : 500,
-              letterSpacing: '0.04em',
-              transition: 'all 0.15s',
-              background: isActive ? 'var(--accent)' : 'transparent',
-              color: isActive ? '#fff' : 'var(--text-tertiary)',
+              letterSpacing: '0.06em',
+              background: 'transparent',
+              color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)',
+              transition: 'color 0.2s ease',
+              whiteSpace: 'nowrap',
             }}
           >
             {label}
