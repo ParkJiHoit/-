@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import AuthScene from '../components/AuthScene';
 import GooeyText from '../components/GooeyText';
-import rankletLogo from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_45_46-removebg-preview.png';
+import rankletLogoDark from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_42_18-removebg-preview.png';
+import rankletLogoLight from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_45_46-removebg-preview.png';
 
 export default function AuthPage({ onSuccess, onClose, theme }) {
   const [mode, setMode] = useState('login'); // 'login' | 'email' | 'signup'
@@ -131,19 +132,11 @@ const GOOEY_TEXTS = ['안녕하세요!\nRANKLET입니다.', '로그인 하셔서
 function Logo({ isDark }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-      <div style={{
-        borderRadius: 10,
-        /* 다크모드: 로고 글자(검정)가 보이도록 흰 배경 패딩, 라이트모드: 그냥 투명 */
-        background: isDark ? 'rgba(255,255,255,0.92)' : 'transparent',
-        padding: isDark ? '6px 14px' : '0',
-        boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.25)' : 'none',
-      }}>
-        <img
-          src={rankletLogo}
-          alt="RANKLET"
-          style={{ height: 128, display: 'block', objectFit: 'contain' }}
-        />
-      </div>
+      <img
+        src={isDark ? rankletLogoDark : rankletLogoLight}
+        alt="RANKLET"
+        style={{ height: 128, display: 'block', objectFit: 'contain' }}
+      />
     </div>
   );
 }
