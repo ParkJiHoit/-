@@ -497,17 +497,22 @@ export default function App() {
               <SummaryCards summary={currentSummary} />
             )}
 
-            {/* SERP 연관 검색어 */}
-            {activeTab === 'analysis' && activeResult?.serpKeywords?.length > 0 && (
+            {/* 연관 키워드 / 자동완성 섹션 */}
+            {activeTab === 'analysis' && (
               <SerpKeywordSection
-                serpKeywords={activeResult.serpKeywords}
+                serpKeywords={activeResult?.serpKeywords}
                 onKeywordClick={analyzeKeyword}
               />
             )}
 
-            {/* 키워드 클러스터링 섹션 헤더 */}
-            {activeTab === 'analysis' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 4 }}>
+            {/* 키워드 클러스터링 섹션 */}
+            <div className="mac-card overflow-hidden">
+              {/* 헤더 */}
+              <div style={{
+                padding: '12px 16px 11px',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
                 <span style={{
                   fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
                   textTransform: 'uppercase', color: 'var(--text-secondary)',
@@ -522,61 +527,57 @@ export default function App() {
                 }}>
                   연관 키워드
                 </span>
+                <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
+                  {formatNumber(filteredRows.length)}개 키워드
+                </span>
               </div>
-            )}
 
-            {/* Unified compact toolbar */}
-            <div
-              className="mac-card px-4 py-3"
-              style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}
-            >
-              <KeywordFilters filters={filters} onChange={setFilters} />
+              {/* 필터 툴바 */}
+              <div style={{ padding: '10px 16px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                <KeywordFilters filters={filters} onChange={setFilters} />
 
-              <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
+                <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
 
-              <QuickToggle
-                label="낮은 연관도 제외"
-                checked={filters.excludeLowRelevance}
-                onChange={(v) => updateFilter('excludeLowRelevance', v)}
-                title="연관도 낮음 키워드를 숨깁니다."
-              />
-              <QuickToggle
-                label="과포화 제외"
-                checked={filters.excludeSaturated}
-                onChange={(v) => updateFilter('excludeSaturated', v)}
-                title="과포화 주의 키워드를 숨깁니다."
-              />
+                <QuickToggle
+                  label="낮은 연관도 제외"
+                  checked={filters.excludeLowRelevance}
+                  onChange={(v) => updateFilter('excludeLowRelevance', v)}
+                  title="연관도 낮음 키워드를 숨깁니다."
+                />
+                <QuickToggle
+                  label="과포화 제외"
+                  checked={filters.excludeSaturated}
+                  onChange={(v) => updateFilter('excludeSaturated', v)}
+                  title="과포화 주의 키워드를 숨깁니다."
+                />
 
-              <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
+                <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
 
-              <ColumnVisibilitySettings
-                visibleColumns={visibleColumns}
-                onChange={setVisibleColumns}
-                onReset={resetVisibleColumns}
-              />
+                <ColumnVisibilitySettings
+                  visibleColumns={visibleColumns}
+                  onChange={setVisibleColumns}
+                  onReset={resetVisibleColumns}
+                />
 
-              <div style={{ flex: 1, minWidth: 4 }} />
+                <div style={{ flex: 1, minWidth: 4 }} />
 
-              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
-                {formatNumber(filteredRows.length)}개 키워드
-              </span>
+                <button
+                  className="mac-btn mac-btn-ghost mac-btn-sm"
+                  type="button"
+                  onClick={() => setFilters(defaultFilters)}
+                >
+                  초기화
+                </button>
 
-              <button
-                className="mac-btn mac-btn-ghost mac-btn-sm"
-                type="button"
-                onClick={() => setFilters(defaultFilters)}
-              >
-                초기화
-              </button>
-
-              <button
-                className="mac-btn mac-btn-sm"
-                onClick={downloadKeywordExcel}
-                disabled={!filteredRows.length}
-              >
-                <Download className="h-3.5 w-3.5" />
-                엑셀 다운로드
-              </button>
+                <button
+                  className="mac-btn mac-btn-sm"
+                  onClick={downloadKeywordExcel}
+                  disabled={!filteredRows.length}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  엑셀 다운로드
+                </button>
+              </div>
             </div>
 
             <KeywordTable

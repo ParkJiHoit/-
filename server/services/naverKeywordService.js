@@ -445,12 +445,16 @@ async function fetchNaverAutoComplete(keyword) {
         r_format: 'json', r_enc: 'UTF-8', r_unicode: 0,
         t_koreng: 1, run: 2, rev: 4, q_enc: 'UTF-8',
       },
+      headers: { 'User-Agent': SERP_UA, 'Referer': 'https://www.naver.com' },
       timeout: 5000,
     });
     // Naver autocomplete: 실제 데이터는 items[0]에 있음 (answer는 항상 빈 배열)
     const list = data?.items?.[0] || data?.answer || [];
-    return list.map(([kw]) => String(kw || '').trim()).filter(Boolean);
-  } catch {
+    const result = list.map(([kw]) => String(kw || '').trim()).filter(Boolean);
+    console.log(`[autoComplete] "${keyword}" → ${result.length}개:`, result);
+    return result;
+  } catch (err) {
+    console.warn(`[autoComplete] "${keyword}" 실패:`, err.message);
     return [];
   }
 }
