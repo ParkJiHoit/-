@@ -281,8 +281,8 @@ function DataRows({ rows, keyword, tab }) {
 
 // ── 탭 스위처 ────────────────────────────────────────────────────────────
 const TABS = [
-  { id: 'blog', label: '블로그' },
   { id: 'view', label: 'VIEW' },
+  { id: 'blog', label: '블로그' },
   { id: 'cafe', label: '카페' },
 ];
 
@@ -325,7 +325,7 @@ function TabSwitcher({ active, onChange }) {
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────
 export default function BlogRankingTable({ baseKeyword }) {
-  const [activeTab,  setActiveTab]  = useState('blog');
+  const [activeTab,  setActiveTab]  = useState('view');
   const [tabData,    setTabData]    = useState({ blog: null, view: null, cafe: null });
   const [tabLoading, setTabLoading] = useState({ blog: false, view: false, cafe: false });
   const [errMsg,     setErrMsg]     = useState(null);
@@ -441,10 +441,10 @@ export default function BlogRankingTable({ baseKeyword }) {
 
       {/* 안내 문구 */}
       <p style={{ fontSize: 9.5, color: 'var(--text-tertiary)', margin: '6px 0 0', lineHeight: 1.5 }}>
-        {activeTab === 'blog'
-          ? '지수 = 순위(35) + 키워드 일치(20) + 최신성(15) + 방문자(15) + 활동성(15, 미수집)'
-          : activeTab === 'view'
-            ? 'VIEW탭 = 블로그 + 카페 통합 순위 · 방문자 수는 블로그 글에만 표시'
+        {activeTab === 'view'
+          ? 'VIEW탭 = 블로그 + 카페 통합 순위'
+          : activeTab === 'blog'
+            ? '지수 = 순위(35) + 키워드 일치(20) + 최신성(15) + 방문자(15) + 활동성(15, 미수집)'
             : '카페탭 순위 · 네이버 카페 게시글 기준'}
       </p>
     </div>

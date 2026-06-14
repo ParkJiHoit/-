@@ -60,7 +60,9 @@ function detectType(url) {
 // 블로그/카페 URL인지 검증 (리다이렉트 후 결과 필터)
 function isValidNaverUrl(url, domains) {
   const isBlog = /blog\.naver\.com\/[^/?#\s]+\/\d{5,}/.test(url);
-  const isCafe = /cafe\.naver\.com\/[^/?#\s]+\/\d+/.test(url);
+  // 카페: /cafeName/articleId 형식 OR 구형 articleid 쿼리 파라미터
+  const isCafe = /cafe\.naver\.com\/[^/?#\s]+\/\d+/.test(url) ||
+                 (/cafe\.naver\.com/.test(url) && /[?&]articleid=\d+/i.test(url));
   if (!isBlog && !isCafe) return false;
   return domains.some(d => url.includes(d));
 }
@@ -107,59 +109,62 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
   const seenUrl = new Set();
   const seenAder = new Set();
 
-  $(SEL.resultItem).each((_, el) => {
-    if (raw.length >= limit) return false;
+  if (tab === 'blog') {
+    // 블로그 탭: ugcItem 기반 (기존 방식)
+    $(SEL.resultItem).each((_, el) => {
+      if (raw.length >= limit) return false;
 
-    const $el = $(el);
-    const author  = $el.find(SEL.author).first().text().trim();
-    const dateRaw = $el.find(SEL.date).first().text().trim();
+      const $el = $(el);
+      const author  = $el.find(SEL.author).first().text().trim();
+      const dateRaw = $el.find(SEL.date).first().text().trim();
 
-    // 블로그 원본 링크 (blog/view 탭)
-    const blogLinkEl = $el.find(SEL.blogLink).first();
-    if (blogLinkEl.length) {
-      const postLink = blogLinkEl.attr('href');
-      if (!postLink || seenUrl.has(postLink)) return;
-      seenUrl.add(postLink);
-      raw.push({ title: blogLinkEl.text().trim().replace(/\s+/g, ' '), author, dateRaw, postLink, type: 'blog', aderUrl: null });
-      return;
-    }
-
-    // 카페 원본 링크 (cafe/view 탭)
-    const cafeLinkEl = $el.find(SEL.cafeLink).first();
-    if (cafeLinkEl.length) {
-      const postLink = cafeLinkEl.attr('href');
-      if (!postLink || seenUrl.has(postLink)) return;
-      seenUrl.add(postLink);
-      raw.push({ title: cafeLinkEl.text().trim().replace(/\s+/g, ' '), author, dateRaw, postLink, type: 'cafe', aderUrl: null });
-      return;
-    }
-
-    // 카페 폴백 셀렉터 (heatmap target 없는 경우)
-    if (tab === 'cafe' || tab === 'view') {
-      const cafeFallback = $el.find('a[href*="cafe.naver.com"]').filter((_, a) => {
-        const href = $(a).attr('href') || '';
-        return /cafe\.naver\.com\/[^/?#]+\/\d+/.test(href);
-      }).first();
-      if (cafeFallback.length) {
-        const postLink = cafeFallback.attr('href');
+      const blogLinkEl = $el.find(SEL.blogLink).first();
+      if (blogLinkEl.length) {
+        const postLink = blogLinkEl.attr('href');
         if (!postLink || seenUrl.has(postLink)) return;
         seenUrl.add(postLink);
-        raw.push({ title: cafeFallback.text().trim().replace(/\s+/g, ' '), author, dateRaw, postLink, type: 'cafe', aderUrl: null });
+        raw.push({ title: blogLinkEl.text().trim().replace(/\s+/g, ' '), author, dateRaw, postLink, type: 'blog', aderUrl: null });
         return;
       }
-    }
 
-    // 파워컨텐츠 리다이렉트 링크
-    const titEl = $el.find(SEL.powerTitle).first();
-    if (titEl.length) {
-      const aderUrl = titEl.attr('href');
-      if (!aderUrl || seenAder.has(aderUrl)) return;
-      seenAder.add(aderUrl);
-      raw.push({ title: titEl.text().trim().replace(/\s+/g, ' '), author, dateRaw, postLink: null, type: null, aderUrl });
-    }
-  });
+      const titEl = $el.find(SEL.powerTitle).first();
+      if (titEl.length) {
+        const aderUrl = titEl.attr('href');
+        if (!aderUrl || seenAder.has(aderUrl)) return;
+        seenAder.add(aderUrl);
+        raw.push({ title: titEl.text().trim().replace(/\s+/g, ' '), author, dateRaw, postLink: null, type: null, aderUrl });
+      }
+    });
+  } else {
+    // VIEW / 카페 탭: ugcItem에 의존하지 않고 전체 링크 스캔
+    // Naver VIEW/카페 탭은 ugcItem 외 다른 템플릿 ID를 사용하므로 브로드 스캔이 필요
+    const $scope = $('#main_pack').length ? $('#main_pack') : $('body');
 
-  // 리다이렉트 해제
+    $scope.find('a[href]').each((_, el) => {
+      if (raw.length >= limit) return false;
+      const $el = $(el);
+      const href = $el.attr('href') || '';
+
+      // 대상 도메인 + 게시글 URL 패턴 검증
+      if (!config.domains.some(d => href.includes(d))) return;
+      if (!isValidNaverUrl(href, config.domains)) return;
+      if (seenUrl.has(href)) return;
+      seenUrl.add(href);
+
+      // 링크 텍스트가 제목이어야 함 (너무 짧으면 제목이 아님)
+      const title = $el.text().trim().replace(/\s+/g, ' ');
+      if (title.length < 4) return;
+
+      // 가장 가까운 결과 컨테이너에서 author/date 추출
+      const $item = $el.closest('[data-template-id], li, article').first();
+      const author  = ($item.find(SEL.author).first().text().trim())  || '';
+      const dateRaw = ($item.find(SEL.date).first().text().trim())    || '';
+
+      raw.push({ title, author, dateRaw, postLink: href, type: detectType(href), aderUrl: null });
+    });
+  }
+
+  // 블로그 탭 파워컨텐츠 리다이렉트 해제
   await Promise.all(
     raw.filter(r => r.aderUrl).map(async r => {
       r.postLink = await followRedirect(r.aderUrl, config.domains);
