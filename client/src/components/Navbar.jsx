@@ -8,6 +8,25 @@ const NOTION_UPDATE_URL =
 const NOTION_GUIDE_URL =
   'https://helix-territory-c92.notion.site/37b24604a091802abe38f48e986102d7?source=copy_link';
 
+const SHADCN_AVATARS = [
+  'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-1.png',
+  'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-2.png',
+  'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-3.png',
+  'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-4.png',
+  'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-5.png',
+  'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-6.png',
+  'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-7.png',
+  'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-8.png',
+];
+
+// 유저 ID 기반으로 항상 같은 아바타 배정
+function getAssignedAvatar(userId) {
+  if (!userId) return SHADCN_AVATARS[0];
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) hash = (hash * 31 + userId.charCodeAt(i)) >>> 0;
+  return SHADCN_AVATARS[hash % SHADCN_AVATARS.length];
+}
+
 const SERVICES = [
   { id: 'analysis',  icon: Search,   label: '키워드 분석', desc: '기준 키워드로 연관 키워드 발굴' },
   { id: 'expansion', icon: Sparkles, label: '키워드 확장', desc: '시드 키워드로 대량 발굴' },
@@ -275,21 +294,11 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
               fontFamily: 'inherit',
             }}
           >
-            {user.user_metadata?.avatar_url ? (
-              <img
-                src={user.user_metadata.avatar_url}
-                alt="avatar"
-                style={{ width: 26, height: 26, borderRadius: 999, objectFit: 'cover', flexShrink: 0 }}
-              />
-            ) : (
-              <div style={{
-                width: 26, height: 26, borderRadius: 999, background: 'var(--accent)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0,
-              }}>
-                {(user.user_metadata?.full_name || user.email || '?')[0].toUpperCase()}
-              </div>
-            )}
+            <img
+              src={getAssignedAvatar(user.id)}
+              alt="avatar"
+              style={{ width: 26, height: 26, borderRadius: 999, objectFit: 'cover', flexShrink: 0 }}
+            />
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
             </span>
