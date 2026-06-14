@@ -16,6 +16,7 @@ const SERVICES = [
 export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, onMockAction, theme }) {
   const [serviceOpen, setServiceOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
+  const [hoveredService, setHoveredService] = useState(null);
   const [comingSoonVisible, setComingSoonVisible] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -76,6 +77,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
   });
 
   return (
+    <>
     <nav
       style={{
         position: 'fixed',
@@ -163,23 +165,46 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
           >
             {SERVICES.map(({ id, icon: Icon, label, desc }) => {
               const isActive = activeTab === id;
+              const isHovered = hoveredService === id;
+              const isComingSoon = id === 'expansion';
+              const highlighted = isActive || isHovered;
               return (
                 <button
                   key={id}
                   className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left"
-                  style={{ background: isActive ? 'var(--bg-overlay)' : 'transparent', border: 'none', cursor: 'pointer' }}
-                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--bg-overlay)'; }}
-                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  style={{
+                    background: highlighted
+                      ? isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+                      : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={() => setHoveredService(id)}
+                  onMouseLeave={() => setHoveredService(null)}
                   onClick={() => handleServiceClick(id)}
                 >
                   <div
                     className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
-                    style={{ background: isActive ? 'var(--accent)' : 'var(--bg-overlay)' }}
+                    style={{
+                      background: isActive ? 'var(--accent)' : isHovered ? (isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.09)') : 'var(--bg-overlay)',
+                      transition: 'background 0.15s',
+                    }}
                   >
-                    <Icon className="h-4 w-4" style={{ color: isActive ? '#fff' : 'var(--text-secondary)' }} />
+                    <Icon className="h-4 w-4" style={{ color: isActive ? '#fff' : isHovered ? 'var(--text-primary)' : 'var(--text-secondary)' }} />
                   </div>
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{label}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{label}</p>
+                      {isComingSoon && (
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                          color: '#FF9F0A', background: 'rgba(255,159,10,0.12)',
+                          border: '1px solid rgba(255,159,10,0.3)',
+                          borderRadius: 4, padding: '1px 5px',
+                        }}>준비중</span>
+                      )}
+                    </div>
                     <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: 0 }}>{desc}</p>
                   </div>
                 </button>
@@ -224,35 +249,6 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       </a>
 
       {divider}
-
-      {/* 준비중 토스트 */}
-      {comingSoonVisible && (
-        <div style={{
-          position: 'fixed',
-          bottom: 72,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 9999,
-          background: isDark ? 'rgba(44,44,46,0.96)' : 'rgba(255,255,255,0.96)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
-          borderRadius: 999,
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
-          padding: '10px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-          animation: 'macFadeUp 0.2s ease',
-        }}>
-          <Sparkles style={{ width: 14, height: 14, color: 'var(--accent)', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-            키워드 확장 — 곧 출시 예정입니다
-          </span>
-        </div>
-      )}
 
       {/* 로그인 */}
       <button
@@ -332,5 +328,35 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         </div>
       </div>
     </nav>
+
+    {/* 준비중 토스트 — nav 바깥에서 렌더해야 fixed 위치가 정상 동작 */}
+    {comingSoonVisible && (
+      <div style={{
+        position: 'fixed',
+        bottom: 72,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 9999,
+        background: isDark ? 'rgba(44,44,46,0.96)' : 'rgba(255,255,255,0.96)',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
+        borderRadius: 999,
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+        padding: '10px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        whiteSpace: 'nowrap',
+        pointerEvents: 'none',
+        animation: 'macFadeUp 0.2s ease',
+      }}>
+        <Sparkles style={{ width: 14, height: 14, color: 'var(--accent)', flexShrink: 0 }} />
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+          키워드 확장 — 곧 출시 예정입니다
+        </span>
+      </div>
+    )}
+    </>
   );
 }
