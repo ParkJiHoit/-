@@ -124,55 +124,21 @@ button, input, select, textarea { font: inherit; }
 .mac-card {
   position: relative;
   border-radius: 14px;
-  background: transparent;
-  border: none;
-}
-
-/* Bend layer: backdrop blur */
-.mac-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  background: rgba(255,255,255,0.06);
-  z-index: 0;
-}
-
-/* Edge + glow layer */
-.mac-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 14px;
-  box-shadow:
-    inset 1px 1px 1px 0 rgba(255,255,255,0.30),
-    inset -1px -1px 1px 0 rgba(255,255,255,0.30),
-    0 4px 4px rgba(0,0,0,0.15),
-    0 0 12px rgba(0,0,0,0.08);
-  border: 1px solid rgba(255,255,255,0.14);
-  z-index: 1;
-  pointer-events: none;
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.11);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  isolation: isolate;
 }
 
 .mac-card > * {
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
-[data-theme="light"] .mac-card::before {
-  background: rgba(255,255,255,0.22);
-  backdrop-filter: blur(24px) saturate(1.8);
-  -webkit-backdrop-filter: blur(24px) saturate(1.8);
-}
-
-[data-theme="light"] .mac-card::after {
-  box-shadow:
-    inset 3px 3px 3px 0 rgba(255,255,255,0.75),
-    inset -2px -2px 2px 0 rgba(255,255,255,0.4),
-    0 4px 20px rgba(0,0,0,0.07);
+[data-theme="light"] .mac-card {
+  background: rgba(255,255,255,0.72);
   border: 1px solid rgba(255,255,255,0.55);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
 }
 
 /* ─── Input ─── */
