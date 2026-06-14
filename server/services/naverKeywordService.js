@@ -43,7 +43,7 @@ function assertNaverCredentials() {
   }
 }
 
-function buildNaverRequestConfig(hintKeyword) {
+function buildNaverRequestConfig(hintKeyword, useKeywordParam = false) {
   const timestamp = Date.now().toString();
   const method = 'GET';
   const signature = createNaverSignature(
@@ -54,10 +54,9 @@ function buildNaverRequestConfig(hintKeyword) {
   );
 
   return {
-    params: {
-      hintKeywords: hintKeyword,
-      showDetail: 1
-    },
+    params: useKeywordParam
+      ? { keyword: hintKeyword, showDetail: 1 }
+      : { hintKeywords: hintKeyword, showDetail: 1 },
     headers: {
       'X-Timestamp': timestamp,
       'X-API-KEY': process.env.NAVER_API_KEY,
@@ -295,6 +294,30 @@ async function fetchNaverRelatedSearches(keyword) {
   }
 }
 
+// keyword 파라미터로 직접 연관 키워드 조회 (hintKeywords 와 다른 결과 반환)
+async function fetchNaverRelKwdStat(baseKeyword) {
+  try {
+    const keyword = sanitizeNaverHintKeyword(baseKeyword);
+    if (!keyword) return [];
+
+    const cacheKey = `relkwd:${keyword.toLowerCase()}`;
+    const cached = keywordToolCache.get(cacheKey);
+    if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.rows;
+
+    const response = await axios.get(
+      `${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`,
+      buildNaverRequestConfig(keyword, true)  // useKeywordParam = true
+    );
+    const rows = response.data?.keywordList || [];
+    console.log(`[relKwdStat] "${baseKeyword}" → ${rows.length} rows:`, rows.slice(0, 5).map(r => r.relKeyword));
+    keywordToolCache.set(cacheKey, { createdAt: Date.now(), rows });
+    return rows;
+  } catch (err) {
+    console.warn(`[relKwdStat] "${baseKeyword}" 실패:`, err.message);
+    return [];
+  }
+}
+
 // SERP 키워드에 API 지표 매핑 (검색량/경쟁도 등)
 function extractSerpKeywords(allRows, serpSignals, baseKeyword) {
   const baseNorm = normalizeText(baseKeyword);
@@ -503,13 +526,31 @@ export async function analyzeKeyword(baseKeyword) {
     );
     const keywords = sortKeywordRows(baseKeyword, normalizedRows);
 
+    // serpSignals가 없으면 RelKwdStat(keyword 파라미터) API로 연관 키워드 직접 조회
+    let effectiveSerpSignals = serpSignals;
+    let relKwdNormalizedRows = [];
+    if (serpSignals.length === 0) {
+      const relKwdRows = await fetchNaverRelKwdStat(baseKeyword);
+      if (relKwdRows.length > 0) {
+        const baseNorm = normalizeText(baseKeyword);
+        effectiveSerpSignals = relKwdRows
+          .map(r => r.relKeyword)
+          .filter(kw => kw && normalizeText(kw) !== baseNorm);
+        relKwdNormalizedRows = relKwdRows.map(r => normalizeKeywordRow(r, baseKeyword, baseKeyword));
+      }
+    }
+
+    const allRowsForSerp = serpSignals.length === 0 && relKwdNormalizedRows.length > 0
+      ? dedupeKeywords([...normalizedRows, ...relKwdNormalizedRows])
+      : normalizedRows;
+
     // chips: SERP 신호 기반 (autocomplete + 연관검색어)
-    const searchSuggestions = serpSignals.length > 0
-      ? buildSerpChips(serpSignals, baseKeyword)
+    const searchSuggestions = effectiveSerpSignals.length > 0
+      ? buildSerpChips(effectiveSerpSignals, baseKeyword)
       : buildSearchSuggestions(keywords, baseKeyword);
 
     // SERP 키워드 테이블 (자동완성 + 연관검색어 키워드 + API 지표 매핑)
-    const serpKeywords = extractSerpKeywords(normalizedRows, serpSignals, baseKeyword);
+    const serpKeywords = extractSerpKeywords(allRowsForSerp, effectiveSerpSignals, baseKeyword);
 
     return {
       baseKeyword,
