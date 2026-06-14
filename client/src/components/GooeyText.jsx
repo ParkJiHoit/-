@@ -88,16 +88,17 @@ export default function GooeyText({
     position: 'absolute',
     display: 'inline-block',
     textAlign: 'center',
-    whiteSpace: 'nowrap',
+    whiteSpace: 'pre-line',
     fontSize,
     fontWeight: 700,
     color,
     left: '50%',
     top: '50%',
     transform: 'translate(-50%, -50%)',
-    letterSpacing: '-0.02em',
-    lineHeight: 1.2,
+    letterSpacing: '-0.03em',
+    lineHeight: 1.25,
     userSelect: 'none',
+    width: '100%',
   };
 
   return (
@@ -115,10 +116,11 @@ export default function GooeyText({
         </defs>
       </svg>
 
-      {/* 텍스트 컨테이너 */}
+      {/* 텍스트 컨테이너 — 두 줄 높이 고정 */}
       <div style={{
         position: 'relative',
-        height: `calc(${fontSize} * 2)`,
+        height: `calc(${fontSize} * 2.8)`,
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

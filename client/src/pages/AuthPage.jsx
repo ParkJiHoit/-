@@ -124,7 +124,7 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
   );
 }
 
-const GOOEY_TEXTS = ['안녕하세요!', 'RANKLET 입니다.', '키워드를 먼저\n차지하세요.'];
+const GOOEY_TEXTS = ['안녕하세요!\nRANKLET입니다.', '로그인 하셔서', '키워드를 먼저\n차지하세요!'];
 
 /* ─── 로그인 메인 패널 (소셜 + 이메일 진입) ─── */
 function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
@@ -137,9 +137,9 @@ function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
         <GooeyText
           texts={GOOEY_TEXTS}
           morphTime={1.1}
-          cooldownTime={2.0}
+          cooldownTime={1.5}
           color={isDark ? '#F5F5F7' : '#1C1C1E'}
-          fontSize='1.65rem'
+          fontSize='2.1rem'
         />
       </div>
 
