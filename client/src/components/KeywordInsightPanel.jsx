@@ -701,8 +701,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             }}>
               {/* 라벨 */}
               <p style={{
-                fontSize: 10, color: 'var(--text-tertiary)', margin: 0,
-                fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                fontSize: 11.5, color: 'var(--text-secondary)', margin: 0,
+                fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
               }}>{label}</p>
 
               {/* 값 */}
