@@ -141,7 +141,7 @@ function Logo({ isDark }) {
         <img
           src={rankletLogo}
           alt="RANKLET"
-          style={{ height: 64, display: 'block', objectFit: 'contain' }}
+          style={{ height: 128, display: 'block', objectFit: 'contain' }}
         />
       </div>
     </div>
