@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import AuthScene from '../components/AuthScene';
 import GooeyText from '../components/GooeyText';
+import rankletLogo from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_45_46-removebg-preview.png';
 
 export default function AuthPage({ onSuccess, onClose, theme }) {
   const [mode, setMode] = useState('login'); // 'login' | 'email' | 'signup'
@@ -126,12 +127,34 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
 
 const GOOEY_TEXTS = ['안녕하세요!\nRANKLET입니다.', '로그인 하셔서', '키워드를 먼저\n차지하세요!'];
 
+/* ─── 로고 ─── */
+function Logo({ isDark }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+      <div style={{
+        borderRadius: 10,
+        /* 다크모드: 로고 글자(검정)가 보이도록 흰 배경 패딩, 라이트모드: 그냥 투명 */
+        background: isDark ? 'rgba(255,255,255,0.92)' : 'transparent',
+        padding: isDark ? '6px 14px' : '0',
+        boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.25)' : 'none',
+      }}>
+        <img
+          src={rankletLogo}
+          alt="RANKLET"
+          style={{ height: 36, display: 'block', objectFit: 'contain' }}
+        />
+      </div>
+    </div>
+  );
+}
+
 /* ─── 로그인 메인 패널 (소셜 + 이메일 진입) ─── */
 function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
   const { signInWithGoogle } = useAuth();
 
   return (
     <div style={{ width: '100%', maxWidth: 300 }}>
+      <Logo isDark={isDark} />
       {/* GooeyText 타이틀 */}
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <GooeyText
@@ -190,6 +213,7 @@ function EmailPanel({ isDark, onSuccess }) {
 
   return (
     <div style={{ width: '100%', maxWidth: 300 }}>
+      <Logo isDark={isDark} />
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.3px', color: isDark ? '#F5F5F7' : '#1C1C1E' }}>
           이메일로 로그인
@@ -266,6 +290,7 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
 
   return (
     <div style={{ width: '100%', maxWidth: 300 }}>
+      <Logo isDark={isDark} />
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.3px', color: isDark ? '#F5F5F7' : '#1C1C1E' }}>
           계정 만들기
