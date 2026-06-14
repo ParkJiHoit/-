@@ -257,13 +257,6 @@ export default function App() {
   const activeRows    = activeResult?.keywords || [];
   const hasResults    = (isKeywordTab && !!activeResult) || (activeTab === 'blog' && !!blogStructure);
 
-  // auth 탭에서 로그인 완료 시 자동으로 분석 탭으로 이동
-  useEffect(() => {
-    if (user && activeTab === 'auth') {
-      setActiveTab('analysis');
-    }
-  }, [user, activeTab]);
-
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -489,9 +482,12 @@ export default function App() {
       <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} />
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
-      {activeTab === 'auth' ? (
-        <AuthPage onSuccess={() => switchTab('analysis')} />
-      ) : activeTab === 'pricing' ? (
+      {/* Auth 모달 오버레이 */}
+      {activeTab === 'auth' && (
+        <AuthPage onSuccess={() => switchTab('analysis')} onClose={() => switchTab('analysis')} theme={theme} />
+      )}
+
+      {activeTab === 'pricing' ? (
         <PricingPage onMockAction={handleMockAction} />
       ) : (
       <>

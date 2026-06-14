@@ -434,7 +434,11 @@ button, input, select, textarea { font: inherit; }
 .mac-stagger > *:nth-child(5) { animation: macFadeIn 0.3s 180ms cubic-bezier(0.4,0,0.2,1) both; }
 .mac-stagger > *:nth-child(6) { animation: macFadeIn 0.3s 225ms cubic-bezier(0.4,0,0.2,1) both; }
 
-@keyframes authFadeUp {
-  from { opacity: 0; transform: translateY(16px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0)    scale(1); }
+@keyframes authOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes authPopIn {
+  from { opacity: 0; transform: scale(0.93) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
