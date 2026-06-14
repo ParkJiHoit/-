@@ -56,12 +56,13 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* 상단 컨트롤 바 — 뒤로가기 버튼만 */}
+          {/* 상단 컨트롤 바 — 뒤로가기 버튼 + 로고 */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             padding: '16px 20px 0',
             flexShrink: 0,
+            gap: 10,
           }}>
             <IconBtn
               onClick={mode === 'login' ? onClose : () => setMode('login')}
@@ -70,6 +71,14 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
             >
               <ArrowLeftIcon />
             </IconBtn>
+            {/* 로고 — 뒤로가기 버튼과 동일 선상 */}
+            <div style={{ width: 140, height: 34, overflow: 'hidden', position: 'relative', flexShrink: 0 }}>
+              <img
+                src={isDark ? rankletLogoDark : rankletLogoLight}
+                alt="RANKLET"
+                style={{ width: 140, position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+              />
+            </div>
           </div>
 
           {/* 폼 콘텐츠 */}
@@ -162,7 +171,6 @@ function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
 
   return (
     <div style={{ width: '100%', maxWidth: 300 }}>
-      <Logo isDark={isDark} />
       {/* VerticalCutReveal 타이틀 */}
       <div style={{ marginBottom: 28, color, fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.4 }}>
         <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="first" transition={tr}>
@@ -223,7 +231,6 @@ function EmailPanel({ isDark, onSuccess }) {
 
   return (
     <div style={{ width: '100%', maxWidth: 300 }}>
-      <Logo isDark={isDark} />
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.3px', color: isDark ? '#F5F5F7' : '#1C1C1E' }}>
           이메일로 로그인
@@ -300,7 +307,6 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
 
   return (
     <div style={{ width: '100%', maxWidth: 300 }}>
-      <Logo isDark={isDark} />
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.3px', color: isDark ? '#F5F5F7' : '#1C1C1E' }}>
           계정 만들기
