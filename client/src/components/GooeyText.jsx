@@ -25,13 +25,12 @@ export default function GooeyText({
 
     const setMorph = (fraction) => {
       if (!text1Ref.current || !text2Ref.current) return;
-      // blur 최대 3px로 줄여 전환 중 자글거림 감소
-      const blur2 = Math.min(3 / fraction - 3, 20);
+      const blur2 = Math.min(8 / fraction - 8, 100);
       text2Ref.current.style.filter = `blur(${blur2}px)`;
       text2Ref.current.style.opacity = `${Math.pow(fraction, 0.4)}`;
 
       const inv = 1 - fraction;
-      const blur1 = Math.min(3 / inv - 3, 20);
+      const blur1 = Math.min(8 / inv - 8, 100);
       text1Ref.current.style.filter = `blur(${blur1}px)`;
       text1Ref.current.style.opacity = `${Math.pow(inv, 0.4)}`;
     };
@@ -111,7 +110,7 @@ export default function GooeyText({
             <feColorMatrix
               in="SourceGraphic"
               type="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -60"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -20"
             />
           </filter>
         </defs>
