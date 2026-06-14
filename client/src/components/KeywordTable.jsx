@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { Lock, ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { formatNumber, formatPercent, formatScore } from '../utils/formatters';
 import { SORTABLE_COLUMNS } from '../utils/tableSort';
 import KeywordBadge from './KeywordBadge';
@@ -43,7 +43,7 @@ const INTENT_CLASS = {
   '일반 후보':  'mac-badge-gray'
 };
 
-export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns }) {
+export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns, isLoggedIn, onLoginPrompt }) {
   const activeColumns = KEYWORD_TABLE_COLUMNS.filter(
     (col) => col.alwaysVisible || visibleColumns?.[col.key]
   );
@@ -98,7 +98,7 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns 
             {rows.map((row) => (
               <tr key={row.keyword}>
                 {activeColumns.map((col) => (
-                  <TableCell key={col.key} column={col} row={row} />
+                  <TableCell key={col.key} column={col} row={row} isLoggedIn={isLoggedIn} onLoginPrompt={onLoginPrompt} />
                 ))}
               </tr>
             ))}
@@ -109,7 +109,28 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns 
   );
 }
 
-function TableCell({ column, row }) {
+function TableCell({ column, row, isLoggedIn, onLoginPrompt }) {
+  // 효율 점수: 비로그인 시 잠금 표시
+  if (column.key === 'efficiencyScore' && !isLoggedIn) {
+    return (
+      <td style={{ textAlign: 'right' }}>
+        <button
+          onClick={onLoginPrompt}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            border: '1px solid var(--border)', borderRadius: 6,
+            background: 'var(--bg-overlay)', padding: '2px 8px',
+            cursor: 'pointer', fontFamily: 'inherit',
+            color: 'var(--text-tertiary)', fontSize: 11,
+          }}
+          title="로그인하면 효율 점수를 볼 수 있어요"
+        >
+          <Lock style={{ width: 10, height: 10 }} />
+          로그인
+        </button>
+      </td>
+    );
+  }
   if (column.key === 'recommendAction') {
     return (
       <td>

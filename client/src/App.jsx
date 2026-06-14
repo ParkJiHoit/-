@@ -1,6 +1,8 @@
 ﻿import { Download, Loader2, Moon, Sun } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { useAuth } from './AuthContext';
+import { supabase } from './supabase';
 import BlogStructurePanel from './components/BlogStructurePanel';
 import ColumnVisibilitySettings from './components/ColumnVisibilitySettings';
 import KeywordExpansionForm from './components/KeywordExpansionForm';
@@ -11,12 +13,15 @@ import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordT
 import AuroraBackground from './components/AuroraBackground';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
+import LoginPromptModal from './components/LoginPromptModal';
 import SummaryCards from './components/SummaryCards';
 import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
 
-const COLUMN_STORAGE_KEY = 'naverKeywordDashboard.visibleColumns.v4';
-const THEME_STORAGE_KEY  = 'keywordlab.theme';
+const COLUMN_STORAGE_KEY   = 'naverKeywordDashboard.visibleColumns.v4';
+const THEME_STORAGE_KEY    = 'keywordlab.theme';
+const GUEST_COUNT_KEY      = 'ranklet.guestAnalysisCount';
+const GUEST_MAX_KEYWORD    = 4;
 
 function getInitialVisibleColumns() {
   try {
@@ -221,6 +226,7 @@ function QuickToggle({ label, checked, onChange, title }) {
 
 /* ═══════════════════════════════════════════ */
 export default function App() {
+  const { user } = useAuth();
   const [theme, setTheme] = useState(() =>
     window.localStorage.getItem(THEME_STORAGE_KEY) || 'dark'
   );
@@ -238,7 +244,12 @@ export default function App() {
   const [loading, setLoading]           = useState(false);
   const [error,   setError]             = useState('');
   const [toast,   setToast]             = useState('');
+  const [loginPrompt, setLoginPrompt]   = useState(null); // null | 'keyword' | 'blog'
   const toastRef = useRef(null);
+
+  // 비로그인 키워드 분석 횟수
+  const guestCount = () => parseInt(localStorage.getItem(GUEST_COUNT_KEY) || '0', 10);
+  const incGuestCount = () => localStorage.setItem(GUEST_COUNT_KEY, guestCount() + 1);
 
   const isKeywordTab  = activeTab === 'analysis' || activeTab === 'expansion';
   const activeResult  = activeTab === 'analysis' ? analysis : expansion;
@@ -320,11 +331,27 @@ export default function App() {
     }
   }, []);
 
+  const saveSearchHistory = useCallback(async (type, keyword) => {
+    if (!user) return;
+    await supabase.from('search_history').insert({ user_id: user.id, type, keyword });
+  }, [user]);
+
   const analyzeKeyword = async (keyword) => {
+    // 비로그인: 4회 초과 시 차단
+    if (!user) {
+      if (guestCount() >= GUEST_MAX_KEYWORD) {
+        setLoginPrompt('keyword');
+        return;
+      }
+      incGuestCount();
+    }
     fetchInsights(keyword);
     const data = await requestKeywords('/api/keywords/analyze', { keyword },
       '키워드 데이터를 조회하지 못했습니다.', { key: 'efficiencyScore', direction: 'desc' });
-    if (data) setAnalysis(data);
+    if (data) {
+      setAnalysis(data);
+      saveSearchHistory('keyword', keyword);
+    }
   };
 
   const expandKeyword = async (payload) => {
@@ -335,15 +362,19 @@ export default function App() {
 
   const analyzeBlogStructure = async (keyword) => {
     if (!keyword) return;
+    // 비로그인 완전 차단
+    if (!user) {
+      setLoginPrompt('blog');
+      return;
+    }
     setBlogStructureKeyword(keyword);
-    // 기존 결과가 있으면(재검색) 유지 — null로 지우면 hasResults가 false가 되어 메인으로 튕김
-    // 기존 결과가 없으면(첫 검색) 메인 페이지 로딩 인디케이터를 보여줘야 하므로 그대로 null 유지
     setLoading(true); setError('');
     try {
       const res  = await fetch('/api/blog/structure-analysis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword }) });
       const data = await parseApiResponse(res);
       if (!res.ok) throw new Error(data.message || '블로그 구조 분석에 실패했습니다.');
       setBlogStructure(data);
+      saveSearchHistory('blog', keyword);
     } catch (e) {
       setError(e.message || '블로그 구조 분석에 실패했습니다.');
     } finally { setLoading(false); }
@@ -427,6 +458,9 @@ export default function App() {
   /* ── Render ── */
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', color: 'var(--text-primary)', position: 'relative' }}>
+      {loginPrompt && (
+        <LoginPromptModal reason={loginPrompt} onClose={() => setLoginPrompt(null)} />
+      )}
       <AuroraBackground theme={theme} hidden={hasResults} />
       {/* 결과 페이지 grid 배경 */}
       {hasResults && (
@@ -561,7 +595,7 @@ export default function App() {
               </div>
             </div>
 
-            <KeywordTable rows={filteredRows} sortConfig={sortConfig} onSort={handleSort} visibleColumns={visibleColumns} />
+            <KeywordTable rows={filteredRows} sortConfig={sortConfig} onSort={handleSort} visibleColumns={visibleColumns} isLoggedIn={!!user} onLoginPrompt={() => setLoginPrompt('keyword')} />
           </div>
         )}
 
