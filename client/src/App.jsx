@@ -472,7 +472,7 @@ export default function App() {
         )}
       </HeroSection>
 
-      <div className="mx-auto w-full max-w-[1560px] px-6 pb-20 lg:px-14">
+      <div className="mx-auto w-full max-w-[1400px] px-5 pb-16 lg:px-10">
         {/* 키워드 분석/확장 탭 로딩 */}
         {loading && isKeywordTab && (
           <div className="mb-5">

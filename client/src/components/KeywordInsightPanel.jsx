@@ -663,7 +663,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
   })();
 
   return (
-    <div className="mac-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="mac-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <style>{`
         @keyframes kip-pulse {
           0%, 100% { opacity: 0.35; }
@@ -672,27 +672,27 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       `}</style>
 
       {/* Row 1: KPI — 4 independent floating cards with sparkline */}
-      <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
         {kpis.map(({ label, value, showChange }) => {
           const isUp = showChange && changePercent != null ? changePercent >= 0 : null;
           return (
             <div key={label} className="mac-card" style={{
-              flex: 1, padding: '16px 18px', minWidth: 0,
+              flex: 1, padding: '12px 14px', minWidth: 0,
               display: 'flex', flexDirection: 'column', justifyContent: 'center',
             }}>
               <p style={{
-                fontSize: 10.5, color: 'var(--text-secondary)', margin: '0 0 12px',
-                fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+                fontSize: 10, color: 'var(--text-tertiary)', margin: '0 0 6px',
+                fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
               }}>{label}</p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '0 0 6px' }}>{value}</p>
+                  <p style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '0 0 4px' }}>{value}</p>
                   {showChange && isUp !== null ? (
-                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
+                    <p style={{ margin: 0, fontSize: 10.5, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
                       {isUp ? '▲' : '▼'} {Math.abs(changePercent).toFixed(1)}% 전월 대비
                     </p>
                   ) : showChange && insightsLoading ? (
-                    <Skeleton height={10} width="65%" radius={4} />
+                    <Skeleton height={9} width="65%" radius={4} />
                   ) : null}
                 </div>
                 <MiniSparkline data={sparklineData} />
@@ -706,15 +706,15 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       {insightsError && !insightsLoading && <InsightsErrorNotice message={insightsError} />}
 
       {/* Row 2: trend | news | demographics — each its own floating card */}
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'stretch' }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'stretch' }}>
 
         {/* Trend chart card */}
         <div className="mac-card" style={{
-          flex: '2 1 300px', padding: '20px 28px',
+          flex: '2 1 300px', padding: '14px 18px',
           minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
           {/* Header: title + period buttons + weekly stats */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
                 {activePeriod.title}
@@ -767,7 +767,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
         {/* News card */}
         <div className="mac-card" style={{
-          flex: '1 1 180px', padding: '20px 18px', minWidth: 0,
+          flex: '1 1 180px', padding: '14px 16px', minWidth: 0,
         }}>
           <Label>관련 기사</Label>
           <NewsSection items={insights?.news} loading={insightsLoading} />
@@ -775,7 +775,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
         {/* Blog ranking card */}
         <div className="mac-card" style={{
-          flex: '1.6 1 240px', padding: '20px 18px', minWidth: 0, overflow: 'hidden',
+          flex: '1.6 1 240px', padding: '14px 16px', minWidth: 0, overflow: 'hidden',
         }}>
           <BlogRankingTable baseKeyword={baseKeyword} onViewDetail={onViewDetail} />
         </div>

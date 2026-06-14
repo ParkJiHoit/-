@@ -11,14 +11,14 @@ export default function SummaryCards({ summary }) {
   return (
     <section className="mac-stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {CARDS.map(({ key, label, icon: Icon }) => (
-        <article className="mac-card px-4 py-4" key={key}>
-          <div className="flex items-start justify-between gap-2">
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-tertiary)', lineHeight: 1.4 }}>
+        <article className="mac-card" style={{ padding: '12px 16px' }} key={key}>
+          <div className="flex items-center justify-between gap-2" style={{ marginBottom: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', lineHeight: 1 }}>
               {label}
             </span>
-            <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+            <Icon style={{ width: 12, height: 12, color: 'var(--text-tertiary)', flexShrink: 0 }} />
           </div>
-          <p style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', marginTop: 10 }}>
+          <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: 0 }}>
             {summary?.[key] ?? 0}
           </p>
         </article>
