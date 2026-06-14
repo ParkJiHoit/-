@@ -430,6 +430,7 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', color: 'var(--text-primary)', position: 'relative' }}>
       <AuroraBackground theme={theme} />
+
       <div style={{ position: 'relative', zIndex: 1 }}>
       <Navbar
         activeTab={activeTab}
