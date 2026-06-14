@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import AuthScene from '../components/AuthScene';
+import GooeyText from '../components/GooeyText';
 
 export default function AuthPage({ onSuccess, onClose, theme }) {
   const [mode, setMode] = useState('login'); // 'login' | 'email' | 'signup'
@@ -33,8 +34,8 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
       <div style={{
         display: 'flex',
         width: '100%',
-        maxWidth: 860,
-        height: 580,
+        maxWidth: 1020,
+        height: 640,
         borderRadius: 20,
         overflow: 'hidden',
         boxShadow: isDark
@@ -123,21 +124,23 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
   );
 }
 
+const GOOEY_TEXTS = ['안녕하세요!', 'RANKLET 입니다.', '키워드를 먼저\n차지하세요.'];
+
 /* ─── 로그인 메인 패널 (소셜 + 이메일 진입) ─── */
 function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
   const { signInWithGoogle } = useAuth();
 
   return (
     <div style={{ width: '100%', maxWidth: 300 }}>
-      {/* 타이틀 */}
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <span style={{ fontSize: 28 }}>👋</span>
-        <h1 style={{
-          fontSize: 22, fontWeight: 700, margin: '8px 0 6px', letterSpacing: '-0.4px',
-          color: isDark ? '#F5F5F7' : '#1C1C1E',
-        }}>
-          반가워요!
-        </h1>
+      {/* GooeyText 타이틀 */}
+      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <GooeyText
+          texts={GOOEY_TEXTS}
+          morphTime={1.1}
+          cooldownTime={2.0}
+          color={isDark ? '#F5F5F7' : '#1C1C1E'}
+          fontSize='1.65rem'
+        />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
