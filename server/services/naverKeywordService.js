@@ -412,7 +412,9 @@ async function fetchNaverAutoComplete(keyword) {
       },
       timeout: 5000,
     });
-    return (data?.answer || []).map(([kw]) => String(kw || '').trim()).filter(Boolean);
+    // Naver autocomplete: 실제 데이터는 items[0]에 있음 (answer는 항상 빈 배열)
+    const list = data?.items?.[0] || data?.answer || [];
+    return list.map(([kw]) => String(kw || '').trim()).filter(Boolean);
   } catch {
     return [];
   }
