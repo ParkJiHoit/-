@@ -52,7 +52,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
           border: focused
             ? '1.5px solid rgba(10,180,255,0.85)'
             : '1.5px solid rgba(255,255,255,0.10)',
-          background: 'rgba(255,255,255,0.04)',
+          background: 'rgba(255,255,255,0.10)',
           boxShadow: focused
             ? '0 0 0 3px rgba(10,180,255,0.18), 0 0 32px rgba(10,180,255,0.22), 0 0 80px rgba(10,180,255,0.08)'
             : '0 2px 20px rgba(0,0,0,0.4), 0 0 18px rgba(10,180,255,0.07), 0 0 48px rgba(10,180,255,0.04)',
@@ -155,14 +155,14 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
                 key={kw}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 0,
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.10)',
+                  border: '1px solid rgba(255,255,255,0.15)',
                   borderRadius: 999,
                   overflow: 'hidden',
                   transition: 'border-color 0.15s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.16)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.28)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
               >
                 <button
                   type="button"

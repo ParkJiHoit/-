@@ -1,6 +1,5 @@
 import { ChevronDown, FileText, Search, Sparkles, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { LiquidMetalButton } from './ui/liquid-metal-button';
 
 const NOTION_UPDATE_URL =
   'https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link';
@@ -220,23 +219,41 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
       {divider}
 
       {/* 로그인 */}
-      <LiquidMetalButton
-        label="로그인"
+      <button
         onClick={onMockAction}
-        viewMode="text"
-        height={34}
-        width={82}
-      />
+        style={{
+          ...pillItem('login'),
+          padding: hoveredNav === 'login' ? '6px 16px' : '6px 10px',
+        }}
+        onMouseEnter={() => setHoveredNav('login')}
+        onMouseLeave={() => setHoveredNav(null)}
+      >
+        로그인
+      </button>
 
       {/* 가입하기 */}
       <div style={{ position: 'relative', flexShrink: 0 }}>
-        <LiquidMetalButton
-          label="가입하기"
+        <button
           onClick={onMockAction}
-          viewMode="text"
-          height={34}
-          width={96}
-        />
+          style={{
+            borderRadius: 999,
+            padding: '6px 14px',
+            border: 'none',
+            background: 'var(--accent)',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            transition: 'background 0.15s',
+            display: 'block',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
+        >
+          가입하기
+        </button>
 
         {/* 둥실둥실 7일 무료체험 뱃지 */}
         {/* 외부 div: 위치 잡기 (transform으로 정렬) — 애니메이션 없음 */}
@@ -254,25 +271,26 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
             {/* 말풍선 꼬리 */}
             <div style={{
               width: 0, height: 0,
-              borderLeft: '5px solid transparent',
-              borderRight: '5px solid transparent',
-              borderBottom: '6px solid #FF9F0A',
+              borderLeft: '4px solid transparent',
+              borderRight: '4px solid transparent',
+              borderBottom: `5px solid ${isDark ? 'rgba(30,80,180,0.6)' : 'rgba(30,80,180,0.4)'}`,
               marginBottom: -1,
             }} />
             <div style={{
-              background: 'linear-gradient(135deg, #FF9F0A 0%, #FF6B35 100%)',
+              background: isDark ? 'rgba(20,60,160,0.28)' : 'rgba(20,60,160,0.14)',
               borderRadius: 20,
-              padding: '5px 12px',
-              fontSize: 11,
-              fontWeight: 800,
-              color: '#fff',
-              letterSpacing: '0.02em',
-              boxShadow: '0 4px 16px rgba(255,159,10,0.5), 0 2px 4px rgba(0,0,0,0.2)',
+              padding: '4px 11px',
+              fontSize: 10,
+              fontWeight: 600,
+              color: isDark ? 'rgba(150,190,255,0.95)' : 'rgba(30,80,200,0.9)',
+              letterSpacing: '0.04em',
+              border: `1px solid ${isDark ? 'rgba(60,120,240,0.4)' : 'rgba(60,120,240,0.3)'}`,
+              backdropFilter: 'blur(8px)',
               display: 'flex',
               alignItems: 'center',
               gap: 4,
             }}>
-              🎁 7일 무료체험
+              7일 무료체험
             </div>
           </div>
         </div>
