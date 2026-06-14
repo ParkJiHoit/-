@@ -13,7 +13,7 @@ const SERVICES = [
   { id: 'blog',      icon: FileText, label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' }
 ];
 
-export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction, theme }) {
+export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, onMockAction, theme }) {
   const [serviceOpen, setServiceOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
   const dropdownRef = useRef(null);
@@ -29,7 +29,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
   }, []);
 
   const handleServiceClick = (id) => {
-    onSwitchTab(id);
+    onGoToService(id);
     setServiceOpen(false);
   };
 
@@ -133,7 +133,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onMockAction,
           onMouseLeave={() => setHoveredNav(null)}
           onClick={() => setServiceOpen((v) => !v)}
         >
-          모든 서비스
+          주요 서비스
           <ChevronDown
             style={{
               width: 10, height: 10, opacity: 0.5,

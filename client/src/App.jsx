@@ -217,7 +217,7 @@ export default function App() {
   const isKeywordTab  = activeTab === 'analysis' || activeTab === 'expansion';
   const activeResult  = activeTab === 'analysis' ? analysis : expansion;
   const activeRows    = activeResult?.keywords || [];
-  const hasResults    = (isKeywordTab && !!activeResult) || (activeTab === 'blog' && !!blogStructure);
+  const hasResults    = (isKeywordTab && !!activeResult) || (activeTab === 'blog' && !!blogStructureKeyword);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -369,6 +369,32 @@ export default function App() {
     setSortConfig({ key: 'efficiencyScore', direction: 'desc' });
   };
 
+  const goToService = (id) => {
+    setError('');
+    setFilters(defaultFilters);
+    if (id === 'analysis') {
+      setActiveTab('analysis');
+      setAnalysis(null);
+      setExpansion(null);
+      setInsights(null);
+      setInsightsLoading(false);
+      setInsightsError(null);
+      setSortConfig({ key: 'efficiencyScore', direction: 'desc' });
+    } else if (id === 'expansion') {
+      setActiveTab('expansion');
+      setAnalysis(null);
+      setExpansion(null);
+      setInsights(null);
+      setInsightsLoading(false);
+      setInsightsError(null);
+      setSortConfig({ key: 'discoveryScore', direction: 'desc' });
+    } else if (id === 'blog') {
+      setActiveTab('blog');
+      setBlogStructure(null);
+      setBlogStructureKeyword('');
+    }
+  };
+
   const handleMockAction = () => showToast('준비 중인 기능입니다 — 곧 만나보실 수 있어요!');
 
   /* ── Render ── */
@@ -377,7 +403,7 @@ export default function App() {
       <AuroraBackground theme={theme} hidden={hasResults} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-      <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onMockAction={handleMockAction} theme={theme} />
+      <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} onMockAction={handleMockAction} theme={theme} />
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
       {activeTab === 'pricing' ? (
