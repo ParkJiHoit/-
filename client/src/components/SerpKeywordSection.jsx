@@ -34,10 +34,10 @@ export default function SerpKeywordSection({ serpKeywords, onKeywordClick }) {
           padding: '2px 7px', borderRadius: 4,
           background: '#0A84FF18', color: '#0A84FF', border: '1px solid #0A84FF30',
         }}>
-          자동완성 · SERP
+          SERP 기준
         </span>
         <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-tertiary)' }}>
-          키워드를 클릭하면 새로 분석합니다
+          네이버 검색결과(SERP) 기반 연관 키워드 · 클릭 시 재분석
         </span>
       </div>
 
@@ -49,7 +49,7 @@ export default function SerpKeywordSection({ serpKeywords, onKeywordClick }) {
           color: 'var(--text-tertiary)',
           fontSize: 13,
         }}>
-          자동완성 · SERP 기준 연관 검색어가 없습니다.
+          SERP 기준 연관 검색어가 없습니다.
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
