@@ -1,12 +1,13 @@
 import { X } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 
-export default function LoginPromptModal({ reason, onClose }) {
+export default function LoginPromptModal({ reason, onClose, onGoToAuth }) {
   const { signInWithGoogle } = useAuth();
 
   const handleLogin = () => {
     onClose();
-    signInWithGoogle();
+    if (onGoToAuth) onGoToAuth();
+    else signInWithGoogle();
   };
 
   const isBlog = reason === 'blog';

@@ -14,6 +14,7 @@ import AuroraBackground from './components/AuroraBackground';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
 import LoginPromptModal from './components/LoginPromptModal';
+import AuthPage from './pages/AuthPage';
 import SummaryCards from './components/SummaryCards';
 import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
@@ -256,6 +257,13 @@ export default function App() {
   const activeRows    = activeResult?.keywords || [];
   const hasResults    = (isKeywordTab && !!activeResult) || (activeTab === 'blog' && !!blogStructure);
 
+  // auth 탭에서 로그인 완료 시 자동으로 분석 탭으로 이동
+  useEffect(() => {
+    if (user && activeTab === 'auth') {
+      setActiveTab('analysis');
+    }
+  }, [user, activeTab]);
+
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -459,7 +467,11 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', color: 'var(--text-primary)', position: 'relative' }}>
       {loginPrompt && (
-        <LoginPromptModal reason={loginPrompt} onClose={() => setLoginPrompt(null)} />
+        <LoginPromptModal
+          reason={loginPrompt}
+          onClose={() => setLoginPrompt(null)}
+          onGoToAuth={() => { setLoginPrompt(null); switchTab('auth'); }}
+        />
       )}
       <AuroraBackground theme={theme} hidden={hasResults} />
       {/* 결과 페이지 grid 배경 */}
@@ -477,7 +489,9 @@ export default function App() {
       <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} />
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
-      {activeTab === 'pricing' ? (
+      {activeTab === 'auth' ? (
+        <AuthPage onSuccess={() => switchTab('analysis')} />
+      ) : activeTab === 'pricing' ? (
         <PricingPage onMockAction={handleMockAction} />
       ) : (
       <>
@@ -552,6 +566,8 @@ export default function App() {
                 insightsLoading={insightsLoading}
                 insightsError={insightsError}
                 onViewDetail={handleViewDetail}
+                isLoggedIn={!!user}
+                onLoginPrompt={() => setLoginPrompt('keyword')}
               />
             )}
             {activeTab === 'analysis' && (

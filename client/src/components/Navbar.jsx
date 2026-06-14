@@ -331,59 +331,45 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
           )}
         </div>
       ) : (
-        /* ── 비로그인 상태: 로그인 + 가입하기 ── */
-        <>
+        /* ── 비로그인 상태: 로그인 버튼 하나 ── */
+        <div style={{ position: 'relative', flexShrink: 0 }}>
           <button
-            onClick={signInWithGoogle}
+            onClick={() => onSwitchTab('auth')}
             style={{
-              ...pillItem('login'),
-              padding: hoveredNav === 'login' ? '6px 16px' : '6px 12px',
+              borderRadius: 999, padding: '6px 14px', border: 'none',
+              background: 'var(--accent)', color: '#fff',
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
+              cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s',
             }}
-            onMouseEnter={() => setHoveredNav('login')}
-            onMouseLeave={() => setHoveredNav(null)}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
           >
             로그인
           </button>
-
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <button
-              onClick={signInWithGoogle}
-              style={{
-                borderRadius: 999, padding: '6px 14px', border: 'none',
-                background: 'var(--accent)', color: '#fff',
-                fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
-                cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--accent)')}
-            >
-              가입하기
-            </button>
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 12px)', left: '50%',
-              transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10,
-            }}>
-              <div className="float-bob" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{
-                  width: 0, height: 0,
-                  borderLeft: '4px solid transparent', borderRight: '4px solid transparent',
-                  borderBottom: `5px solid ${isDark ? 'rgba(30,80,180,0.6)' : 'rgba(30,80,180,0.4)'}`,
-                  marginBottom: -1,
-                }} />
-                <div style={{
-                  background: isDark ? 'rgba(20,60,160,0.28)' : 'rgba(20,60,160,0.14)',
-                  borderRadius: 20, padding: '4px 11px', fontSize: 10, fontWeight: 600,
-                  color: isDark ? 'rgba(150,190,255,0.95)' : 'rgba(30,80,200,0.9)',
-                  letterSpacing: '0.04em',
-                  border: `1px solid ${isDark ? 'rgba(60,120,240,0.4)' : 'rgba(60,120,240,0.3)'}`,
-                  backdropFilter: 'blur(8px)',
-                }}>
-                  7일 무료체험
-                </div>
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 12px)', left: '50%',
+            transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10,
+          }}>
+            <div className="float-bob" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{
+                width: 0, height: 0,
+                borderLeft: '4px solid transparent', borderRight: '4px solid transparent',
+                borderBottom: `5px solid ${isDark ? 'rgba(30,80,180,0.6)' : 'rgba(30,80,180,0.4)'}`,
+                marginBottom: -1,
+              }} />
+              <div style={{
+                background: isDark ? 'rgba(20,60,160,0.28)' : 'rgba(20,60,160,0.14)',
+                borderRadius: 20, padding: '4px 11px', fontSize: 10, fontWeight: 600,
+                color: isDark ? 'rgba(150,190,255,0.95)' : 'rgba(30,80,200,0.9)',
+                letterSpacing: '0.04em',
+                border: `1px solid ${isDark ? 'rgba(60,120,240,0.4)' : 'rgba(60,120,240,0.3)'}`,
+                backdropFilter: 'blur(8px)',
+              }}>
+                7일 무료체험
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
     </nav>
 

@@ -24,10 +24,23 @@ export function AuthProvider({ children }) {
       options: { redirectTo: window.location.origin },
     });
 
+  const signInWithEmail = (email, password) =>
+    supabase.auth.signInWithPassword({ email, password });
+
+  const signUpWithEmail = (email, password, name, phone) =>
+    supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name, phone },
+        emailRedirectTo: window.location.origin,
+      },
+    });
+
   const signOut = () => supabase.auth.signOut();
 
   return (
-    <AuthContext.Provider value={{ user, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut }}>
       {children}
     </AuthContext.Provider>
   );

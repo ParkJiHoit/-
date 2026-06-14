@@ -543,7 +543,7 @@ function InsightsErrorNotice({ message }) {
 }
 
 /* ─── Main Panel ─── */
-export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError, onViewDetail }) {
+export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError, onViewDetail, isLoggedIn, onLoginPrompt }) {
   const [trendPeriod, setTrendPeriod] = useState('daily');
 
   // changePercent reflects MoM search trend index — only meaningful for "총 검색량"
@@ -694,10 +694,13 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
           const splitTotal = splitBar ? (splitBar.pc + splitBar.mobile) || 1 : 1;
           const pcPct     = splitBar ? (splitBar.pc / splitTotal) * 100 : 0;
           const mobilePct = splitBar ? (splitBar.mobile / splitTotal) * 100 : 0;
+          const isEfficiency = label === '효율 점수';
+          const locked = isEfficiency && !isLoggedIn;
           return (
             <div key={label} className="mac-card" style={{
               flex: 1, padding: '16px 18px', minWidth: 0,
               display: 'flex', flexDirection: 'column', gap: 10,
+              position: 'relative', overflow: 'hidden',
             }}>
               {/* 라벨 */}
               <p style={{
@@ -744,6 +747,35 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
                   <Skeleton height={10} width="40%" radius={4} />
                 ) : null}
               </div>
+
+              {/* 효율 점수 잠금 오버레이 */}
+              {locked && (
+                <button
+                  onClick={onLoginPrompt}
+                  style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+                    background: 'rgba(10,132,255,0.10)',
+                    border: 'none', cursor: 'pointer', borderRadius: 14,
+                  }}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 8,
+                    background: 'var(--accent)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 2px 10px rgba(10,132,255,0.45)',
+                  }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="11" width="18" height="11" rx="2" stroke="#fff" strokeWidth="2.2"/>
+                      <path d="M7 11V7a5 5 0 0110 0v4" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.02em' }}>
+                    로그인하면 볼 수 있어요
+                  </span>
+                </button>
+              )}
             </div>
           );
         })}
