@@ -10,6 +10,7 @@ import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
 import KeywordInsightPanel from './components/KeywordInsightPanel';
 import KeywordSearchForm from './components/KeywordSearchForm';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
+import AuroraBackground from './components/AuroraBackground';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
 import SummaryCards from './components/SummaryCards';
@@ -427,7 +428,9 @@ export default function App() {
 
   /* ── Render ── */
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', color: 'var(--text-primary)', position: 'relative' }}>
+      <AuroraBackground theme={theme} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
       <Navbar
         activeTab={activeTab}
         onSwitchTab={switchTab}
@@ -611,6 +614,7 @@ export default function App() {
       </> )} {/* end pricing conditional */}
 
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
+      </div> {/* end z-index wrapper */}
     </div>
   );
 }
