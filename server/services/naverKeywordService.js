@@ -294,28 +294,51 @@ async function fetchNaverRelatedSearches(keyword) {
   }
 }
 
-// keyword 파라미터로 직접 연관 키워드 조회 (hintKeywords 와 다른 결과 반환)
+// base 키워드 + 일반 suffix 조합으로 sub-keyword 조회 (로워드 방식)
+const SERP_SUFFIXES = ['비용', '교육', '단점', '수익', '문의', '후기', '방법', '대출방법', '추천', '가격', '조건', '절차'];
+
 async function fetchNaverRelKwdStat(baseKeyword) {
-  try {
-    const keyword = sanitizeNaverHintKeyword(baseKeyword);
-    if (!keyword) return [];
+  const clean = sanitizeNaverHintKeyword(baseKeyword);
+  if (!clean) return [];
 
-    const cacheKey = `relkwd:${keyword.toLowerCase()}`;
-    const cached = keywordToolCache.get(cacheKey);
-    if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.rows;
+  const cacheKey = `relkwd:${clean.toLowerCase()}`;
+  const cached = keywordToolCache.get(cacheKey);
+  if (cached && Date.now() - cached.createdAt < CACHE_TTL_MS) return cached.rows;
 
-    const response = await axios.get(
-      `${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`,
-      buildNaverRequestConfig(keyword, true)  // useKeywordParam = true
-    );
-    const rows = response.data?.keywordList || [];
-    console.log(`[relKwdStat] "${baseKeyword}" → ${rows.length} rows:`, rows.slice(0, 5).map(r => r.relKeyword));
-    keywordToolCache.set(cacheKey, { createdAt: Date.now(), rows });
-    return rows;
-  } catch (err) {
-    console.warn(`[relKwdStat] "${baseKeyword}" 실패:`, err.message);
-    return [];
-  }
+  const candidates = SERP_SUFFIXES.map(s => clean + s);
+
+  // hintKeywords는 최대 5개 comma-separated 지원 — 2배치로 처리
+  const batches = [candidates.slice(0, 5).join(','), candidates.slice(5).join(',')].filter(Boolean);
+
+  const settled = await Promise.allSettled(
+    batches.map(async batch => {
+      try {
+        const response = await axios.get(
+          `${NAVER_API_BASE_URL}${KEYWORD_TOOL_URI}`,
+          buildNaverRequestConfig(batch, false)
+        );
+        return response.data?.keywordList || [];
+      } catch (err) {
+        console.warn(`[relKwdStat] batch 실패:`, err.message);
+        return [];
+      }
+    })
+  );
+
+  const allRows = settled
+    .filter(r => r.status === 'fulfilled')
+    .flatMap(r => r.value);
+
+  // base 키워드로 시작하는 sub-keyword만 필터 (검색량 > 0인 것 우선)
+  const baseNorm = normalizeText(clean);
+  const subRows = allRows.filter(r => {
+    const kNorm = normalizeText(r.relKeyword || '');
+    return kNorm.startsWith(baseNorm) && kNorm !== baseNorm;
+  });
+
+  console.log(`[relKwdStat] "${baseKeyword}" → ${subRows.length}개:`, subRows.slice(0, 6).map(r => r.relKeyword));
+  keywordToolCache.set(cacheKey, { createdAt: Date.now(), rows: subRows });
+  return subRows;
 }
 
 // SERP 키워드에 API 지표 매핑 (검색량/경쟁도 등)
@@ -526,31 +549,27 @@ export async function analyzeKeyword(baseKeyword) {
     );
     const keywords = sortKeywordRows(baseKeyword, normalizedRows);
 
-    // serpSignals가 없으면 RelKwdStat(keyword 파라미터) API로 연관 키워드 직접 조회
-    let effectiveSerpSignals = serpSignals;
-    let relKwdNormalizedRows = [];
-    if (serpSignals.length === 0) {
-      const relKwdRows = await fetchNaverRelKwdStat(baseKeyword);
-      if (relKwdRows.length > 0) {
-        const baseNorm = normalizeText(baseKeyword);
-        effectiveSerpSignals = relKwdRows
-          .map(r => r.relKeyword)
-          .filter(kw => kw && normalizeText(kw) !== baseNorm);
-        relKwdNormalizedRows = relKwdRows.map(r => normalizeKeywordRow(r, baseKeyword, baseKeyword));
-      }
-    }
+    // RelKwdStat(keyword 파라미터)로 SERP 테이블용 연관 키워드 항상 조회
+    const relKwdRows = await fetchNaverRelKwdStat(baseKeyword);
+    const baseNorm = normalizeText(baseKeyword);
+    const relKwdSignals = relKwdRows
+      .map(r => r.relKeyword)
+      .filter(kw => kw && normalizeText(kw) !== baseNorm);
+    const relKwdNormalizedRows = relKwdRows.map(r => normalizeKeywordRow(r, baseKeyword, baseKeyword));
 
-    const allRowsForSerp = serpSignals.length === 0 && relKwdNormalizedRows.length > 0
+    // SERP 테이블: RelKwdStat 결과 우선, 없으면 serpSignals 폴백
+    const serpTableSignals = relKwdSignals.length > 0 ? relKwdSignals : serpSignals;
+    const allRowsForSerp = relKwdNormalizedRows.length > 0
       ? dedupeKeywords([...normalizedRows, ...relKwdNormalizedRows])
       : normalizedRows;
 
-    // chips: SERP 신호 기반 (autocomplete + 연관검색어)
-    const searchSuggestions = effectiveSerpSignals.length > 0
-      ? buildSerpChips(effectiveSerpSignals, baseKeyword)
+    // chips: SERP 스크래핑 신호 (autocomplete + 연관검색어) 우선
+    const searchSuggestions = serpSignals.length > 0
+      ? buildSerpChips(serpSignals, baseKeyword)
       : buildSearchSuggestions(keywords, baseKeyword);
 
-    // SERP 키워드 테이블 (자동완성 + 연관검색어 키워드 + API 지표 매핑)
-    const serpKeywords = extractSerpKeywords(allRowsForSerp, effectiveSerpSignals, baseKeyword);
+    // SERP 키워드 테이블 (RelKwdStat 기반 + API 지표 매핑)
+    const serpKeywords = extractSerpKeywords(allRowsForSerp, serpTableSignals, baseKeyword);
 
     return {
       baseKeyword,
