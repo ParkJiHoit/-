@@ -134,7 +134,7 @@ function SkeletonRows({ colCount }) {
 const COLS = {
   blog: [
     { label: '#',      align: 'center', width: 36 },
-    { label: '블로그명', align: 'left',   width: 88 },
+    { label: '블로그명', align: 'left',   width: 100 },
     { label: '제목',   align: 'left',   width: undefined },
     { label: '발행일', align: 'right',  width: 70 },
     { label: '방문자/일', align: 'right', width: 70 },
@@ -143,13 +143,13 @@ const COLS = {
   view: [
     { label: '#',    align: 'center', width: 36 },
     { label: '유형', align: 'center', width: 56 },
-    { label: '작성자/카페', align: 'left', width: 88 },
+    { label: '작성자/카페', align: 'left', width: 100 },
     { label: '제목', align: 'left',   width: undefined },
     { label: '발행일', align: 'right', width: 70 },
   ],
   cafe: [
     { label: '#',    align: 'center', width: 36 },
-    { label: '카페명', align: 'left',  width: 88 },
+    { label: '카페명', align: 'left',  width: 100 },
     { label: '제목', align: 'left',   width: undefined },
     { label: '발행일', align: 'right', width: 70 },
   ],
@@ -199,7 +199,7 @@ function DataRows({ rows, keyword, tab }) {
           {/* 작성자 / 카페명 / 블로그명 */}
           <td style={{
             padding: '9px 10px', fontSize: 11, color: 'var(--text-secondary)',
-            maxWidth: 88, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            width: 100, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }} title={item.author}>
             {item.author || '—'}
           </td>

@@ -1,5 +1,118 @@
 import { ExternalLink } from 'lucide-react';
 
+// ── 도넛 차트 ──────────────────────────────────────────────────────────────
+function DonutChart({ segments, size = 120, thickness = 22 }) {
+  const r = (size - thickness) / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circ = 2 * Math.PI * r;
+
+  const total = segments.reduce((s, seg) => s + seg.value, 0);
+  if (!total) return null;
+
+  let offset = 0;
+  const arcs = segments
+    .filter(seg => seg.value > 0)
+    .map(seg => {
+      const pct = seg.value / total;
+      const dash = pct * circ;
+      const arc = { ...seg, dash, gap: circ - dash, offset: circ - offset };
+      offset += dash + 1.5;
+      return arc;
+    });
+
+  return (
+    <svg width={size} height={size} style={{ flexShrink: 0, overflow: 'visible' }}>
+      {/* 배경 링 */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={thickness} />
+      {arcs.map((arc, i) => (
+        <circle
+          key={i}
+          cx={cx} cy={cy} r={r}
+          fill="none"
+          stroke={arc.color}
+          strokeWidth={thickness}
+          strokeDasharray={`${arc.dash - 1.5} ${arc.gap + 1.5}`}
+          strokeDashoffset={arc.offset}
+          strokeLinecap="butt"
+          style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px`, transition: 'stroke-dasharray 0.5s ease' }}
+        />
+      ))}
+    </svg>
+  );
+}
+
+function DonutCard({ title, segments, total }) {
+  const filtered = segments.filter(s => s.value > 0);
+  const size = 108;
+  const thickness = 20;
+  const r = (size - thickness) / 2;
+  const circ = 2 * Math.PI * r;
+
+  let offset = 0;
+  const arcs = filtered.map(seg => {
+    const pct = seg.value / total;
+    const dash = pct * circ;
+    const arc = { ...seg, dash, gap: circ - dash, offset: circ - offset };
+    offset += dash + 1.5;
+    return arc;
+  });
+
+  const cx = size / 2;
+  const cy = size / 2;
+
+  return (
+    <div className="mac-card" style={{ padding: '18px 20px' }}>
+      <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 16px' }}>
+        {title}
+      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        {/* SVG 도넛 */}
+        <svg width={size} height={size} style={{ flexShrink: 0, overflow: 'visible' }}>
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={thickness} />
+          {arcs.map((arc, i) => (
+            <circle
+              key={i}
+              cx={cx} cy={cy} r={r}
+              fill="none"
+              stroke={arc.color}
+              strokeWidth={thickness}
+              strokeDasharray={`${arc.dash - 1.5} ${arc.gap + 1.5}`}
+              strokeDashoffset={arc.offset}
+              strokeLinecap="butt"
+              style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px`, transition: 'stroke-dasharray 0.5s ease' }}
+            />
+          ))}
+          {/* 중앙 텍스트 */}
+          <text x={cx} y={cy - 6} textAnchor="middle" fill="var(--text-primary)" fontSize="18" fontWeight="800" fontFamily="-apple-system, sans-serif">
+            {total}
+          </text>
+          <text x={cx} y={cy + 10} textAnchor="middle" fill="var(--text-tertiary)" fontSize="9" fontWeight="600" fontFamily="-apple-system, sans-serif" letterSpacing="0.05em">
+            TOTAL
+          </text>
+        </svg>
+        {/* 범례 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1, minWidth: 0 }}>
+          {filtered.map(({ key, label, color, value }) => (
+            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {label}
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
+                {value}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--text-tertiary)', flexShrink: 0, minWidth: 30, textAlign: 'right' }}>
+                {Math.round((value / total) * 100)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StatCard({ label, value, sub, color }) {
   return (
     <div className="mac-card" style={{ padding: '18px 20px', minWidth: 0 }}>
@@ -42,74 +155,22 @@ function InsightCard({ insight }) {
   );
 }
 
-function PositionBar({ counts, total }) {
-  const segments = [
-    { key: 'front',   label: '앞',   color: '#0a84ff' },
-    { key: 'middle',  label: '중간', color: '#5e5ce6' },
-    { key: 'back',    label: '뒤',   color: '#bf5af2' },
-    { key: 'partial', label: '부분', color: '#ff9f0a' },
-    { key: 'none',    label: '없음', color: 'rgba(255,255,255,0.12)' },
-  ];
-  return (
-    <div>
-      <div style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', gap: 1.5 }}>
-        {segments.map(({ key, color }) => {
-          const pct = total ? (counts[key] / total) * 100 : 0;
-          if (pct === 0) return null;
-          return (
-            <div key={key} style={{ width: `${pct}%`, background: color, transition: 'width 0.4s' }} />
-          );
-        })}
-      </div>
-      <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-        {segments.map(({ key, label, color }) => (
-          counts[key] > 0 && (
-            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-                {label} {counts[key]}개
-              </span>
-            </div>
-          )
-        ))}
-      </div>
-    </div>
-  );
-}
+const POSITION_SEGMENTS = [
+  { key: 'front',   label: '앞',   color: '#0a84ff' },
+  { key: 'middle',  label: '중간', color: '#5e5ce6' },
+  { key: 'back',    label: '뒤',   color: '#bf5af2' },
+  { key: 'partial', label: '부분', color: '#ff9f0a' },
+  { key: 'none',    label: '없음', color: 'rgba(152,152,157,0.5)' },
+];
 
-function RecencyBar({ counts, total }) {
-  const segments = [
-    { key: 'week',    label: '7일 이내',   color: '#30d158' },
-    { key: 'month',   label: '30일 이내',  color: '#0a84ff' },
-    { key: 'quarter', label: '90일 이내',  color: '#5e5ce6' },
-    { key: 'year',    label: '1년 이내',   color: '#ff9f0a' },
-    { key: 'old',     label: '1년 초과',   color: '#ff6b6b' },
-    { key: 'unknown', label: '알 수 없음', color: 'rgba(255,255,255,0.12)' },
-  ];
-  return (
-    <div>
-      <div style={{ display: 'flex', height: 10, borderRadius: 5, overflow: 'hidden', gap: 1.5 }}>
-        {segments.map(({ key, color }) => {
-          const pct = total ? (counts[key] / total) * 100 : 0;
-          if (pct === 0) return null;
-          return <div key={key} style={{ width: `${pct}%`, background: color }} />;
-        })}
-      </div>
-      <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-        {segments.map(({ key, label, color }) => (
-          counts[key] > 0 && (
-            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
-              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-                {label} {counts[key]}개
-              </span>
-            </div>
-          )
-        ))}
-      </div>
-    </div>
-  );
-}
+const RECENCY_SEGMENTS = [
+  { key: 'week',    label: '7일 이내',   color: '#30d158' },
+  { key: 'month',   label: '30일 이내',  color: '#0a84ff' },
+  { key: 'quarter', label: '90일 이내',  color: '#5e5ce6' },
+  { key: 'year',    label: '1년 이내',   color: '#ff9f0a' },
+  { key: 'old',     label: '1년 초과',   color: '#ff6b6b' },
+  { key: 'unknown', label: '알 수 없음', color: 'rgba(152,152,157,0.5)' },
+];
 
 const POSITION_LABEL = { front: '앞', middle: '중간', back: '뒤', partial: '부분', none: '없음' };
 const POSITION_COLOR = { front: '#0a84ff', middle: '#5e5ce6', back: '#bf5af2', partial: '#ff9f0a', none: 'var(--text-tertiary)' };
@@ -180,20 +241,18 @@ export default function BlogStructurePanel({ result, keyword }) {
         )}
       </div>
 
-      {/* 분포 차트 */}
+      {/* 분포 도넛 차트 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div className="mac-card" style={{ padding: '18px 20px' }}>
-          <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 14px' }}>
-            제목 키워드 위치 분포
-          </p>
-          <PositionBar counts={positionCounts} total={posts.length} />
-        </div>
-        <div className="mac-card" style={{ padding: '18px 20px' }}>
-          <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 14px' }}>
-            게시물 최신성 분포
-          </p>
-          <RecencyBar counts={recencyCounts} total={posts.length} />
-        </div>
+        <DonutCard
+          title="제목 키워드 위치 분포"
+          total={posts.length}
+          segments={POSITION_SEGMENTS.map(s => ({ ...s, value: positionCounts[s.key] || 0 }))}
+        />
+        <DonutCard
+          title="게시물 최신성 분포"
+          total={posts.length}
+          segments={RECENCY_SEGMENTS.map(s => ({ ...s, value: recencyCounts[s.key] || 0 }))}
+        />
       </div>
 
       {/* 인사이트 */}
@@ -220,13 +279,21 @@ export default function BlogStructurePanel({ result, keyword }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
-                {['#', '블로그명', '제목', '키워드 위치', '발행일', '방문자/일'].map(h => (
-                  <th key={h} style={{
+                {[
+                  { label: '#',        align: 'center', width: 36 },
+                  { label: '블로그명', align: 'left',   width: 100 },
+                  { label: '제목',     align: 'left',   width: undefined },
+                  { label: '키워드 위치', align: 'left', width: 80 },
+                  { label: '발행일',   align: 'right',  width: 80 },
+                  { label: '방문자/일', align: 'right', width: 80 },
+                ].map(({ label, align, width }) => (
+                  <th key={label} style={{
                     padding: '7px 12px', fontSize: 9, fontWeight: 700,
                     letterSpacing: '0.06em', textTransform: 'uppercase',
-                    color: 'var(--text-tertiary)', textAlign: h === '#' || h === '방문자/일' ? 'center' : 'left',
+                    color: 'var(--text-tertiary)', textAlign: align,
                     whiteSpace: 'nowrap',
-                  }}>{h}</th>
+                    ...(width ? { width } : {}),
+                  }}>{label}</th>
                 ))}
               </tr>
             </thead>
@@ -249,7 +316,7 @@ export default function BlogStructurePanel({ result, keyword }) {
                       {post.rank}
                     </span>
                   </td>
-                  <td style={{ padding: '9px 12px', fontSize: 11, color: 'var(--text-secondary)', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '9px 12px', fontSize: 11, color: 'var(--text-secondary)', width: 100, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {post.author || '—'}
                   </td>
                   <td style={{ padding: '9px 12px', maxWidth: 0 }}>
