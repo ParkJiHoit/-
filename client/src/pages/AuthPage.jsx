@@ -166,13 +166,13 @@ function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
       {/* VerticalCutReveal 타이틀 */}
       <div style={{ marginBottom: 28, color, fontSize: '1.55rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.4 }}>
         <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="first" transition={tr}>
-          {`안녕하세요! RANKLET입니다.`}
+          {`HI 👋, FRIEND!`}
         </VerticalCutReveal>
         <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="last" reverse={true} transition={{ ...tr, delay: 0.5 }}>
-          {`로그인 하셔서`}
+          {`IT IS NICE ⇗ TO`}
         </VerticalCutReveal>
         <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="center" transition={{ ...tr, delay: 1.1 }}>
-          {`키워드를 먼저 차지하세요!`}
+          {`MEET 😊 YOU.`}
         </VerticalCutReveal>
       </div>
 
