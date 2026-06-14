@@ -83,9 +83,10 @@ router.get('/blog-rankings', async (req, res, next) => {
   try {
     const keyword = String(req.query?.keyword || '').trim();
     if (!keyword) return res.status(400).json({ message: '키워드를 입력해 주세요.' });
-    console.log(`[blog-rankings] → "${keyword}"`);
-    const rankings = await fetchBlogRankings(keyword);
-    console.log(`[blog-rankings] ✓ ${rankings.length}개`);
+    const tab = ['blog', 'view', 'cafe'].includes(req.query.tab) ? req.query.tab : 'blog';
+    console.log(`[blog-rankings/${tab}] → "${keyword}"`);
+    const rankings = await fetchBlogRankings(keyword, tab);
+    console.log(`[blog-rankings/${tab}] ✓ ${rankings.length}개`);
     res.json(rankings);
   } catch (error) {
     console.error(`[blog-rankings] ✗ ${error.message}`);
