@@ -297,37 +297,48 @@ async function fetchNaverRelatedSearches(keyword) {
 
 // SERP 키워드에 API 지표 매핑 (검색량/경쟁도 등)
 function extractSerpKeywords(allRows, serpSignals, baseKeyword) {
-  if (!serpSignals?.length) return [];
-  const rowMap = new Map(allRows.map(r => [normalizeText(r.keyword), r]));
-  const seen = new Set();
-  const result = [];
+  const baseNorm = normalizeText(baseKeyword);
 
-  for (const s of serpSignals) {
-    if (!s) continue;
-    const norm = normalizeText(s);
-    if (seen.has(norm)) continue;
-    seen.add(norm);
-
-    const apiRow = rowMap.get(norm);
-    if (apiRow) {
-      result.push(apiRow);
-    } else {
-      // SERP에는 있지만 API 결과에 없는 키워드 (검색량 극소)
-      const relevance = calculateKeywordRelevance(baseKeyword, s);
-      result.push({
-        keyword: s,
-        totalSearch: 0,
-        monthlyPcSearch: 0,
-        monthlyMobileSearch: 0,
-        competition: null,
-        efficiencyScore: 0,
-        saturationScore: 0,
-        relevanceScore: relevance.relevanceScore,
-        relevanceLevel: relevance.relevanceLevel,
-      });
+  if (serpSignals?.length) {
+    // SERP 자동완성/연관검색어가 있으면 해당 키워드 우선 사용
+    const rowMap = new Map(allRows.map(r => [normalizeText(r.keyword), r]));
+    const seen = new Set();
+    const result = [];
+    for (const s of serpSignals) {
+      if (!s) continue;
+      const norm = normalizeText(s);
+      if (seen.has(norm) || norm === baseNorm) continue;
+      seen.add(norm);
+      const apiRow = rowMap.get(norm);
+      if (apiRow) {
+        result.push(apiRow);
+      } else {
+        const relevance = calculateKeywordRelevance(baseKeyword, s);
+        result.push({
+          keyword: s, totalSearch: 0, monthlyPcSearch: 0, monthlyMobileSearch: 0,
+          competition: null, efficiencyScore: 0, saturationScore: 0,
+          relevanceScore: relevance.relevanceScore, relevanceLevel: relevance.relevanceLevel,
+        });
+      }
     }
+    return result;
   }
-  return result;
+
+  // 자동완성/SERP 연관검색어를 못 가져온 경우:
+  // 키워드 도구 API 결과에서 베이스 키워드로 시작하거나 연관도 높은 키워드를 대신 표시
+  return allRows
+    .filter(r => {
+      const kNorm = normalizeText(r.keyword);
+      if (kNorm === baseNorm) return false;
+      return kNorm.startsWith(baseNorm) || r.relevanceScore >= 70;
+    })
+    .sort((a, b) => {
+      const aStarts = normalizeText(a.keyword).startsWith(baseNorm);
+      const bStarts = normalizeText(b.keyword).startsWith(baseNorm);
+      if (aStarts !== bStarts) return aStarts ? -1 : 1;
+      return b.relevanceScore - a.relevanceScore;
+    })
+    .slice(0, 10);
 }
 
 // SERP 신호로 관련 추천 검색어 chips 생성

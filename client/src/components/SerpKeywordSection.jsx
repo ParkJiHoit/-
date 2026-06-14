@@ -37,7 +37,7 @@ export default function SerpKeywordSection({ serpKeywords, onKeywordClick }) {
           자동완성 · SERP
         </span>
         <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-tertiary)' }}>
-          네이버 자동완성 · 연관검색어 기반 · 클릭 시 분석
+          키워드를 클릭하면 새로 분석합니다
         </span>
       </div>
 
