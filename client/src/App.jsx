@@ -429,7 +429,7 @@ export default function App() {
   /* ── Render ── */
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', color: 'var(--text-primary)', position: 'relative' }}>
-      <AuroraBackground theme={theme} />
+      <AuroraBackground theme={theme} hidden={hasResults} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
       <Navbar

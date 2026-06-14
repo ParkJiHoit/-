@@ -13,7 +13,7 @@ const CONFIG = {
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
-export default function AuroraBackground({ theme }) {
+export default function AuroraBackground({ theme, hidden = false }) {
   const [smoothPos, setSmoothPos] = useState({ x: 0, y: 0 });
   const targetPos = useRef({ x: 0, y: 0 });
   const currentPos = useRef({ x: 0, y: 0 });
@@ -86,6 +86,8 @@ export default function AuroraBackground({ theme }) {
         overflow: 'hidden',
       }}
     >
+      {/* 구체/애니메이션 요소 — 분석 페이지에서는 숨김 */}
+      <div style={{ opacity: hidden ? 0 : 1, transition: 'opacity 0.6s ease' }}>
       {/* 인라인 CSS 애니메이션 */}
       <style>{`
         @keyframes sphere-spin {
@@ -180,6 +182,7 @@ export default function AuroraBackground({ theme }) {
           ? 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)'
           : 'radial-gradient(ellipse at center, transparent 40%, rgba(200,200,220,0.5) 100%)',
       }} />
+      </div>{/* end 구체/애니메이션 wrapper */}
     </div>
   );
 }
