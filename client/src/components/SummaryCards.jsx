@@ -1,28 +1,64 @@
 import { Lightbulb, ShieldAlert, Target, Trophy } from 'lucide-react';
 
 const CARDS = [
-  { key: 'totalKeywords',    label: '전체 키워드',  icon: Target      },
-  { key: 'priorityCount',    label: '우선 테스트',  icon: Trophy      },
-  { key: 'opportunityCount', label: '기회 키워드',  icon: Lightbulb   },
-  { key: 'saturatedCount',   label: '과포화 주의',  icon: ShieldAlert },
+  {
+    key: 'totalKeywords',    label: '전체 키워드',  icon: Target,
+    color: '#8E8E93',
+    sub: (s) => `분석된 연관 키워드`,
+  },
+  {
+    key: 'priorityCount',    label: '우선 테스트',  icon: Trophy,
+    color: '#0A84FF',
+    sub: (s) => s.totalKeywords ? `전체의 ${Math.round(s.priorityCount / s.totalKeywords * 100)}%` : '—',
+  },
+  {
+    key: 'opportunityCount', label: '기회 키워드',  icon: Lightbulb,
+    color: '#30D158',
+    sub: (s) => s.totalKeywords ? `전체의 ${Math.round(s.opportunityCount / s.totalKeywords * 100)}%` : '—',
+  },
+  {
+    key: 'saturatedCount',   label: '과포화 주의',  icon: ShieldAlert,
+    color: '#FF9F0A',
+    sub: (s) => s.totalKeywords ? `전체의 ${Math.round(s.saturatedCount / s.totalKeywords * 100)}%` : '—',
+  },
 ];
 
 export default function SummaryCards({ summary }) {
   return (
     <section className="mac-stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {CARDS.map(({ key, label, icon: Icon }) => (
-        <article className="mac-card" style={{ padding: '12px 16px' }} key={key}>
-          <div className="flex items-center justify-between gap-2" style={{ marginBottom: 6 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', lineHeight: 1 }}>
-              {label}
-            </span>
-            <Icon style={{ width: 12, height: 12, color: 'var(--text-tertiary)', flexShrink: 0 }} />
-          </div>
-          <p style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: 0 }}>
-            {summary?.[key] ?? 0}
-          </p>
-        </article>
-      ))}
+      {CARDS.map(({ key, label, icon: Icon, color, sub }) => {
+        const value = summary?.[key] ?? 0;
+        const total = summary?.totalKeywords || 1;
+        const pct = key !== 'totalKeywords' ? Math.round(value / total * 100) : null;
+        return (
+          <article className="mac-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }} key={key}>
+            {/* 헤더 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+                {label}
+              </span>
+              <div style={{ width: 24, height: 24, borderRadius: 7, background: color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon style={{ width: 12, height: 12, color }} />
+              </div>
+            </div>
+
+            {/* 숫자 */}
+            <p style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1px', color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
+              {value}
+            </p>
+
+            {/* 바 + 보조 */}
+            {pct !== null && (
+              <div style={{ height: 2, borderRadius: 1, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 1, transition: 'width 0.6s ease' }} />
+              </div>
+            )}
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
+              {sub(summary ?? {})}
+            </p>
+          </article>
+        );
+      })}
     </section>
   );
 }

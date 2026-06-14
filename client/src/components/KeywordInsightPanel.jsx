@@ -548,10 +548,25 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
   // changePercent reflects MoM search trend index — only meaningful for "총 검색량"
   const kpis = [
-    { label: '총 검색량',   value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—', showChange: true },
-    { label: '모바일 비중', value: keywordRow ? formatPercent(keywordRow.mobileRatio) : '—',  showChange: false },
-    { label: '평균 CTR',   value: keywordRow ? formatPercent(keywordRow.averageCtr) : '—',   showChange: false },
-    { label: '효율 점수',  value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—', showChange: false },
+    {
+      label: '총 검색량', value: keywordRow ? formatNumber(keywordRow.totalSearch) : '—', showChange: true,
+      sub: keywordRow ? `PC ${formatNumber(keywordRow.monthlyPcSearch)} · 모바일 ${formatNumber(keywordRow.monthlyMobileSearch)}` : null,
+    },
+    {
+      label: '모바일 비중', value: keywordRow ? formatPercent(keywordRow.mobileRatio) : '—', showChange: false,
+      bar: keywordRow ? keywordRow.mobileRatio : null, barColor: '#0A84FF',
+      sub: keywordRow ? (keywordRow.mobileRatio >= 70 ? '모바일 중심 키워드' : keywordRow.mobileRatio >= 50 ? '모바일 우세' : 'PC 우세') : null,
+    },
+    {
+      label: '평균 CTR', value: keywordRow ? formatPercent(keywordRow.averageCtr) : '—', showChange: false,
+      bar: keywordRow ? Math.min(keywordRow.averageCtr, 30) / 30 * 100 : null, barColor: '#30D158',
+      sub: keywordRow ? (keywordRow.averageCtr >= 10 ? '클릭률 높음' : keywordRow.averageCtr >= 3 ? '클릭률 보통' : '클릭률 낮음') : null,
+    },
+    {
+      label: '효율 점수', value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—', showChange: false,
+      bar: keywordRow ? keywordRow.efficiencyScore : null, barColor: keywordRow?.efficiencyScore >= 60 ? '#30D158' : keywordRow?.efficiencyScore >= 40 ? '#FF9F0A' : '#FF453A',
+      sub: keywordRow ? (keywordRow.efficiencyScore >= 60 ? '발굴 가치 높음' : keywordRow.efficiencyScore >= 40 ? '발굴 가치 보통' : '발굴 가치 낮음') : null,
+    },
   ];
 
   const { changePercent, weekSum, prevWeekSum, weekChange } = computeTrendStats(insights?.trend);
@@ -663,7 +678,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
   })();
 
   return (
-    <div className="mac-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div className="mac-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <style>{`
         @keyframes kip-pulse {
           0%, 100% { opacity: 0.35; }
@@ -672,30 +687,43 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       `}</style>
 
       {/* Row 1: KPI — 4 independent floating cards with sparkline */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        {kpis.map(({ label, value, showChange }) => {
+      <div style={{ display: 'flex', gap: 10 }}>
+        {kpis.map(({ label, value, showChange, sub, bar, barColor }) => {
           const isUp = showChange && changePercent != null ? changePercent >= 0 : null;
           return (
             <div key={label} className="mac-card" style={{
-              flex: 1, padding: '12px 14px', minWidth: 0,
-              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              flex: 1, padding: '16px 18px', minWidth: 0,
+              display: 'flex', flexDirection: 'column', gap: 10,
             }}>
+              {/* 라벨 */}
               <p style={{
-                fontSize: 10, color: 'var(--text-tertiary)', margin: '0 0 6px',
-                fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                fontSize: 10, color: 'var(--text-tertiary)', margin: 0,
+                fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
               }}>{label}</p>
+
+              {/* 값 + 스파크라인 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '0 0 4px' }}>{value}</p>
-                  {showChange && isUp !== null ? (
-                    <p style={{ margin: 0, fontSize: 10.5, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
-                      {isUp ? '▲' : '▼'} {Math.abs(changePercent).toFixed(1)}% 전월 대비
-                    </p>
-                  ) : showChange && insightsLoading ? (
-                    <Skeleton height={9} width="65%" radius={4} />
-                  ) : null}
+                <p style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-1px', color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>{value}</p>
+                {showChange && <MiniSparkline data={sparklineData} />}
+              </div>
+
+              {/* 진행 바 (모바일/CTR/효율) */}
+              {bar != null && (
+                <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(bar, 100)}%`, height: '100%', background: barColor, borderRadius: 2, transition: 'width 0.6s ease' }} />
                 </div>
-                <MiniSparkline data={sparklineData} />
+              )}
+
+              {/* 보조 텍스트 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {sub && <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>{sub}</p>}
+                {showChange && isUp !== null ? (
+                  <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
+                    {isUp ? '▲' : '▼'} {Math.abs(changePercent).toFixed(1)}%
+                  </p>
+                ) : showChange && insightsLoading ? (
+                  <Skeleton height={10} width="50%" radius={4} />
+                ) : null}
               </div>
             </div>
           );
@@ -706,15 +734,15 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       {insightsError && !insightsLoading && <InsightsErrorNotice message={insightsError} />}
 
       {/* Row 2: trend | news | demographics — each its own floating card */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'stretch' }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'stretch' }}>
 
         {/* Trend chart card */}
         <div className="mac-card" style={{
-          flex: '2 1 300px', padding: '14px 18px',
+          flex: '2 1 300px', padding: '20px 24px',
           minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
           {/* Header: title + period buttons + weekly stats */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
                 {activePeriod.title}
@@ -767,7 +795,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
         {/* News card */}
         <div className="mac-card" style={{
-          flex: '1 1 180px', padding: '14px 16px', minWidth: 0,
+          flex: '1 1 180px', padding: '20px 18px', minWidth: 0,
         }}>
           <Label>관련 기사</Label>
           <NewsSection items={insights?.news} loading={insightsLoading} />
@@ -775,7 +803,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
 
         {/* Blog ranking card */}
         <div className="mac-card" style={{
-          flex: '1.6 1 240px', padding: '14px 16px', minWidth: 0, overflow: 'hidden',
+          flex: '1.6 1 240px', padding: '20px 18px', minWidth: 0, overflow: 'hidden',
         }}>
           <BlogRankingTable baseKeyword={baseKeyword} onViewDetail={onViewDetail} />
         </div>
