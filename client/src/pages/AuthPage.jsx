@@ -129,7 +129,7 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
 /* ─── 로고 ─── */
 function Logo({ isDark }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, marginTop: -16 }}>
       {/* 이미지 캔버스 여백을 clip으로 제거 — 실제 로고는 세로 중앙 약 30% 영역 */}
       <div style={{
         width: 220,
@@ -164,7 +164,7 @@ function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
     <div style={{ width: '100%', maxWidth: 300 }}>
       <Logo isDark={isDark} />
       {/* VerticalCutReveal 타이틀 */}
-      <div style={{ marginBottom: 28, color, fontSize: '1.55rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.4 }}>
+      <div style={{ marginBottom: 28, color, fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.4 }}>
         <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="first" transition={tr}>
           {`HI 👋, FRIEND!`}
         </VerticalCutReveal>
