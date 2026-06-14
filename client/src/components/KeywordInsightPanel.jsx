@@ -543,7 +543,7 @@ function InsightsErrorNotice({ message }) {
 }
 
 /* ─── Main Panel ─── */
-export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError }) {
+export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights, insightsLoading, insightsError, onViewDetail }) {
   const [trendPeriod, setTrendPeriod] = useState('daily');
 
   // changePercent reflects MoM search trend index — only meaningful for "총 검색량"
@@ -777,7 +777,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         <div className="mac-card" style={{
           flex: '1.6 1 240px', padding: '20px 18px', minWidth: 0, overflow: 'hidden',
         }}>
-          <BlogRankingTable baseKeyword={baseKeyword} />
+          <BlogRankingTable baseKeyword={baseKeyword} onViewDetail={onViewDetail} />
         </div>
 
       </div>

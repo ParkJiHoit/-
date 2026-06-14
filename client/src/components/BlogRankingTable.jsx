@@ -1,4 +1,4 @@
-import { Download, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 // ── 블로그 지수 계산 (블로그 탭 전용) ────────────────────────────────────────
@@ -38,38 +38,6 @@ function calcBlogIndex(item, keyword) {
   }
 
   return rankScore + titleScore + recency + reaction;
-}
-
-// ── CSV 다운로드 ───────────────────────────────────────────────────────────
-function downloadCSV(rankings, keyword, tab) {
-  const isView = tab === 'view';
-  const hasBlog = tab === 'blog';
-
-  const headers = isView
-    ? ['순위', '유형', '작성자/카페', '제목', 'URL', '발행일']
-    : hasBlog
-      ? ['순위', '블로그명', '제목', 'URL', '발행일', '방문자/일', '블로그지수']
-      : ['순위', '카페명', '제목', 'URL', '발행일'];
-
-  const rows = rankings.map((r) =>
-    isView
-      ? [r.rank, r.type === 'blog' ? '블로그' : '카페', r.author, r.title, r.postLink, r.date]
-      : hasBlog
-        ? [r.rank, r.author, r.title, r.postLink, r.date, r.dailyVisitors ?? '비공개', r.blogIndex ?? '-']
-        : [r.rank, r.author, r.title, r.postLink, r.date]
-  );
-
-  const csv = [headers, ...rows]
-    .map((row) => row.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
-    .join('\n');
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  const TAB_LABEL = { blog: '블로그', view: 'VIEW', cafe: '카페' };
-  a.download = `${TAB_LABEL[tab] || ''}순위_${keyword}_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 // ── 서브 컴포넌트 ──────────────────────────────────────────────────────────
@@ -347,7 +315,7 @@ function TabSwitcher({ active, onChange }) {
 }
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────
-export default function BlogRankingTable({ baseKeyword }) {
+export default function BlogRankingTable({ baseKeyword, onViewDetail }) {
   const [activeTab,  setActiveTab]  = useState('view');
   const [tabData,    setTabData]    = useState({ blog: null, view: null, cafe: null });
   const [tabLoading, setTabLoading] = useState({ blog: false, view: false, cafe: false });
@@ -429,21 +397,24 @@ export default function BlogRankingTable({ baseKeyword }) {
       }}>
         <TabSwitcher active={activeTab} onChange={handleTabChange} />
 
-        {enriched?.length ? (
+        {onViewDetail && (
           <button
-            onClick={() => downloadCSV(enriched, baseKeyword, activeTab)}
+            onClick={() => onViewDetail(baseKeyword)}
             style={{
               display: 'flex', alignItems: 'center', gap: 4,
-              fontSize: 10, color: 'var(--text-tertiary)',
-              background: 'transparent', border: '1px solid var(--border)',
-              borderRadius: 5, padding: '3px 8px', cursor: 'pointer',
+              fontSize: 11, fontWeight: 600,
+              color: 'var(--accent)',
+              background: 'rgba(10,132,255,0.10)',
+              border: '1px solid rgba(10,132,255,0.30)',
+              borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
+              transition: 'background 0.15s, border-color 0.15s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(10,132,255,0.18)'; e.currentTarget.style.borderColor = 'rgba(10,132,255,0.5)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(10,132,255,0.10)'; e.currentTarget.style.borderColor = 'rgba(10,132,255,0.30)'; }}
           >
-            <Download size={10} /> CSV
+            자세히 보기 <ExternalLink size={10} />
           </button>
-        ) : null}
+        )}
       </div>
 
       {/* 테이블 */}
