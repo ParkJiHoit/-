@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import AuthScene from '../components/AuthScene';
-import GooeyText from '../components/GooeyText';
+import VerticalCutReveal from '../components/VerticalCutReveal';
 import rankletLogoDark from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_42_18-removebg-preview.png';
 import rankletLogoLight from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_45_46-removebg-preview.png';
 
@@ -126,8 +126,6 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
   );
 }
 
-const GOOEY_TEXTS = ['안녕하세요!\nRANKLET입니다.', '로그인 하셔서', '키워드를 먼저\n차지하세요!'];
-
 /* ─── 로고 ─── */
 function Logo({ isDark }) {
   return (
@@ -159,19 +157,29 @@ function Logo({ isDark }) {
 /* ─── 로그인 메인 패널 (소셜 + 이메일 진입) ─── */
 function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
   const { signInWithGoogle } = useAuth();
+  const color = isDark ? '#F5F5F7' : '#1C1C1E';
+  const tr = { type: 'spring', stiffness: 200, damping: 21 };
 
   return (
     <div style={{ width: '100%', maxWidth: 300 }}>
       <Logo isDark={isDark} />
-      {/* GooeyText 타이틀 */}
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
-        <GooeyText
-          texts={GOOEY_TEXTS}
-          morphTime={1.1}
-          cooldownTime={1.5}
-          color={isDark ? '#F5F5F7' : '#1C1C1E'}
-          fontSize='2.1rem'
-        />
+      {/* VerticalCutReveal 타이틀 */}
+      <div style={{ textAlign: 'center', marginBottom: 28, color, fontSize: '1.55rem', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.3 }}>
+        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="first" transition={tr}>
+          안녕하세요!
+        </VerticalCutReveal>
+        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="last" reverse={true} transition={{ ...tr, delay: 0.3 }}>
+          RANKLET입니다.
+        </VerticalCutReveal>
+        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="center" transition={{ ...tr, delay: 0.6 }}>
+          로그인 하셔서
+        </VerticalCutReveal>
+        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="first" reverse={true} transition={{ ...tr, delay: 0.9 }}>
+          키워드를 먼저
+        </VerticalCutReveal>
+        <VerticalCutReveal splitBy="characters" staggerDuration={0.025} staggerFrom="last" transition={{ ...tr, delay: 1.2 }}>
+          차지하세요!
+        </VerticalCutReveal>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

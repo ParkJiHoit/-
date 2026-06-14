@@ -12,6 +12,7 @@
     "@paper-design/shaders": "^0.0.76",
     "@supabase/supabase-js": "^2.108.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "framer-motion": "^12.40.0",
     "lucide-react": "^0.468.0",
     "motion": "^12.40.0",
     "react": "^18.3.1",
