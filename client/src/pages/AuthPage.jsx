@@ -131,12 +131,27 @@ const GOOEY_TEXTS = ['안녕하세요!\nRANKLET입니다.', '로그인 하셔서
 /* ─── 로고 ─── */
 function Logo({ isDark }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-      <img
-        src={isDark ? rankletLogoDark : rankletLogoLight}
-        alt="RANKLET"
-        style={{ height: 128, display: 'block', objectFit: 'contain' }}
-      />
+    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+      {/* 이미지 캔버스 여백을 clip으로 제거 — 실제 로고는 세로 중앙 약 30% 영역 */}
+      <div style={{
+        width: 220,
+        height: 56,
+        overflow: 'hidden',
+        position: 'relative',
+        flexShrink: 0,
+      }}>
+        <img
+          src={isDark ? rankletLogoDark : rankletLogoLight}
+          alt="RANKLET"
+          style={{
+            width: 220,
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+      </div>
     </div>
   );
 }
