@@ -10,7 +10,6 @@ import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
 import KeywordInsightPanel from './components/KeywordInsightPanel';
 import KeywordSearchForm from './components/KeywordSearchForm';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
-import SerpKeywordSection from './components/SerpKeywordSection';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
 import SummaryCards from './components/SummaryCards';
@@ -497,13 +496,6 @@ export default function App() {
               <SummaryCards summary={currentSummary} />
             )}
 
-            {/* 연관 키워드 / 자동완성 섹션 */}
-            {activeTab === 'analysis' && (
-              <SerpKeywordSection
-                serpKeywords={activeResult?.serpKeywords}
-                onKeywordClick={analyzeKeyword}
-              />
-            )}
 
             {/* 키워드 클러스터링 섹션 */}
             <div className="mac-card overflow-hidden">
