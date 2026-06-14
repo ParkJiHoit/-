@@ -19,9 +19,9 @@ function Label({ children }) {
   return (
     <p style={{
       margin: '0 0 14px',
-      fontSize: 11, fontWeight: 700,
-      letterSpacing: '0.08em', textTransform: 'uppercase',
-      color: 'var(--text-secondary)',
+      fontSize: 13, fontWeight: 700,
+      letterSpacing: '0.06em', textTransform: 'uppercase',
+      color: 'var(--text-primary)',
     }}>
       {children}
     </p>
@@ -701,8 +701,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             }}>
               {/* 라벨 */}
               <p style={{
-                fontSize: 11.5, color: 'var(--text-secondary)', margin: 0,
-                fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+                fontSize: 13, color: 'var(--text-primary)', margin: 0,
+                fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
               }}>{label}</p>
 
               {/* 값 */}
@@ -724,17 +724,17 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 {splitBar ? (
                   <div style={{ display: 'flex', gap: 10 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: 'var(--text-secondary)' }}>
                       <span style={{ width: 6, height: 6, borderRadius: 1, background: '#5E5CE6', flexShrink: 0 }} />
                       PC {Math.round(pcPct)}%
                     </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: 'var(--text-secondary)' }}>
                       <span style={{ width: 6, height: 6, borderRadius: 1, background: '#0A84FF', flexShrink: 0 }} />
                       모바일 {Math.round(mobilePct)}%
                     </span>
                   </div>
                 ) : (
-                  sub && <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>{sub}</p>
+                  sub && <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text-secondary)' }}>{sub}</p>
                 )}
                 {showChange && isUp !== null ? (
                   <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: isUp ? '#30D158' : '#FF375F' }}>
@@ -763,7 +763,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
           {/* Header: title + period buttons + weekly stats */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)' }}>
                 {activePeriod.title}
               </p>
               {/* Period toggle buttons */}

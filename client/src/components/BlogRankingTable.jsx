@@ -162,8 +162,8 @@ function THead({ tab }) {
       <tr style={{ borderBottom: '1px solid var(--border)' }}>
         {cols.map(({ label, align, width }) => (
           <th key={label} style={{
-            padding: '7px 10px', fontSize: 9, fontWeight: 700,
-            color: 'var(--text-tertiary)', letterSpacing: '0.06em',
+            padding: '7px 10px', fontSize: 11, fontWeight: 700,
+            color: 'var(--text-secondary)', letterSpacing: '0.04em',
             textTransform: 'uppercase', textAlign: align,
             background: 'var(--bg-secondary)',
             ...(width ? { width } : {}),

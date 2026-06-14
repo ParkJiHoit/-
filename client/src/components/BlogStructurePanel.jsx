@@ -63,7 +63,7 @@ function DonutCard({ title, segments, total }) {
 
   return (
     <div className="mac-card" style={{ padding: '18px 20px' }}>
-      <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 16px' }}>
+      <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: '0 0 16px' }}>
         {title}
       </p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
@@ -116,14 +116,14 @@ function DonutCard({ title, segments, total }) {
 function StatCard({ label, value, sub, color }) {
   return (
     <div className="mac-card" style={{ padding: '18px 20px', minWidth: 0 }}>
-      <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0, marginBottom: 8 }}>
+      <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0, marginBottom: 8 }}>
         {label}
       </p>
       <p style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', color: color || 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
         {value}
       </p>
       {sub && (
-        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 5, marginBottom: 0 }}>
+        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 5, marginBottom: 0 }}>
           {sub}
         </p>
       )}
@@ -189,7 +189,7 @@ export default function BlogStructurePanel({ result, keyword }) {
     <div className="flex flex-col gap-5">
       {/* 헤더 */}
       <div className="mac-card" style={{ padding: '16px 20px' }}>
-        <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0 }}>
           블로그 구조 분석
         </p>
         <p style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '4px 0 0' }}>
@@ -257,7 +257,7 @@ export default function BlogStructurePanel({ result, keyword }) {
 
       {/* 인사이트 */}
       <div className="mac-card" style={{ padding: '18px 20px' }}>
-        <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 14px' }}>
+        <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: '0 0 14px' }}>
           콘텐츠 전략 인사이트
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
@@ -271,7 +271,7 @@ export default function BlogStructurePanel({ result, keyword }) {
           <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
             상위 블로그 상세
           </p>
-          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
             정확도순 상위 {posts.length}개
           </p>
         </div>
@@ -288,9 +288,9 @@ export default function BlogStructurePanel({ result, keyword }) {
                   { label: '방문자/일', align: 'right', width: 80 },
                 ].map(({ label, align, width }) => (
                   <th key={label} style={{
-                    padding: '7px 12px', fontSize: 9, fontWeight: 700,
-                    letterSpacing: '0.06em', textTransform: 'uppercase',
-                    color: 'var(--text-tertiary)', textAlign: align,
+                    padding: '7px 12px', fontSize: 11, fontWeight: 700,
+                    letterSpacing: '0.04em', textTransform: 'uppercase',
+                    color: 'var(--text-secondary)', textAlign: align,
                     whiteSpace: 'nowrap',
                     ...(width ? { width } : {}),
                   }}>{label}</th>

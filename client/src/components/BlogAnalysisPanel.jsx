@@ -13,8 +13,8 @@ function MetricRow({ label, value, helper }) {
       <th
         style={{
           width: 168, background: 'var(--bg-overlay)', padding: '10px 14px',
-          textAlign: 'left', fontSize: 11, fontWeight: 600,
-          letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-tertiary)',
+          textAlign: 'left', fontSize: 12, fontWeight: 700,
+          letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-secondary)',
           whiteSpace: 'nowrap'
         }}
       >
@@ -111,8 +111,8 @@ export default function BlogAnalysisPanel({ result }) {
                       key={h}
                       style={{
                         background: 'var(--bg-overlay)', padding: '9px 14px',
-                        fontSize: 11, fontWeight: 600, letterSpacing: '0.05em',
-                        textTransform: 'uppercase', color: 'var(--text-tertiary)',
+                        fontSize: 12, fontWeight: 700, letterSpacing: '0.04em',
+                        textTransform: 'uppercase', color: 'var(--text-secondary)',
                         textAlign: 'left', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap'
                       }}
                     >

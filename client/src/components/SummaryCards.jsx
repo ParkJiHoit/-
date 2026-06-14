@@ -34,7 +34,7 @@ export default function SummaryCards({ summary }) {
           <article className="mac-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }} key={key}>
             {/* 헤더 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+              <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)' }}>
                 {label}
               </span>
               <div style={{ width: 24, height: 24, borderRadius: 7, background: color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -53,7 +53,7 @@ export default function SummaryCards({ summary }) {
                 <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 1, transition: 'width 0.6s ease' }} />
               </div>
             )}
-            <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
+            <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text-secondary)' }}>
               {sub(summary ?? {})}
             </p>
           </article>
