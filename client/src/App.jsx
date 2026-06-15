@@ -212,14 +212,14 @@ function HeroSection({ tab, hasResults, children }) {
 /* ── Section label ── */
 function SectionLabel({ children }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
       <span style={{
-        fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
-        color: 'var(--accent)',
+        fontSize: 13, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase',
+        color: 'var(--accent)', whiteSpace: 'nowrap',
       }}>
         {children}
       </span>
-      <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, rgba(10,132,255,0.25), transparent)' }} />
+      <div style={{ flex: 1, height: 2, borderRadius: 1, background: 'linear-gradient(to right, rgba(10,132,255,0.35), transparent)' }} />
     </div>
   );
 }

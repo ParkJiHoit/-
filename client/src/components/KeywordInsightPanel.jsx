@@ -696,21 +696,25 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
           const mobilePct = splitBar ? (splitBar.mobile / splitTotal) * 100 : 0;
           const isEfficiency = label === '효율 점수';
           const locked = isEfficiency && !isLoggedIn;
+          const accentColor = barColor ?? 'var(--accent)';
+          const accentHex   = barColor ?? '#0A84FF';
           return (
             <div key={label} className="mac-card" style={{
-              flex: 1, padding: '16px 18px', minWidth: 0,
-              display: 'flex', flexDirection: 'column', gap: 10,
+              flex: 1, padding: '20px 20px 18px', minWidth: 0,
+              display: 'flex', flexDirection: 'column', gap: 12,
               position: 'relative', overflow: 'hidden',
+              background: `radial-gradient(ellipse at top left, ${accentHex}10 0%, transparent 60%)`,
+              borderTop: `1px solid ${accentHex}30`,
             }}>
               {/* 라벨 */}
               <p style={{
-                fontSize: 13, color: 'var(--text-secondary)', margin: 0,
-                fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+                fontSize: 12, color: 'var(--text-tertiary)', margin: 0,
+                fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase',
               }}>{label}</p>
 
-              {/* 값 — 효율 점수는 점수대별 컬러 */}
+              {/* 값 */}
               <p style={{
-                fontSize: 26, fontWeight: 800, letterSpacing: '-1px', margin: 0, lineHeight: 1,
+                fontSize: 30, fontWeight: 800, letterSpacing: '-1px', margin: 0, lineHeight: 1,
                 color: barColor && label === '효율 점수' ? barColor
                   : label === '모바일 비중' ? 'var(--accent)'
                   : 'var(--text-primary)',
@@ -796,6 +800,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         <div className="mac-card" style={{
           flex: '2 1 300px', padding: '20px 24px',
           minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          borderTop: '1px solid rgba(10,132,255,0.22)',
+          background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
         }}>
           {/* Header: title + period buttons + weekly stats */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -852,6 +858,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         {/* News card */}
         <div className="mac-card" style={{
           flex: '1 1 180px', padding: '20px 18px', minWidth: 0,
+          borderTop: '1px solid rgba(10,132,255,0.22)',
+          background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
         }}>
           <Label>관련 기사</Label>
           <NewsSection items={insights?.news} loading={insightsLoading} />
@@ -860,6 +868,8 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
         {/* Blog ranking card */}
         <div className="mac-card" style={{
           flex: '1.6 1 240px', padding: '20px 18px', minWidth: 0, overflow: 'hidden',
+          borderTop: '1px solid rgba(10,132,255,0.22)',
+          background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
         }}>
           <BlogRankingTable baseKeyword={baseKeyword} onViewDetail={onViewDetail} />
         </div>
