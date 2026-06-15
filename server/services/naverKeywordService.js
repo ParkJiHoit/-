@@ -253,13 +253,13 @@ function sortKeywordRows(baseKeyword, rows, sortMode = 'analysis') {
 
 // 의도 타입별 맞춤 접미어 — 의도에 맞는 롱테일 탐색용
 const INTENT_SUFFIX_MAP = {
-  '창업 의도':    ['비용', '방법', '준비', '절차', '성공사례'],
-  '대리점/매장':  ['비용', '조건', '계약', '수익', '문의'],
-  '비용/수익':    ['평균', '비교', '절약', '견적', '수익률'],
-  '정보 탐색':    ['후기', '추천', '비교', '장단점', '방법'],
-  '판매/유통':    ['방법', '조건', '단가', '플랫폼', '마진'],
-  '수리/중고':    ['가격', '비용', '후기', '추천', '방법'],
-  '일반 후보':    ['방법', '후기', '추천', '비용', '뜻'],
+  '창업 의도':   ['비용', '수익', '교육', '문의', '단점', '방법', '준비', '대출', '후기', '성공'],
+  '대리점/매장': ['비용', '조건', '수익', '문의', '계약', '단점', '교육', '후기', '방법', '준비'],
+  '비용/수익':   ['평균', '비교', '절약', '견적', '수익률', '계산', '방법', '후기', '기준', '단점'],
+  '정보 탐색':   ['후기', '추천', '비교', '장단점', '방법', '종류', '가격', '뜻', '특징', '순위'],
+  '판매/유통':   ['방법', '조건', '단가', '마진', '플랫폼', '수수료', '계약', '후기', '주의사항', '비용'],
+  '수리/중고':   ['가격', '비용', '후기', '추천', '방법', '업체', '비교', '주의사항', '기간', '보증'],
+  '일반 후보':   ['방법', '후기', '추천', '비용', '뜻', '종류', '비교', '장단점', '가격', '특징'],
 };
 
 const SERP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
@@ -401,17 +401,17 @@ async function deriveAnalysisHints(keyword) {
     if (s && !seen.has(s)) { seen.add(s); hints.push(kw); }
   }
 
-  // 3. 의도 파악 → 의도에 맞는 접미어 2개로 롱테일 힌트
+  // 3. 의도 파악 → 의도에 맞는 접미어 5개로 롱테일 힌트
   const { intentType } = detectIntent(keyword, keyword);
   const suffixes = INTENT_SUFFIX_MAP[intentType] || INTENT_SUFFIX_MAP['일반 후보'];
-  for (const suffix of suffixes.slice(0, 2)) {
+  for (const suffix of suffixes.slice(0, 5)) {
     const combined = clean + suffix;
     if (!seen.has(combined)) { seen.add(combined); hints.push(combined); }
   }
 
   // 4. SERP 연관검색어 상위 2개 → 유사/함께 검색된 키워드 힌트
   for (const kw of relatedSearches.slice(0, 2)) {
-    if (hints.length >= 8) break;
+    if (hints.length >= 10) break;
     const s = sanitizeNaverHintKeyword(kw);
     if (s && !seen.has(s)) { seen.add(s); hints.push(kw); }
   }
