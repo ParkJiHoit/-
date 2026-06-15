@@ -145,7 +145,7 @@ export default function BlogAuditPanel({ result }) {
           padding: '20px 24px',
           borderTop: '1px solid rgba(10,132,255,0.22)',
           background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
-          flex: '0 0 380px',
+          flex: '1 1 0',
           minWidth: 0,
         }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
