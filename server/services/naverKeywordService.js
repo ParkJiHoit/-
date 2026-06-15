@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { classifyKeyword } from '../utils/keywordClassifier.js';
 import { classifyKeywordIntent } from '../utils/keywordIntent.js';
+const detectIntent = classifyKeywordIntent;
 import { calculateKeywordRelevance } from '../utils/keywordRelevance.js';
 import { createNaverSignature } from '../utils/naverSignature.js';
 import {
@@ -250,7 +251,16 @@ function sortKeywordRows(baseKeyword, rows, sortMode = 'analysis') {
   });
 }
 
-const INTENT_SUFFIXES = ['방법', '후기', '비용', '추천', '수익', '가격', '단점', '뜻'];
+// 의도 타입별 맞춤 접미어 — 의도에 맞는 롱테일 탐색용
+const INTENT_SUFFIX_MAP = {
+  '창업 의도':    ['비용', '방법', '준비', '절차', '성공사례'],
+  '대리점/매장':  ['비용', '조건', '계약', '수익', '문의'],
+  '비용/수익':    ['평균', '비교', '절약', '견적', '수익률'],
+  '정보 탐색':    ['후기', '추천', '비교', '장단점', '방법'],
+  '판매/유통':    ['방법', '조건', '단가', '플랫폼', '마진'],
+  '수리/중고':    ['가격', '비용', '후기', '추천', '방법'],
+  '일반 후보':    ['방법', '후기', '추천', '비용', '뜻'],
+};
 
 const SERP_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 const SERP_RELATED_SELECTORS = [
@@ -373,37 +383,40 @@ async function deriveAnalysisHints(keyword) {
   const clean = sanitizeNaverHintKeyword(keyword);
   if (!clean) return { hints: [], serpSignals: [] };
 
-  // 자동완성 + SERP 연관검색어만 사용 — 질 중심
-  const MAX_HINTS = 8;
   const seen = new Set([clean]);
   const hints = [clean];
 
+  // 1. 자동완성 + SERP 연관검색어 병렬 수집
   const [acResult, relatedResult] = await Promise.allSettled([
     fetchNaverAutoComplete(keyword),
     fetchNaverRelatedSearches(keyword),
   ]);
-
   const acSuggestions = acResult.status === 'fulfilled' ? acResult.value : [];
   const relatedSearches = relatedResult.status === 'fulfilled' ? relatedResult.value : [];
   const serpSignals = [...acSuggestions, ...relatedSearches];
 
-  // 자동완성 우선, 연관검색어 후순위로 인터리빙 — 연관성 높은 것만
-  const maxLen = Math.max(acSuggestions.length, relatedSearches.length);
-  for (let i = 0; i < maxLen; i++) {
-    if (hints.length >= MAX_HINTS) break;
-    for (const src of [acSuggestions, relatedSearches]) {
-      if (hints.length >= MAX_HINTS) break;
-      if (i < src.length) {
-        const sanitized = sanitizeNaverHintKeyword(src[i]);
-        if (sanitized && !seen.has(sanitized)) {
-          seen.add(sanitized);
-          hints.push(src[i]);
-        }
-      }
-    }
+  // 2. 자동완성 상위 3개 → 롱테일 탐색 힌트
+  for (const kw of acSuggestions.slice(0, 3)) {
+    const s = sanitizeNaverHintKeyword(kw);
+    if (s && !seen.has(s)) { seen.add(s); hints.push(kw); }
   }
 
-  console.log(`[hints] "${keyword}" → ${hints.length}개:`, hints);
+  // 3. 의도 파악 → 의도에 맞는 접미어 2개로 롱테일 힌트
+  const { intentType } = detectIntent(keyword, keyword);
+  const suffixes = INTENT_SUFFIX_MAP[intentType] || INTENT_SUFFIX_MAP['일반 후보'];
+  for (const suffix of suffixes.slice(0, 2)) {
+    const combined = clean + suffix;
+    if (!seen.has(combined)) { seen.add(combined); hints.push(combined); }
+  }
+
+  // 4. SERP 연관검색어 상위 2개 → 유사/함께 검색된 키워드 힌트
+  for (const kw of relatedSearches.slice(0, 2)) {
+    if (hints.length >= 8) break;
+    const s = sanitizeNaverHintKeyword(kw);
+    if (s && !seen.has(s)) { seen.add(s); hints.push(kw); }
+  }
+
+  console.log(`[hints] "${keyword}" (의도: ${intentType}) → ${hints.length}개:`, hints);
   return { hints, serpSignals };
 }
 
@@ -479,9 +492,19 @@ export async function analyzeKeyword(baseKeyword) {
       .filter((r) => r.status === 'fulfilled')
       .map((r) => r.value);
 
+    // SERP 신호 정규화 세트 — 부스트 판별용
+    const serpSignalSet = new Set(serpSignals.map(s => normalizeText(s)));
+
     const allNormalized = dedupeKeywords(
       responses.flatMap(({ hint, rows }) =>
-        rows.map((row) => normalizeKeywordRow(row, baseKeyword, hint))
+        rows.map((row) => {
+          const normalized = normalizeKeywordRow(row, baseKeyword, hint);
+          // SERP 신호(자동완성/연관검색어)에 포함된 키워드는 연관도 부스트
+          if (serpSignalSet.has(normalizeText(normalized.keyword))) {
+            normalized.relevanceScore = Math.min(100, normalized.relevanceScore + 15);
+          }
+          return normalized;
+        })
       )
     );
 
