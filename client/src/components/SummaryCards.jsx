@@ -61,6 +61,7 @@ export default function SummaryCards({ summary }) {
             {/* 숫자 */}
             <p style={{
               fontSize: 36, fontWeight: 800, letterSpacing: '-1.5px',
+              fontFamily: "'Space Grotesk', sans-serif",
               color: 'var(--text-primary)', margin: 0, lineHeight: 1,
             }}>
               {value}
