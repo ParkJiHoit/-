@@ -696,7 +696,7 @@ export default function App() {
           onGoToAuth={() => { setLoginPrompt(null); switchTab('auth'); }}
         />
       )}
-      <AuroraBackground theme={theme} hidden={hasResults} />
+      <AuroraBackground theme={theme} hidden={hasResults} loading={loading || blogAuditLoading} />
       {/* 결과 페이지 배경 */}
       {hasResults && (
         <>
@@ -790,14 +790,6 @@ export default function App() {
             )}
           </div>
         )}
-        {/* 블로그 구조 첫 검색 로딩 */}
-        {activeTab === 'blog' && blogSubTab === 'structure' && loading && !blogStructure && (
-          <MainPageLoading label="상위 블로그 구조를 분석 중입니다…" />
-        )}
-        {/* 블로그 감사 첫 검색 로딩 */}
-        {activeTab === 'blog' && blogSubTab === 'audit' && blogAuditLoading && !blogAudit && (
-          <MainPageLoading label="블로그를 분석 중입니다…" />
-        )}
         {/* 에러 */}
         {activeTab === 'blog' && blogSubTab === 'structure' && !blogStructure && error && (
           <p className="mac-fade-in" style={{ fontSize: 13, color: 'var(--destructive)', textAlign: 'center', marginTop: 16 }}>
@@ -812,8 +804,8 @@ export default function App() {
       </HeroSection>
 
       <div className="mx-auto w-full max-w-[1400px] px-5 pb-16 lg:px-10">
-        {/* 키워드 분석/확장 탭 로딩 */}
-        {loading && isKeywordTab && (
+        {/* 키워드 분석/확장 탭 재검색 로딩 (결과 있을 때만) */}
+        {loading && isKeywordTab && activeResult && (
           <div className="mb-5">
             <LoadingRow label={
               activeTab === 'analysis' ? '키워드 데이터를 분석 중입니다…' :

@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const CONFIG = {
-  primaryColor: '10, 132, 255',
-  secondaryColor: '64, 156, 255',
   sphereRotationDuration: '240s',
+  sphereRotationLoadingDuration: '8s',
   wireframeOpacity: 0.55,
   coreBlur: 180,
   parallaxDepth: 20,
@@ -13,7 +12,7 @@ const CONFIG = {
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
-export default function AuroraBackground({ theme, hidden = false }) {
+export default function AuroraBackground({ theme, hidden = false, loading = false }) {
   const [smoothPos, setSmoothPos] = useState({ x: 0, y: 0 });
   const targetPos = useRef({ x: 0, y: 0 });
   const currentPos = useRef({ x: 0, y: 0 });
@@ -48,14 +47,16 @@ export default function AuroraBackground({ theme, hidden = false }) {
   const { x, y } = smoothPos;
   const d = CONFIG.parallaxDepth;
 
-  // 브랜드 컬러 #0A84FF 기반
-  const primary   = '10, 132, 255';
-  const secondary = '64, 156, 255';
-  const tertiary  = '0, 180, 255';
+  const primary   = loading ? '120, 200, 255' : '10, 132, 255';
+  const secondary = loading ? '180, 220, 255' : '64, 156, 255';
+  const tertiary  = loading ? '80, 210, 255'  : '0, 180, 255';
   const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(139,92,246,0.07)';
-  const wireColor = `rgba(${primary}, ${isDark ? CONFIG.wireframeOpacity : 0.4})`;
-  const coreOpacity = isDark ? 0.4 : 0.3;
-  const bloomOpacity = isDark ? 0.85 : 0.6;
+  const wireOpacity = loading ? 0.85 : (isDark ? CONFIG.wireframeOpacity : 0.4);
+  const wireColor = `rgba(${primary}, ${wireOpacity})`;
+  const coreOpacity = loading ? 0.65 : (isDark ? 0.4 : 0.3);
+  const bloomOpacity = loading ? 1.0 : (isDark ? 0.85 : 0.6);
+  const sphereScale = loading ? 1.18 : 1.0;
+  const spinDuration = loading ? CONFIG.sphereRotationLoadingDuration : CONFIG.sphereRotationDuration;
 
   const sphereRings = Array.from({ length: CONFIG.sphereDensity }, (_, i) => {
     const step = 90 / (CONFIG.sphereDensity / 2);
@@ -68,8 +69,9 @@ export default function AuroraBackground({ theme, hidden = false }) {
           inset: 0,
           borderRadius: '50%',
           border: `1px solid ${wireColor}`,
-          boxShadow: `0 0 ${isDark ? 8 : 5}px 1px rgba(${primary}, ${isDark ? 0.4 : 0.25})`,
+          boxShadow: `0 0 ${loading ? 14 : isDark ? 8 : 5}px ${loading ? 3 : 1}px rgba(${primary}, ${loading ? 0.7 : isDark ? 0.4 : 0.25})`,
           transform: i % 2 === 0 ? `rotateY(${angle}deg)` : `rotateX(${angle}deg)`,
+          transition: 'box-shadow 0.8s ease, border-color 0.8s ease',
         }}
       />
     );
@@ -86,9 +88,7 @@ export default function AuroraBackground({ theme, hidden = false }) {
         overflow: 'hidden',
       }}
     >
-      {/* 구체/애니메이션 요소 — 분석 페이지에서는 숨김 */}
       <div style={{ opacity: hidden ? 0 : 1, transition: 'opacity 0.6s ease' }}>
-      {/* 인라인 CSS 애니메이션 */}
       <style>{`
         @keyframes sphere-spin {
           from { transform: rotateY(0deg) rotateX(10deg); }
@@ -101,6 +101,10 @@ export default function AuroraBackground({ theme, hidden = false }) {
         @keyframes core-pulse {
           0%, 100% { opacity: ${coreOpacity}; transform: translate(-50%, -50%) scale(1); }
           50%       { opacity: ${coreOpacity * 0.6}; transform: translate(-50%, -50%) scale(1.12); }
+        }
+        @keyframes core-pulse-loading {
+          0%, 100% { opacity: ${coreOpacity}; transform: translate(-50%, -50%) scale(1); }
+          50%       { opacity: ${coreOpacity * 0.75}; transform: translate(-50%, -50%) scale(1.22); }
         }
       `}</style>
 
@@ -120,6 +124,7 @@ export default function AuroraBackground({ theme, hidden = false }) {
         backgroundImage: `radial-gradient(circle at 50% 50%, rgba(${primary}, ${isDark ? 0.12 : 0.08}) 0%, transparent 55%)`,
         filter: 'blur(120px)',
         transform: `translate3d(${x * (d / 2)}px, ${y * (d / 2)}px, 0)`,
+        transition: 'background-image 0.8s ease',
       }} />
 
       {/* Deep base */}
@@ -133,12 +138,14 @@ export default function AuroraBackground({ theme, hidden = false }) {
       <div style={{
         position: 'absolute',
         top: '50%', left: '50%',
-        width: 360, height: 360,
+        width: loading ? 480 : 360,
+        height: loading ? 480 : 360,
         borderRadius: '50%',
         backgroundImage: `radial-gradient(circle, rgba(${secondary}, ${coreOpacity}) 0%, transparent 70%)`,
-        filter: `blur(${CONFIG.coreBlur}px)`,
-        animation: 'core-pulse 25s ease-in-out infinite',
+        filter: `blur(${loading ? 200 : CONFIG.coreBlur}px)`,
+        animation: loading ? 'core-pulse-loading 3s ease-in-out infinite' : 'core-pulse 25s ease-in-out infinite',
         transform: 'translate(-50%, -50%)',
+        transition: 'width 0.8s ease, height 0.8s ease, filter 0.8s ease',
       }} />
 
       {/* Wireframe sphere */}
@@ -149,13 +156,16 @@ export default function AuroraBackground({ theme, hidden = false }) {
         marginLeft: -390, marginTop: -390,
         transformStyle: 'preserve-3d',
         perspective: 800,
-        transform: `translate3d(${x * d}px, ${y * d}px, 0)`,
+        transform: `translate3d(${x * d}px, ${y * d}px, 0) scale(${sphereScale})`,
+        transition: 'transform 0.9s cubic-bezier(0.34,1.2,0.64,1)',
       }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          transformStyle: 'preserve-3d',
-          animation: `sphere-spin ${CONFIG.sphereRotationDuration} linear infinite`,
-        }}>
+        <div
+          key={spinDuration}
+          style={{
+            position: 'absolute', inset: 0,
+            transformStyle: 'preserve-3d',
+            animation: `sphere-spin ${spinDuration} linear infinite`,
+          }}>
           {sphereRings}
         </div>
       </div>
@@ -173,6 +183,7 @@ export default function AuroraBackground({ theme, hidden = false }) {
         filter: 'blur(80px)',
         opacity: bloomOpacity,
         transform: `translate3d(${x * d}px, ${y * d}px, 0)`,
+        transition: 'opacity 0.8s ease',
       }} />
 
       {/* Vignette */}
@@ -182,7 +193,23 @@ export default function AuroraBackground({ theme, hidden = false }) {
           ? 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)'
           : 'radial-gradient(ellipse at center, transparent 40%, rgba(200,200,220,0.5) 100%)',
       }} />
-      </div>{/* end 구체/애니메이션 wrapper */}
+
+      {/* 로딩 상태 추가 외곽 링 */}
+      {loading && (
+        <div style={{
+          position: 'absolute',
+          top: '50%', left: '50%',
+          width: 860, height: 860,
+          marginLeft: -430, marginTop: -430,
+          borderRadius: '50%',
+          border: '1px solid rgba(120,200,255,0.25)',
+          boxShadow: '0 0 40px 8px rgba(120,200,255,0.12)',
+          animation: 'sphere-spin 5s linear infinite reverse',
+          transformStyle: 'preserve-3d',
+        }} />
+      )}
+
+      </div>
     </div>
   );
 }
