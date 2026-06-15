@@ -58,7 +58,6 @@ function StatChip({ label, value, color, sub }) {
       background: `radial-gradient(ellipse at top left, ${color || '#0A84FF'}10 0%, transparent 60%)`,
       borderTop: `1px solid ${color || '#0A84FF'}28`,
       border: `1px solid var(--border)`,
-      minWidth: 0, flex: 1,
     }}>
       <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
         {label}
@@ -146,7 +145,7 @@ export default function BlogAuditPanel({ result }) {
           padding: '20px 24px',
           borderTop: '1px solid rgba(10,132,255,0.22)',
           background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
-          flex: '0 0 340px',
+          flex: '1 1 0',
           minWidth: 0,
         }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
@@ -165,8 +164,8 @@ export default function BlogAuditPanel({ result }) {
           </div>
         </div>
 
-        {/* 핵심 지표 칩 — 4×2 그리드 */}
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: 10 }}>
+        {/* 핵심 지표 칩 — 세로 1열 */}
+        <div style={{ flex: '0 0 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <StatChip label="월 포스팅" value={stats.postsLast30} sub="최근 30일" color="#0A84FF" />
           <StatChip
             label="포스팅 주기"

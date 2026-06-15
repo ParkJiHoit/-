@@ -143,13 +143,41 @@ function ThemeToggle({ theme, onToggle }) {
 }
 
 /* ── Blog Audit Form ── */
+const AUDIT_HISTORY_KEY = 'keywordlab.auditHistory';
+const MAX_AUDIT_HISTORY = 6;
+
+function getAuditHistory() {
+  try { return JSON.parse(localStorage.getItem(AUDIT_HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
+
 function BlogAuditForm({ onSubmit, loading }) {
   const [url, setUrl] = useState('');
   const [focused, setFocused] = useState(false);
+  const [history, setHistory] = useState(() => getAuditHistory());
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (url.trim()) onSubmit(url.trim());
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    const updated = [trimmed, ...history.filter(u => u !== trimmed)].slice(0, MAX_AUDIT_HISTORY);
+    setHistory(updated);
+    localStorage.setItem(AUDIT_HISTORY_KEY, JSON.stringify(updated));
+    onSubmit(trimmed);
   };
+
+  const removeItem = (item, e) => {
+    e.stopPropagation();
+    const updated = history.filter(u => u !== item);
+    setHistory(updated);
+    localStorage.setItem(AUDIT_HISTORY_KEY, JSON.stringify(updated));
+  };
+
+  const clearAll = () => {
+    setHistory([]);
+    localStorage.removeItem(AUDIT_HISTORY_KEY);
+  };
+
   return (
     <div style={{ width: '100%' }}>
       <form
@@ -170,7 +198,6 @@ function BlogAuditForm({ onSubmit, loading }) {
           height: 64,
         }}
       >
-        {/* Platform badge */}
         <div style={{
           flexShrink: 0, display: 'flex', alignItems: 'center',
           paddingLeft: 22, paddingRight: 18,
@@ -218,6 +245,78 @@ function BlogAuditForm({ onSubmit, loading }) {
           }
         </button>
       </form>
+
+      {/* 최근 분석 블로그 */}
+      {history.length > 0 && (
+        <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+                최근 분석 블로그
+              </span>
+            </div>
+            <button
+              onClick={clearAll}
+              style={{
+                fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                letterSpacing: '0.04em', transition: 'color 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-tertiary)')}
+            >
+              전체 삭제
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center' }}>
+            {history.map((item) => (
+              <div
+                key={item}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 0,
+                  background: 'rgba(255,255,255,0.10)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 999, overflow: 'hidden',
+                  transition: 'border-color 0.15s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.28)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setUrl(item); onSubmit(item); }}
+                  disabled={loading}
+                  style={{
+                    padding: '7px 4px 7px 14px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 12, fontWeight: 500,
+                    color: 'var(--text-secondary)', fontFamily: 'inherit',
+                    letterSpacing: '-0.2px', transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                >
+                  {item.replace('https://blog.naver.com/', '')}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => removeItem(item, e)}
+                  style={{
+                    padding: '7px 10px 7px 6px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center',
+                    color: 'var(--text-tertiary)', transition: 'color 0.15s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-tertiary)')}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
