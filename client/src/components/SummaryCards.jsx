@@ -25,43 +25,60 @@ const CARDS = [
 
 export default function SummaryCards({ summary }) {
   return (
-    <section className="mac-stagger grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="mac-stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {CARDS.map(({ key, label, icon: Icon, color, sub }) => {
         const value = summary?.[key] ?? 0;
         const total = summary?.totalKeywords || 1;
         const pct = key !== 'totalKeywords' ? Math.round(value / total * 100) : null;
         return (
-          <article className="mac-card" style={{
-              padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10,
-              borderLeft: `3px solid ${color}`,
-            }} key={key}>
+          <article
+            key={key}
+            className="mac-card"
+            style={{
+              padding: '22px 22px 20px',
+              display: 'flex', flexDirection: 'column', gap: 14,
+              background: `radial-gradient(ellipse at top left, ${color}12 0%, transparent 60%)`,
+              borderTop: `1px solid ${color}30`,
+            }}
+          >
             {/* 헤더 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)' }}>
+              <span style={{
+                fontSize: 12, fontWeight: 600, letterSpacing: '0.07em',
+                textTransform: 'uppercase', color: 'var(--text-tertiary)',
+              }}>
                 {label}
               </span>
               <div style={{
-                width: 28, height: 28, borderRadius: 8,
-                background: color + '20', border: `1px solid ${color}40`,
+                width: 30, height: 30, borderRadius: 9,
+                background: color + '18', border: `1px solid ${color}35`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: `0 0 10px ${color}22`,
               }}>
-                <Icon style={{ width: 13, height: 13, color }} />
+                <Icon style={{ width: 14, height: 14, color }} />
               </div>
             </div>
 
             {/* 숫자 */}
-            <p style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1px', color, margin: 0, lineHeight: 1 }}>
+            <p style={{
+              fontSize: 36, fontWeight: 800, letterSpacing: '-1.5px',
+              color: 'var(--text-primary)', margin: 0, lineHeight: 1,
+            }}>
               {value}
             </p>
 
-            {/* 바 + 보조 */}
+            {/* 바 */}
             {pct !== null && (
-              <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                <div style={{ width: `${pct}%`, height: '100%', background: `linear-gradient(90deg, ${color}, ${color}aa)`, borderRadius: 2, transition: 'width 0.6s ease' }} />
+              <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${pct}%`, height: '100%',
+                  background: color,
+                  borderRadius: 2, transition: 'width 0.7s cubic-bezier(0.34,1.2,0.64,1)',
+                }} />
               </div>
             )}
-            <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text-secondary)' }}>
+
+            {/* 보조 텍스트 */}
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
               {sub(summary ?? {})}
             </p>
           </article>

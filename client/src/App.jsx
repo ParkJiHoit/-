@@ -209,6 +209,21 @@ function HeroSection({ tab, hasResults, children }) {
   );
 }
 
+/* ── Section label ── */
+function SectionLabel({ children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      <span style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
+        color: 'var(--accent)',
+      }}>
+        {children}
+      </span>
+      <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, rgba(10,132,255,0.25), transparent)' }} />
+    </div>
+  );
+}
+
 /* ── Quick toggle (dark/light aware) ── */
 function QuickToggle({ label, checked, onChange, title }) {
   return (
@@ -467,23 +482,29 @@ export default function App() {
         />
       )}
       <AuroraBackground theme={theme} hidden={hasResults} />
-      {/* 결과 페이지 grid 배경 */}
+      {/* 결과 페이지 배경 */}
       {hasResults && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-          backgroundImage: 'linear-gradient(to right, var(--grid-line) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
-          maskImage: 'radial-gradient(ellipse 100% 100% at 50% 0%, black 30%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 100% 100% at 50% 0%, black 30%, transparent 100%)',
-        }} />
-      )}
-      {/* 결과 페이지 상단 브랜드 컬러 시그니처 라인 */}
-      {hasResults && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, height: 2, zIndex: 2000, pointerEvents: 'none',
-          background: 'linear-gradient(90deg, transparent 0%, #0A84FF 30%, #34C1FF 60%, #0A84FF 80%, transparent 100%)',
-          opacity: 0.85,
-        }} />
+        <>
+          {/* dot grid */}
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+            backgroundImage: 'radial-gradient(circle, rgba(10,132,255,0.18) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+            maskImage: 'radial-gradient(ellipse 100% 70% at 50% 0%, black 0%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 100% 70% at 50% 0%, black 0%, transparent 100%)',
+          }} />
+          {/* 상단 haze */}
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, height: 320, zIndex: 0, pointerEvents: 'none',
+            background: 'radial-gradient(ellipse 80% 100% at 50% -10%, rgba(10,132,255,0.08) 0%, transparent 100%)',
+          }} />
+          {/* 브랜드 시그니처 라인 */}
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, height: 2, zIndex: 2000, pointerEvents: 'none',
+            background: 'linear-gradient(90deg, transparent 0%, #0A84FF 25%, #34C1FF 55%, #0A84FF 80%, transparent 100%)',
+            opacity: 0.9,
+          }} />
+        </>
       )}
 
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -556,66 +577,71 @@ export default function App() {
 
         {/* Keyword results */}
         {isKeywordTab && activeResult && !loading && (
-          <div className="mac-fade-in flex flex-col gap-5">
+          <div className="mac-fade-in flex flex-col" style={{ gap: 48 }}>
             {activeTab === 'analysis' && (
-              <KeywordInsightPanel
-                baseKeyword={activeResult.baseKeyword}
-                keywordRow={
-                  activeResult.keywords?.find(
-                    (r) => r.keyword?.toLowerCase().replace(/\s+/g, '') ===
-                           (activeResult.baseKeyword || '').toLowerCase().replace(/\s+/g, '')
-                  ) || activeResult.keywords?.[0]
-                }
-                insights={insights}
-                insightsLoading={insightsLoading}
-                insightsError={insightsError}
-                onViewDetail={handleViewDetail}
-                isLoggedIn={!!user}
-                onLoginPrompt={() => setLoginPrompt('keyword')}
-              />
+              <section>
+                <SectionLabel>키워드 인사이트</SectionLabel>
+                <KeywordInsightPanel
+                  baseKeyword={activeResult.baseKeyword}
+                  keywordRow={
+                    activeResult.keywords?.find(
+                      (r) => r.keyword?.toLowerCase().replace(/\s+/g, '') ===
+                             (activeResult.baseKeyword || '').toLowerCase().replace(/\s+/g, '')
+                    ) || activeResult.keywords?.[0]
+                  }
+                  insights={insights}
+                  insightsLoading={insightsLoading}
+                  insightsError={insightsError}
+                  onViewDetail={handleViewDetail}
+                  isLoggedIn={!!user}
+                  onLoginPrompt={() => setLoginPrompt('keyword')}
+                />
+              </section>
             )}
             {activeTab === 'analysis' && (
-              <SummaryCards summary={currentSummary} />
+              <section>
+                <SectionLabel>키워드 요약</SectionLabel>
+                <SummaryCards summary={currentSummary} />
+              </section>
             )}
 
-            <div className="mac-card overflow-hidden">
-              <div style={{
-                padding: '12px 16px 11px', borderBottom: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-                  키워드 클러스터링
-                </span>
-                <span style={{
-                  fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', padding: '2px 7px', borderRadius: 4,
-                  background: 'var(--bg-overlay)', color: 'var(--text-tertiary)', border: '1px solid var(--border)',
-                }}>연관 키워드</span>
-                <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
-                  {formatNumber(filteredRows.length)}개 키워드
-                </span>
+            <section>
+              <SectionLabel>키워드 클러스터링</SectionLabel>
+              <div className="mac-card overflow-hidden">
+                <div style={{
+                  padding: '13px 18px 12px', borderBottom: '1px solid var(--border)',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+                    연관 키워드
+                  </span>
+                  <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
+                    {formatNumber(filteredRows.length)}개
+                  </span>
+                </div>
+                <div style={{ padding: '12px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                  <KeywordFilters filters={filters} onChange={setFilters} />
+                  <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
+                  <QuickToggle label="낮은 연관도 제외" checked={filters.excludeLowRelevance}
+                    onChange={(v) => updateFilter('excludeLowRelevance', v)} title="연관도 낮음 키워드를 숨깁니다." />
+                  <QuickToggle label="과포화 제외" checked={filters.excludeSaturated}
+                    onChange={(v) => updateFilter('excludeSaturated', v)} title="과포화 주의 키워드를 숨깁니다." />
+                  <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
+                  <ColumnVisibilitySettings visibleColumns={visibleColumns} onChange={setVisibleColumns} onReset={resetVisibleColumns} />
+                  <div style={{ flex: 1, minWidth: 4 }} />
+                  <button className="mac-btn mac-btn-ghost mac-btn-sm" type="button" onClick={() => setFilters(defaultFilters)}>
+                    초기화
+                  </button>
+                  <button className="mac-btn mac-btn-sm" onClick={downloadKeywordExcel} disabled={!filteredRows.length}>
+                    <Download className="h-3.5 w-3.5" />
+                    엑셀 다운로드
+                  </button>
+                </div>
               </div>
-
-              <div style={{ padding: '10px 16px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-                <KeywordFilters filters={filters} onChange={setFilters} />
-                <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
-                <QuickToggle label="낮은 연관도 제외" checked={filters.excludeLowRelevance}
-                  onChange={(v) => updateFilter('excludeLowRelevance', v)} title="연관도 낮음 키워드를 숨깁니다." />
-                <QuickToggle label="과포화 제외" checked={filters.excludeSaturated}
-                  onChange={(v) => updateFilter('excludeSaturated', v)} title="과포화 주의 키워드를 숨깁니다." />
-                <div style={{ width: 1, height: 22, background: 'var(--border)', flexShrink: 0 }} />
-                <ColumnVisibilitySettings visibleColumns={visibleColumns} onChange={setVisibleColumns} onReset={resetVisibleColumns} />
-                <div style={{ flex: 1, minWidth: 4 }} />
-                <button className="mac-btn mac-btn-ghost mac-btn-sm" type="button" onClick={() => setFilters(defaultFilters)}>
-                  초기화
-                </button>
-                <button className="mac-btn mac-btn-sm" onClick={downloadKeywordExcel} disabled={!filteredRows.length}>
-                  <Download className="h-3.5 w-3.5" />
-                  엑셀 다운로드
-                </button>
+              <div style={{ marginTop: 12 }}>
+                <KeywordTable rows={filteredRows} sortConfig={sortConfig} onSort={handleSort} visibleColumns={visibleColumns} isLoggedIn={!!user} onLoginPrompt={() => setLoginPrompt('keyword')} />
               </div>
-            </div>
-
-            <KeywordTable rows={filteredRows} sortConfig={sortConfig} onSort={handleSort} visibleColumns={visibleColumns} isLoggedIn={!!user} onLoginPrompt={() => setLoginPrompt('keyword')} />
+            </section>
           </div>
         )}
 
