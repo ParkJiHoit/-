@@ -138,44 +138,50 @@ export default function BlogAuditPanel({ result }) {
         </div>
       )}
 
-      {/* 항목별 점수 바 */}
-      <div className="mac-card" style={{
-        padding: '20px 24px',
-        borderTop: '1px solid rgba(10,132,255,0.22)',
-        background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
-      }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
-          항목별 점수
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {Object.entries(score.breakdown).map(([key, val]) => (
-            <ScoreBar
-              key={key}
-              label={SCORE_LABELS[key] || key}
-              value={val}
-              max={SCORE_MAX[key] || 10}
-              color={SCORE_COLORS[key] || '#0A84FF'}
-            />
-          ))}
-        </div>
-      </div>
+      {/* 항목별 점수 + KPI 가로 배치 */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
 
-      {/* 핵심 지표 칩 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 10 }}>
-        <StatChip label="월 포스팅" value={stats.postsLast30} sub="최근 30일" color="#0A84FF" />
-        <StatChip label="분기 포스팅" value={stats.postsLast90} sub="최근 90일" color="#5E5CE6" />
-        <StatChip
-          label="포스팅 주기"
-          value={stats.avgIntervalDays != null ? `${stats.avgIntervalDays}일` : null}
-          sub="평균 간격"
-          color={stats.avgIntervalDays != null && stats.avgIntervalDays <= 7 ? '#30D158' : stats.avgIntervalDays <= 21 ? '#FF9F0A' : '#FF453A'}
-        />
-        <StatChip label="상위 노출률" value={`${stats.exposureRate}%`} sub={`${stats.checkedCount}개 확인`} color="#30D158" />
-        <StatChip label="일 방문자" value={stats.dailyVisitors != null ? stats.dailyVisitors.toLocaleString() : null} sub="오늘 방문자" color="#34C1FF" />
-        <StatChip label="누적 방문자" value={stats.totalVisitors != null ? stats.totalVisitors.toLocaleString() : null} sub="전체 누적" color="#0A84FF" />
-        <StatChip label="이웃 수" value={stats.neighborCount != null ? stats.neighborCount.toLocaleString() : null} sub="구독자" color="#BF5AF2" />
-        <StatChip label="광고 비중" value={`${stats.adRatio}%`} sub="협찬·제공 포함" color={stats.adRatio > 50 ? '#FF453A' : stats.adRatio > 25 ? '#FF9F0A' : '#30D158'} />
-        <StatChip label="블로그 연차" value={stats.blogAgeYears != null ? `${stats.blogAgeYears}년+` : null} sub="RSS 기준" color="#FF9F0A" />
+        {/* 항목별 점수 바 */}
+        <div className="mac-card" style={{
+          padding: '20px 24px',
+          borderTop: '1px solid rgba(10,132,255,0.22)',
+          background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
+          flex: '0 0 340px',
+          minWidth: 0,
+        }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
+            항목별 점수
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {Object.entries(score.breakdown).map(([key, val]) => (
+              <ScoreBar
+                key={key}
+                label={SCORE_LABELS[key] || key}
+                value={val}
+                max={SCORE_MAX[key] || 10}
+                color={SCORE_COLORS[key] || '#0A84FF'}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 핵심 지표 칩 — 4×2 그리드 */}
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: 10 }}>
+          <StatChip label="월 포스팅" value={stats.postsLast30} sub="최근 30일" color="#0A84FF" />
+          <StatChip
+            label="포스팅 주기"
+            value={stats.avgIntervalDays != null ? `${stats.avgIntervalDays}일` : null}
+            sub="평균 간격"
+            color={stats.avgIntervalDays != null && stats.avgIntervalDays <= 7 ? '#30D158' : stats.avgIntervalDays <= 21 ? '#FF9F0A' : '#FF453A'}
+          />
+          <StatChip label="상위 노출률" value={`${stats.exposureRate}%`} sub={`${stats.checkedCount}개 확인`} color="#30D158" />
+          <StatChip label="일 방문자" value={stats.dailyVisitors != null ? stats.dailyVisitors.toLocaleString() : null} sub="오늘 방문자" color="#34C1FF" />
+          <StatChip label="누적 방문자" value={stats.totalVisitors != null ? stats.totalVisitors.toLocaleString() : null} sub="전체 누적" color="#0A84FF" />
+          <StatChip label="이웃 수" value={stats.neighborCount != null ? stats.neighborCount.toLocaleString() : null} sub="구독자" color="#BF5AF2" />
+          <StatChip label="광고 비중" value={`${stats.adRatio}%`} sub="협찬·제공 포함" color={stats.adRatio > 50 ? '#FF453A' : stats.adRatio > 25 ? '#FF9F0A' : '#30D158'} />
+          <StatChip label="블로그 연차" value={stats.blogAgeYears != null ? `${stats.blogAgeYears}년+` : null} sub="RSS 기준" color="#FF9F0A" />
+        </div>
+
       </div>
 
       {/* 상위 노출 확인 포스트 */}
