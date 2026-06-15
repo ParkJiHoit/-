@@ -69,6 +69,7 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns,
               {activeColumns.map((col) => (
                 <th
                   key={col.key}
+                  className={sortConfig.key === col.key ? 'th-active' : ''}
                   style={{ textAlign: col.align === 'right' ? 'right' : 'left' }}
                 >
                   {col.sortable ? (

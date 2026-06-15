@@ -253,6 +253,12 @@ button, input, select, textarea { font: inherit; }
   z-index: 5;
   white-space: nowrap;
   border-bottom: 1px solid var(--border);
+  transition: color 0.15s;
+}
+
+.mac-table thead th.th-active {
+  color: var(--accent);
+  background: rgba(10,132,255,0.07);
 }
 
 .mac-table tbody tr {
@@ -269,6 +275,11 @@ button, input, select, textarea { font: inherit; }
   white-space: nowrap;
   color: var(--text-secondary);
   font-size: 13px;
+}
+
+.mac-table tbody td.td-active {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 

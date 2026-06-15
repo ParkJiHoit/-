@@ -87,7 +87,7 @@ function MiniSparkline({ data }) {
   const path = catmullRom(pts, 0.2);
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: W, height: H, flexShrink: 0 }}>
-      <path d={path} fill="none" stroke="rgba(120,120,128,0.5)" strokeWidth="1.5"
+      <path d={path} fill="none" stroke="rgba(10,132,255,0.55)" strokeWidth="1.5"
         strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
@@ -704,12 +704,17 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             }}>
               {/* 라벨 */}
               <p style={{
-                fontSize: 13, color: 'var(--text-primary)', margin: 0,
-                fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+                fontSize: 13, color: 'var(--text-secondary)', margin: 0,
+                fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
               }}>{label}</p>
 
-              {/* 값 */}
-              <p style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-1px', color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>{value}</p>
+              {/* 값 — 효율 점수는 점수대별 컬러 */}
+              <p style={{
+                fontSize: 26, fontWeight: 800, letterSpacing: '-1px', margin: 0, lineHeight: 1,
+                color: barColor && label === '효율 점수' ? barColor
+                  : label === '모바일 비중' ? 'var(--accent)'
+                  : 'var(--text-primary)',
+              }}>{value}</p>
 
               {/* PC·모바일 split bar */}
               {splitBar ? (

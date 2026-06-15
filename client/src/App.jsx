@@ -477,6 +477,14 @@ export default function App() {
           WebkitMaskImage: 'radial-gradient(ellipse 100% 100% at 50% 0%, black 30%, transparent 100%)',
         }} />
       )}
+      {/* 결과 페이지 상단 브랜드 컬러 시그니처 라인 */}
+      {hasResults && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, height: 2, zIndex: 2000, pointerEvents: 'none',
+          background: 'linear-gradient(90deg, transparent 0%, #0A84FF 30%, #34C1FF 60%, #0A84FF 80%, transparent 100%)',
+          opacity: 0.85,
+        }} />
+      )}
 
       <div style={{ position: 'relative', zIndex: 1 }}>
       <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} />

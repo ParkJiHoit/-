@@ -31,26 +31,34 @@ export default function SummaryCards({ summary }) {
         const total = summary?.totalKeywords || 1;
         const pct = key !== 'totalKeywords' ? Math.round(value / total * 100) : null;
         return (
-          <article className="mac-card" style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }} key={key}>
+          <article className="mac-card" style={{
+              padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10,
+              borderLeft: `3px solid ${color}`,
+            }} key={key}>
             {/* 헤더 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)' }}>
                 {label}
               </span>
-              <div style={{ width: 24, height: 24, borderRadius: 7, background: color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon style={{ width: 12, height: 12, color }} />
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: color + '20', border: `1px solid ${color}40`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: `0 0 10px ${color}22`,
+              }}>
+                <Icon style={{ width: 13, height: 13, color }} />
               </div>
             </div>
 
             {/* 숫자 */}
-            <p style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1px', color: 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
+            <p style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-1px', color, margin: 0, lineHeight: 1 }}>
               {value}
             </p>
 
             {/* 바 + 보조 */}
             {pct !== null && (
-              <div style={{ height: 2, borderRadius: 1, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 1, transition: 'width 0.6s ease' }} />
+              <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                <div style={{ width: `${pct}%`, height: '100%', background: `linear-gradient(90deg, ${color}, ${color}aa)`, borderRadius: 2, transition: 'width 0.6s ease' }} />
               </div>
             )}
             <p style={{ margin: 0, fontSize: 11.5, color: 'var(--text-secondary)' }}>
