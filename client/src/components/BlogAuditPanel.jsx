@@ -37,8 +37,8 @@ function ScoreBar({ label, value, max, color }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>
-        <span style={{ fontSize: 12, fontWeight: 700, color }}>{value}<span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 400 }}>/{max}</span></span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>
+        <span style={{ fontSize: 16, fontWeight: 800, color }}>{value}<span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 400 }}>/{max}</span></span>
       </div>
       <div style={{ height: 8, borderRadius: 4, background: 'var(--border)', overflow: 'hidden' }}>
         <div style={{
