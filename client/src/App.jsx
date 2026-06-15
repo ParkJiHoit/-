@@ -1,4 +1,4 @@
-﻿import { Download, Loader2, Moon, Sun } from 'lucide-react';
+﻿import { Download, Loader2, Moon, Sun, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { useAuth } from './AuthContext';
@@ -143,53 +143,87 @@ function ThemeToggle({ theme, onToggle }) {
 }
 
 /* ── Blog Audit Form ── */
-function BlogAuditForm({ onSubmit, loading, isMain }) {
+function BlogAuditForm({ onSubmit, loading }) {
   const [url, setUrl] = useState('');
+  const [focused, setFocused] = useState(false);
   const handleSubmit = (e) => {
     e.preventDefault();
     if (url.trim()) onSubmit(url.trim());
   };
   return (
-    <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 620, margin: '0 auto' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 0,
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--border)',
-        borderRadius: 14,
-        padding: '4px 4px 4px 18px',
-        boxShadow: '0 2px 20px rgba(0,0,0,0.08)',
-      }}>
+    <div style={{ width: '100%' }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          position: 'relative',
+          borderRadius: 999,
+          border: focused
+            ? '1.5px solid rgba(10,180,255,0.85)'
+            : '1.5px solid rgba(255,255,255,0.10)',
+          background: 'rgba(255,255,255,0.10)',
+          boxShadow: focused
+            ? '0 0 0 3px rgba(10,180,255,0.18), 0 0 32px rgba(10,180,255,0.22), 0 0 80px rgba(10,180,255,0.08)'
+            : '0 2px 20px rgba(0,0,0,0.4), 0 0 18px rgba(10,180,255,0.07), 0 0 48px rgba(10,180,255,0.04)',
+          transition: 'box-shadow 0.25s ease, border-color 0.25s ease',
+          display: 'flex',
+          alignItems: 'center',
+          height: 64,
+        }}
+      >
+        {/* Platform badge */}
+        <div style={{
+          flexShrink: 0, display: 'flex', alignItems: 'center',
+          paddingLeft: 22, paddingRight: 18,
+          borderRight: '1px solid rgba(255,255,255,0.10)',
+          color: '#06C755', fontWeight: 700, fontSize: 13,
+          letterSpacing: '-0.2px', whiteSpace: 'nowrap',
+          cursor: 'default', userSelect: 'none',
+        }}>
+          NAVER
+        </div>
         <input
           type="text"
           value={url}
           onChange={e => setUrl(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder="https://blog.naver.com/blogId"
+          disabled={loading}
           style={{
-            flex: 1, border: 'none', background: 'transparent', outline: 'none',
-            fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
-            fontFamily: 'inherit',
+            flex: 1, height: '100%',
+            background: 'transparent', border: 'none', outline: 'none',
+            paddingLeft: 18, paddingRight: 8,
+            fontSize: 17, fontWeight: 400,
+            color: 'var(--text-primary)', fontFamily: 'inherit',
           }}
         />
         <button
           type="submit"
           disabled={loading || !url.trim()}
-          className="mac-btn mac-btn-sm"
-          style={{ flexShrink: 0, borderRadius: 10, padding: '8px 18px' }}
+          style={{
+            flexShrink: 0, marginRight: 10,
+            width: 44, height: 44, borderRadius: 999, border: 'none',
+            background: focused ? 'var(--accent)' : 'var(--search-btn-bg)',
+            cursor: loading || !url.trim() ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.15s, color 0.15s',
+            color: focused ? '#fff' : 'var(--search-btn-icon)',
+          }}
+          onMouseEnter={(e) => { if (!focused) e.currentTarget.style.background = 'var(--search-btn-hover)'; }}
+          onMouseLeave={(e) => { if (!focused) e.currentTarget.style.background = 'var(--search-btn-bg)'; }}
         >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '분석하기'}
+          {loading
+            ? <Loader2 style={{ width: 18, height: 18 }} className="animate-spin" />
+            : <Search style={{ width: 18, height: 18 }} />
+          }
         </button>
-      </div>
-      {isMain && (
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center', marginTop: 10 }}>
-          네이버 블로그 URL을 입력하면 배포 적합성을 분석합니다
-        </p>
-      )}
-    </form>
+      </form>
+    </div>
   );
 }
 
 /* ── Hero / compact wrapper ── */
-function HeroSection({ tab, hasResults, children }) {
+function HeroSection({ tab, blogSubTab, hasResults, children }) {
   const maxW = tab === 'expansion' ? 1140 : 680;
   return (
     <div className="hero-transition" style={{
@@ -209,7 +243,8 @@ function HeroSection({ tab, hasResults, children }) {
             }}>
               {tab === 'analysis' && 'Keyword Analysis'}
               {tab === 'expansion' && 'Keyword Expansion'}
-              {tab === 'blog'     && 'Blog Structure Analysis'}
+              {tab === 'blog' && blogSubTab === 'structure' && 'Blog Structure Analysis'}
+              {tab === 'blog' && blogSubTab === 'audit'     && 'Blog Audit'}
             </p>
             <h1 style={{
               fontSize: 42, fontWeight: 800, letterSpacing: '-1.2px',
@@ -235,7 +270,7 @@ function HeroSection({ tab, hasResults, children }) {
                   }}>키워드가 있습니다</span>
                 </>
               )}
-              {tab === 'blog' && (
+              {tab === 'blog' && blogSubTab === 'structure' && (
                 <>
                   상위 블로그는 어떻게
                   <br />
@@ -245,11 +280,22 @@ function HeroSection({ tab, hasResults, children }) {
                   }}>구성되어 있을까요</span>
                 </>
               )}
+              {tab === 'blog' && blogSubTab === 'audit' && (
+                <>
+                  배포를 맡겨도 될
+                  <br />
+                  <span style={{
+                    background: 'linear-gradient(120deg, #0A84FF 0%, #BF5AF2 55%, #34C1FF 100%)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+                  }}>블로그인지 확인하세요</span>
+                </>
+              )}
             </h1>
             <p style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginTop: 10 }}>
               {tab === 'analysis' && '키워드를 분석하고, 가능성을 실험하는 공간'}
               {tab === 'expansion' && '시드 키워드로 숨겨진 틈새 키워드를 한 번에 찾아드립니다'}
-              {tab === 'blog'     && '상위 1~10위 블로그 구조를 분석하고 콘텐츠 전략을 세우세요'}
+              {tab === 'blog' && blogSubTab === 'structure' && '상위 1~10위 블로그 구조를 분석하고 콘텐츠 전략을 세우세요'}
+              {tab === 'blog' && blogSubTab === 'audit'     && '노출 가능성과 상위 노출 이력을 기반으로 블로그 적합성을 분석합니다'}
             </p>
           </div>
         )}
@@ -591,7 +637,7 @@ export default function App() {
       ) : (
       <>
 
-      <HeroSection tab={activeTab} hasResults={hasResults}>
+      <HeroSection tab={activeTab} blogSubTab={blogSubTab} hasResults={hasResults}>
         {activeTab === 'analysis' && (
           <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
             suggestions={analysis?.searchSuggestions || []}
@@ -603,24 +649,39 @@ export default function App() {
         {activeTab === 'blog' && (
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {/* 서브탭 스위처 */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 0, marginBottom: 4 }}>
-              {[{ id: 'structure', label: '블로그 구조 분석' }, { id: 'audit', label: '블로그 감사' }].map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => { setBlogSubTab(id); setError(''); setBlogAuditError(''); }}
-                  style={{
-                    padding: '8px 22px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                    fontSize: 13, fontWeight: blogSubTab === id ? 700 : 500,
-                    background: blogSubTab === id ? 'var(--accent)' : 'var(--bg-overlay)',
-                    color: blogSubTab === id ? '#fff' : 'var(--text-secondary)',
-                    borderRadius: id === 'structure' ? '8px 0 0 8px' : '0 8px 8px 0',
-                    border: `1px solid ${blogSubTab === id ? 'var(--accent)' : 'var(--border)'}`,
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
+              <div style={{
+                display: 'inline-flex',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.10)',
+                borderRadius: 999,
+                padding: 3,
+                gap: 2,
+              }}>
+                {[{ id: 'structure', label: '블로그 구조 분석' }, { id: 'audit', label: '블로그 감사' }].map(({ id, label }) => {
+                  const isActive = blogSubTab === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => { setBlogSubTab(id); setError(''); setBlogAuditError(''); }}
+                      style={{
+                        padding: '8px 20px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                        fontSize: 13, fontWeight: isActive ? 700 : 500,
+                        borderRadius: 999,
+                        background: isActive
+                          ? 'var(--accent)'
+                          : 'transparent',
+                        color: isActive ? '#fff' : 'rgba(255,255,255,0.45)',
+                        transition: 'background 0.2s, color 0.2s',
+                        letterSpacing: '-0.1px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             {/* 구조 분석 폼 */}
             {blogSubTab === 'structure' && (
@@ -628,7 +689,7 @@ export default function App() {
             )}
             {/* 감사 폼 */}
             {blogSubTab === 'audit' && (
-              <BlogAuditForm onSubmit={auditBlog} loading={blogAuditLoading} isMain={!hasResults} />
+              <BlogAuditForm onSubmit={auditBlog} loading={blogAuditLoading} />
             )}
           </div>
         )}
