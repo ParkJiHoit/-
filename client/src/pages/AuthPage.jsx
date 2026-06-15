@@ -73,7 +73,7 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
             </IconBtn>
             {/* 로고 — 좌우 중앙 절대 위치 */}
             <div style={{
-              position: 'absolute', left: '50%', top: '50%',
+              position: 'absolute', left: '50%', top: 'calc(50% + 6px)',
               transform: 'translate(-50%, -50%)',
               width: 140, height: 34, overflow: 'hidden',
               pointerEvents: 'none',
