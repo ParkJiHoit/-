@@ -1,12 +1,19 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+const UA_PC = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+const UA_MOBILE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 const HEADERS = {
-  'User-Agent': UA,
+  'User-Agent': UA_PC,
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
   'Accept-Language': 'ko-KR,ko;q=0.9',
   'Referer': 'https://www.naver.com',
+};
+const HEADERS_MOBILE = {
+  'User-Agent': UA_MOBILE,
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'ko-KR,ko;q=0.9',
+  'Referer': 'https://m.naver.com',
 };
 
 // ── URL 파싱 ──────────────────────────────────────────────────────────────────
@@ -18,50 +25,43 @@ function parseBlogUrl(url) {
   return { blogId: m[1] };
 }
 
-// ── 블로그 메인 페이지 크롤링 ─────────────────────────────────────────────────
+// ── 블로그 메인 페이지 크롤링 (모바일 UA — 이웃/방문자 수 노출됨) ─────────────
 async function fetchBlogMain(blogId) {
-  const url = `https://blog.naver.com/${blogId}`;
-  const { data } = await axios.get(url, { headers: HEADERS, timeout: 10000 });
+  const url = `https://m.blog.naver.com/${blogId}`;
+  const { data } = await axios.get(url, { headers: HEADERS_MOBILE, timeout: 10000 });
   const $ = cheerio.load(data);
 
-  // 이웃 수
+  // 이웃 수: <span>139명의 이웃</span>
   let neighborCount = null;
-  $('*').each((_, el) => {
-    const text = $(el).text();
-    const m = text.match(/이웃\s*([\d,]+)/);
-    if (m && !neighborCount) {
-      neighborCount = parseInt(m[1].replace(/,/g, ''));
-    }
+  $('span').each((_, el) => {
+    const text = $(el).text().trim();
+    const m = text.match(/^([\d,]+)명의?\s*이웃/);
+    if (m && !neighborCount) neighborCount = parseInt(m[1].replace(/,/g, ''));
   });
+  // 폴백: 텍스트 전체에서 패턴 탐색
+  if (!neighborCount) {
+    const bodyText = $.root().text();
+    const m = bodyText.match(/([\d,]+)명의?\s*이웃/);
+    if (m) neighborCount = parseInt(m[1].replace(/,/g, ''));
+  }
 
-  // 방문자 수 (공개된 경우 사이드바에 표시)
+  // 방문자 수: class="count__jEvPR" → "오늘 569  전체 155,518"
   let dailyVisitors = null;
-  $('*').each((_, el) => {
-    const text = $(el).text();
-    const m = text.match(/오늘\s*([\d,]+)/);
-    if (m && !dailyVisitors) {
-      dailyVisitors = parseInt(m[1].replace(/,/g, ''));
-    }
+  let totalVisitors = null;
+  $('[class*="count"]').each((_, el) => {
+    const text = $(el).text().trim();
+    const mToday = text.match(/오늘\s*([\d,]+)/);
+    const mTotal = text.match(/전체\s*([\d,]+)/);
+    if (mToday && !dailyVisitors) dailyVisitors = parseInt(mToday[1].replace(/,/g, ''));
+    if (mTotal && !totalVisitors) totalVisitors = parseInt(mTotal[1].replace(/,/g, ''));
   });
 
-  // 블로그 별명 / 제목
+  // 블로그 이름 (og:title 또는 title)
   const blogName = $('meta[property="og:title"]').attr('content') ||
-    $('.blog_title').text().trim() ||
     $('title').text().split('::')[0].trim() ||
     blogId;
 
-  // 개설일 (meta 또는 사이드바)
-  let since = null;
-  $('*').each((_, el) => {
-    const text = $(el).text().trim();
-    const m = text.match(/(\d{4})[.\-](\d{1,2})[.\-](\d{1,2})/);
-    if (m && !since) {
-      const y = parseInt(m[1]);
-      if (y >= 2003 && y <= new Date().getFullYear()) since = `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-    }
-  });
-
-  return { blogName, neighborCount, dailyVisitors, since };
+  return { blogName, neighborCount, dailyVisitors, totalVisitors };
 }
 
 // ── 최근 포스트 목록 크롤링 (PostListByCategory API) ─────────────────────────
@@ -344,6 +344,7 @@ export async function auditBlog(url) {
       isRegular:       posting.isRegular,
       neighborCount:   mainInfo.neighborCount,
       dailyVisitors:   mainInfo.dailyVisitors,
+      totalVisitors:   mainInfo.totalVisitors,
       adRatio,
       blogAgeYears,
       exposureRate:    exposure.exposureRate,

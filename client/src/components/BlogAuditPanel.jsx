@@ -171,8 +171,9 @@ export default function BlogAuditPanel({ result }) {
           color={stats.avgIntervalDays != null && stats.avgIntervalDays <= 7 ? '#30D158' : stats.avgIntervalDays <= 21 ? '#FF9F0A' : '#FF453A'}
         />
         <StatChip label="상위 노출률" value={`${stats.exposureRate}%`} sub={`${stats.checkedCount}개 확인`} color="#30D158" />
-        <StatChip label="일 방문자" value={stats.dailyVisitors} sub="공개 시 표시" color="#34C1FF" />
-        <StatChip label="이웃 수" value={stats.neighborCount} sub="구독자" color="#BF5AF2" />
+        <StatChip label="일 방문자" value={stats.dailyVisitors != null ? stats.dailyVisitors.toLocaleString() : null} sub="오늘 방문자" color="#34C1FF" />
+        <StatChip label="누적 방문자" value={stats.totalVisitors != null ? stats.totalVisitors.toLocaleString() : null} sub="전체 누적" color="#0A84FF" />
+        <StatChip label="이웃 수" value={stats.neighborCount != null ? stats.neighborCount.toLocaleString() : null} sub="구독자" color="#BF5AF2" />
         <StatChip label="광고 비중" value={`${stats.adRatio}%`} sub="협찬·제공 포함" color={stats.adRatio > 50 ? '#FF453A' : stats.adRatio > 25 ? '#FF9F0A' : '#30D158'} />
         <StatChip label="블로그 연차" value={stats.blogAgeYears != null ? `${stats.blogAgeYears}년+` : null} sub="RSS 기준" color="#FF9F0A" />
       </div>
