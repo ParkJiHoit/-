@@ -14,10 +14,20 @@ const lerp = (a, b, t) => a + (b - a) * t;
 
 export default function AuroraBackground({ theme, hidden = false, loading = false }) {
   const [smoothPos, setSmoothPos] = useState({ x: 0, y: 0 });
+  const [activeLoading, setActiveLoading] = useState(false);
   const targetPos = useRef({ x: 0, y: 0 });
   const currentPos = useRef({ x: 0, y: 0 });
   const rafRef = useRef();
   const isDark = theme === 'dark';
+
+  useEffect(() => {
+    if (loading) {
+      const t = requestAnimationFrame(() => setActiveLoading(true));
+      return () => cancelAnimationFrame(t);
+    } else {
+      setActiveLoading(false);
+    }
+  }, [loading]);
 
   const animate = useCallback(() => {
     currentPos.current.x = lerp(currentPos.current.x, targetPos.current.x, CONFIG.lerpFactor);
@@ -47,16 +57,16 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
   const { x, y } = smoothPos;
   const d = CONFIG.parallaxDepth;
 
-  const primary   = loading ? '30, 160, 255'  : '10, 132, 255';
-  const secondary = loading ? '60, 170, 255'  : '64, 156, 255';
-  const tertiary  = loading ? '20, 150, 255'  : '0, 180, 255';
+  const primary   = activeLoading ? '30, 160, 255'  : '10, 132, 255';
+  const secondary = activeLoading ? '60, 170, 255'  : '64, 156, 255';
+  const tertiary  = activeLoading ? '20, 150, 255'  : '0, 180, 255';
   const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(139,92,246,0.07)';
-  const wireOpacity = loading ? (isDark ? 0.65 : 0.55) : (isDark ? CONFIG.wireframeOpacity : 0.4);
+  const wireOpacity = activeLoading ? (isDark ? 0.65 : 0.55) : (isDark ? CONFIG.wireframeOpacity : 0.4);
   const wireColor = `rgba(${primary}, ${wireOpacity})`;
-  const coreOpacity = loading ? (isDark ? 0.42 : 0.38) : (isDark ? 0.4 : 0.3);
-  const bloomOpacity = loading ? (isDark ? 0.88 : 0.72) : (isDark ? 0.85 : 0.6);
-  const sphereScale = loading ? 1.10 : 1.0;
-  const spinDuration = loading ? '40s' : CONFIG.sphereRotationDuration;
+  const coreOpacity = activeLoading ? (isDark ? 0.42 : 0.38) : (isDark ? 0.4 : 0.3);
+  const bloomOpacity = activeLoading ? (isDark ? 0.88 : 0.72) : (isDark ? 0.85 : 0.6);
+  const sphereScale = activeLoading ? 1.10 : 1.0;
+  const spinDuration = activeLoading ? '40s' : CONFIG.sphereRotationDuration;
 
   const sphereRings = Array.from({ length: CONFIG.sphereDensity }, (_, i) => {
     const step = 90 / (CONFIG.sphereDensity / 2);
@@ -69,7 +79,7 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
           inset: 0,
           borderRadius: '50%',
           border: `1px solid ${wireColor}`,
-          boxShadow: `0 0 ${loading ? 14 : isDark ? 8 : 5}px ${loading ? 3 : 1}px rgba(${primary}, ${loading ? 0.7 : isDark ? 0.4 : 0.25})`,
+          boxShadow: `0 0 ${activeLoading ? 14 : isDark ? 8 : 5}px ${activeLoading ? 3 : 1}px rgba(${primary}, ${activeLoading ? 0.7 : isDark ? 0.4 : 0.25})`,
           transform: i % 2 === 0 ? `rotateY(${angle}deg)` : `rotateX(${angle}deg)`,
           transition: 'box-shadow 0.8s ease, border-color 0.8s ease',
         }}
@@ -138,12 +148,12 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
       <div style={{
         position: 'absolute',
         top: '50%', left: '50%',
-        width: loading ? 480 : 360,
-        height: loading ? 480 : 360,
+        width: activeLoading ? 480 : 360,
+        height: activeLoading ? 480 : 360,
         borderRadius: '50%',
         backgroundImage: `radial-gradient(circle, rgba(${secondary}, ${coreOpacity}) 0%, transparent 70%)`,
-        filter: `blur(${loading ? 200 : CONFIG.coreBlur}px)`,
-        animation: loading ? 'core-pulse-loading 3s ease-in-out infinite' : 'core-pulse 25s ease-in-out infinite',
+        filter: `blur(${activeLoading ? 200 : CONFIG.coreBlur}px)`,
+        animation: activeLoading ? 'core-pulse-loading 3s ease-in-out infinite' : 'core-pulse 25s ease-in-out infinite',
         transform: 'translate(-50%, -50%)',
         transition: 'width 0.8s ease, height 0.8s ease, filter 0.8s ease',
       }} />
@@ -195,7 +205,7 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
       }} />
 
       {/* 로딩 상태 추가 외곽 링 */}
-      {loading && (
+      {activeLoading && (
         <div style={{
           position: 'absolute',
           top: '50%', left: '50%',
