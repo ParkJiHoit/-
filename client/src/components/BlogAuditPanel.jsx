@@ -147,11 +147,12 @@ export default function BlogAuditPanel({ result }) {
           background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
           flex: '1 1 0',
           minWidth: 0,
+          display: 'flex', flexDirection: 'column',
         }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
             항목별 점수
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
             {Object.entries(score.breakdown).map(([key, val]) => (
               <ScoreBar
                 key={key}
