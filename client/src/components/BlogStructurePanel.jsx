@@ -154,10 +154,10 @@ function InsightCard({ insight }) {
       border: `1px solid ${c.border}`,
       borderRadius: 10,
     }}>
-      <p style={{ fontSize: 13, fontWeight: 700, color: c.title, margin: 0, marginBottom: 4 }}>
-        {insight.icon} {insight.title}
+      <p style={{ fontSize: 15, fontWeight: 700, color: c.title, margin: 0, marginBottom: 6 }}>
+        {insight.title}
       </p>
-      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.65 }}>
         {insight.body}
       </p>
     </div>
