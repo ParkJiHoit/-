@@ -652,8 +652,8 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
               <div style={{
                 display: 'inline-flex',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.10)',
+                background: 'var(--bg-overlay)',
+                border: '1px solid var(--border)',
                 borderRadius: 999,
                 padding: 3,
                 gap: 2,
@@ -668,10 +668,8 @@ export default function App() {
                         padding: '8px 20px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                         fontSize: 13, fontWeight: isActive ? 700 : 500,
                         borderRadius: 999,
-                        background: isActive
-                          ? 'var(--accent)'
-                          : 'transparent',
-                        color: isActive ? '#fff' : 'rgba(255,255,255,0.45)',
+                        background: isActive ? 'var(--accent)' : 'transparent',
+                        color: isActive ? '#fff' : 'var(--text-secondary)',
                         transition: 'background 0.2s, color 0.2s',
                         letterSpacing: '-0.1px',
                         whiteSpace: 'nowrap',
