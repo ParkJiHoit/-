@@ -59,23 +59,23 @@ body {
   min-height: 100vh;
   background: var(--bg-base);
   color: var(--text-primary);
-  /* UI/본문 기본: Outfit */
-  font-family: 'Outfit', -apple-system, 'Helvetica Neue', sans-serif;
+  /* UI/본문 기본: Inter */
+  font-family: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 13px;
   line-height: 1.5;
 }
 
-/* 헤드라인 — Outfit */
+/* 헤드라인 — Sora */
 h1, h2, h3,
 .font-headline {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Sora', 'Inter', sans-serif;
 }
 
-/* 숫자/KPI/점수/코드 — DM Mono */
+/* 숫자/KPI/점수 — Space Grotesk */
 .font-numeric {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
 }
 
 button, input, select, textarea { font: inherit; }
