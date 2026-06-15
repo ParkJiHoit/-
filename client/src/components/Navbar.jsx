@@ -153,6 +153,8 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
           fontSize: 13, fontWeight: 800, letterSpacing: '0.04em',
           fontFamily: "'Pretendard Variable', 'Pretendard', sans-serif",
           color: 'var(--text-primary)',
+          lineHeight: '1',
+          paddingTop: 1,
         }}>
           RANKLET
         </span>

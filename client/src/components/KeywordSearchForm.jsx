@@ -164,6 +164,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
                   borderRadius: 999,
                   overflow: 'hidden',
                   transition: 'border-color 0.15s',
+                  lineHeight: 1,
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.28)')}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
@@ -178,6 +179,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
                     fontSize: 13, fontWeight: 500,
                     color: 'var(--text-secondary)',
                     fontFamily: 'inherit', letterSpacing: '-0.2px',
+                    lineHeight: 1,
                     transition: 'color 0.15s',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
@@ -192,6 +194,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
                     padding: '7px 10px 7px 6px',
                     background: 'none', border: 'none', cursor: 'pointer',
                     display: 'flex', alignItems: 'center',
+                    lineHeight: 1,
                     color: 'var(--text-tertiary)',
                     transition: 'color 0.15s',
                   }}
