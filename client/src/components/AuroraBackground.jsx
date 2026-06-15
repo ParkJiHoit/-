@@ -47,16 +47,16 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
   const { x, y } = smoothPos;
   const d = CONFIG.parallaxDepth;
 
-  const primary   = loading ? '120, 200, 255' : '10, 132, 255';
-  const secondary = loading ? '180, 220, 255' : '64, 156, 255';
-  const tertiary  = loading ? '80, 210, 255'  : '0, 180, 255';
+  const primary   = loading ? '30, 160, 255'  : '10, 132, 255';
+  const secondary = loading ? '60, 170, 255'  : '64, 156, 255';
+  const tertiary  = loading ? '20, 150, 255'  : '0, 180, 255';
   const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(139,92,246,0.07)';
-  const wireOpacity = loading ? 0.85 : (isDark ? CONFIG.wireframeOpacity : 0.4);
+  const wireOpacity = loading ? (isDark ? 0.65 : 0.55) : (isDark ? CONFIG.wireframeOpacity : 0.4);
   const wireColor = `rgba(${primary}, ${wireOpacity})`;
-  const coreOpacity = loading ? 0.65 : (isDark ? 0.4 : 0.3);
-  const bloomOpacity = loading ? 1.0 : (isDark ? 0.85 : 0.6);
-  const sphereScale = loading ? 1.18 : 1.0;
-  const spinDuration = loading ? CONFIG.sphereRotationLoadingDuration : CONFIG.sphereRotationDuration;
+  const coreOpacity = loading ? (isDark ? 0.42 : 0.38) : (isDark ? 0.4 : 0.3);
+  const bloomOpacity = loading ? (isDark ? 0.88 : 0.72) : (isDark ? 0.85 : 0.6);
+  const sphereScale = loading ? 1.10 : 1.0;
+  const spinDuration = loading ? '40s' : CONFIG.sphereRotationDuration;
 
   const sphereRings = Array.from({ length: CONFIG.sphereDensity }, (_, i) => {
     const step = 90 / (CONFIG.sphereDensity / 2);
@@ -157,7 +157,7 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
         transformStyle: 'preserve-3d',
         perspective: 800,
         transform: `translate3d(${x * d}px, ${y * d}px, 0) scale(${sphereScale})`,
-        transition: 'transform 0.9s cubic-bezier(0.34,1.2,0.64,1)',
+        transition: 'transform 2.4s cubic-bezier(0.25,0.46,0.45,0.94)',
       }}>
         <div
           key={spinDuration}
@@ -202,9 +202,9 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
           width: 860, height: 860,
           marginLeft: -430, marginTop: -430,
           borderRadius: '50%',
-          border: '1px solid rgba(120,200,255,0.25)',
-          boxShadow: '0 0 40px 8px rgba(120,200,255,0.12)',
-          animation: 'sphere-spin 5s linear infinite reverse',
+          border: `1px solid rgba(${primary}, 0.18)`,
+          boxShadow: `0 0 24px 4px rgba(${primary}, 0.07)`,
+          animation: 'sphere-spin 60s linear infinite reverse',
           transformStyle: 'preserve-3d',
         }} />
       )}
