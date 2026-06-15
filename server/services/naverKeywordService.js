@@ -503,7 +503,7 @@ export async function analyzeKeyword(baseKeyword) {
       : buildSearchSuggestions(keywords, baseKeyword);
 
     // SERP 키워드 테이블 — 실제 SERP 신호 기반, 없으면 API 결과에서 base 시작 키워드 폴백
-    const serpKeywords = extractSerpKeywords(normalizedRows, serpSignals, baseKeyword);
+    const serpKeywords = extractSerpKeywords(allNormalized, serpSignals, baseKeyword);
 
     return {
       baseKeyword,
