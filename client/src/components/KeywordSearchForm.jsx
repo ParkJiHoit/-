@@ -4,7 +4,12 @@ import { useState } from 'react';
 const MAX_HISTORY = 8;
 
 function getHistory(key) {
-  try { return JSON.parse(localStorage.getItem(key) || '[]'); }
+  try {
+    const raw = JSON.parse(localStorage.getItem(key) || '[]');
+    const filtered = raw.filter(k => !k.startsWith('http'));
+    if (filtered.length !== raw.length) localStorage.setItem(key, JSON.stringify(filtered));
+    return filtered;
+  }
   catch { return []; }
 }
 

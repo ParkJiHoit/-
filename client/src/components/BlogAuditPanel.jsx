@@ -40,9 +40,9 @@ function ScoreBar({ label, value, max, color }) {
         <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>
         <span style={{ fontSize: 12, fontWeight: 700, color }}>{value}<span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 400 }}>/{max}</span></span>
       </div>
-      <div style={{ height: 5, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
+      <div style={{ height: 8, borderRadius: 4, background: 'var(--border)', overflow: 'hidden' }}>
         <div style={{
-          width: `${pct}%`, height: '100%', borderRadius: 3, background: color,
+          width: `${pct}%`, height: '100%', borderRadius: 4, background: color,
           transition: 'width 0.7s cubic-bezier(0.34,1.2,0.64,1)',
         }} />
       </div>
@@ -145,7 +145,7 @@ export default function BlogAuditPanel({ result }) {
           padding: '20px 24px',
           borderTop: '1px solid rgba(10,132,255,0.22)',
           background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
-          flex: '1 1 0',
+          flex: '0 0 380px',
           minWidth: 0,
         }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
@@ -165,7 +165,7 @@ export default function BlogAuditPanel({ result }) {
         </div>
 
         {/* 핵심 지표 칩 — 2열 4행 */}
-        <div style={{ flex: '0 0 260px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'repeat(4, 1fr)', gap: 8 }}>
+        <div style={{ flex: '1 1 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'repeat(4, 1fr)', gap: 8 }}>
           <StatChip label="월 포스팅" value={stats.postsLast30} sub="최근 30일" color="#0A84FF" />
           <StatChip
             label="포스팅 주기"
