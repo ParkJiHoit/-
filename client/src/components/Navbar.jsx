@@ -151,7 +151,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         </div>
         <span style={{
           fontSize: 13, fontWeight: 800, letterSpacing: '0.04em',
-          fontFamily: "'Pretendard', sans-serif",
+          fontFamily: "'Outfit', sans-serif",
           color: 'var(--text-primary)',
         }}>
           RANKLET

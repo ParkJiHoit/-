@@ -62,7 +62,7 @@ function StatChip({ label, value, color, sub }) {
       <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
         {label}
       </span>
-      <span style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif", color: value === null || value === undefined ? 'var(--text-tertiary)' : (color || 'var(--text-primary)'), letterSpacing: '-0.5px', lineHeight: 1 }}>
+      <span style={{ fontSize: 22, fontWeight: 800, fontFamily: "'DM Mono', sans-serif", color: value === null || value === undefined ? 'var(--text-tertiary)' : (color || 'var(--text-primary)'), letterSpacing: '-0.5px', lineHeight: 1 }}>
         {value === null || value === undefined ? '비공개' : value}
       </span>
       {sub && <span style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 1 }}>{sub}</span>}
@@ -91,7 +91,7 @@ export default function BlogAuditPanel({ result }) {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           background: gc.bg, border: `2px solid ${gc.border}`,
         }}>
-          <span style={{ fontSize: 36, fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", color: gc.color, lineHeight: 1 }}>{score.grade}</span>
+          <span style={{ fontSize: 36, fontWeight: 900, fontFamily: "'DM Mono', sans-serif", color: gc.color, lineHeight: 1 }}>{score.grade}</span>
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: gc.color, opacity: 0.8, marginTop: 2 }}>{gc.label}</span>
         </div>
 
@@ -112,7 +112,7 @@ export default function BlogAuditPanel({ result }) {
 
         {/* 종합 점수 */}
         <div style={{ textAlign: 'center', flexShrink: 0 }}>
-          <p style={{ fontSize: 52, fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", color: gc.color, margin: 0, lineHeight: 1, letterSpacing: '-2px' }}>
+          <p style={{ fontSize: 52, fontWeight: 900, fontFamily: "'DM Mono', sans-serif", color: gc.color, margin: 0, lineHeight: 1, letterSpacing: '-2px' }}>
             {score.total}
           </p>
           <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: '4px 0 0', fontWeight: 600, letterSpacing: '0.04em' }}>
