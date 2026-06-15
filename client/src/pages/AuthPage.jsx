@@ -268,7 +268,6 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
   const { signUpWithEmail } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [error, setError] = useState('');
@@ -280,7 +279,7 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
     setError('');
     if (password !== passwordConfirm) { setError('패스워드가 일치하지 않습니다.'); return; }
     setLoading(true);
-    const { error } = await signUpWithEmail(email, password, name, phone);
+    const { error } = await signUpWithEmail(email, password, name, '');
     setLoading(false);
     if (error) setError(getKoreanError(error.message));
     else setDone(true);
@@ -329,10 +328,6 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
         <FormField label="이메일" isDark={isDark}>
           <AuthInput type="email" value={email} onChange={e => setEmail(e.target.value)}
             placeholder="name@example.com" autoComplete="email" required isDark={isDark} />
-        </FormField>
-        <FormField label="연락처" isDark={isDark}>
-          <AuthInput type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-            placeholder="010-0000-0000" autoComplete="tel" isDark={isDark} />
         </FormField>
         <FormField label="패스워드" isDark={isDark}>
           <AuthInput type="password" value={password} onChange={e => setPassword(e.target.value)}
