@@ -106,14 +106,6 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
           0%, 100% { opacity: ${coreOpacity}; transform: translate(-50%, -50%) scale(1); }
           50%       { opacity: ${coreOpacity * 0.75}; transform: translate(-50%, -50%) scale(1.22); }
         }
-        @keyframes sphere-heartbeat {
-          0%   { transform: translate3d(0,0,0) scale(1); }
-          12%  { transform: translate3d(0,0,0) scale(1.10); }
-          24%  { transform: translate3d(0,0,0) scale(1.04); }
-          36%  { transform: translate3d(0,0,0) scale(1.08); }
-          52%  { transform: translate3d(0,0,0) scale(1.05); }
-          100% { transform: translate3d(0,0,0) scale(1.05); }
-        }
       `}</style>
 
       {/* Grid */}
@@ -164,8 +156,8 @@ export default function AuroraBackground({ theme, hidden = false, loading = fals
         marginLeft: -390, marginTop: -390,
         transformStyle: 'preserve-3d',
         perspective: 800,
-        transform: `translate3d(${x * d}px, ${y * d}px, 0)`,
-        animation: loading ? 'sphere-heartbeat 1.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards' : 'none',
+        transform: `translate3d(${x * d}px, ${y * d}px, 0) scale(${sphereScale})`,
+        transition: 'transform 2.4s cubic-bezier(0.25,0.46,0.45,0.94)',
       }}>
         <div
           key={spinDuration}
