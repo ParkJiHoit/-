@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const CONFIG = {
-  primaryColor: '139, 92, 246',
-  secondaryColor: '59, 130, 246',
+  primaryColor: '10, 132, 255',
+  secondaryColor: '64, 156, 255',
   sphereRotationDuration: '240s',
   wireframeOpacity: 0.55,
   coreBlur: 180,
@@ -48,10 +48,10 @@ export default function AuroraBackground({ theme, hidden = false }) {
   const { x, y } = smoothPos;
   const d = CONFIG.parallaxDepth;
 
-  // 라이트/다크 동일 색상
-  const primary   = '139, 92, 246';
-  const secondary = '59, 130, 246';
-  const tertiary  = '236, 72, 153';
+  // 브랜드 컬러 #0A84FF 기반
+  const primary   = '10, 132, 255';
+  const secondary = '64, 156, 255';
+  const tertiary  = '0, 180, 255';
   const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(139,92,246,0.07)';
   const wireColor = `rgba(${primary}, ${isDark ? CONFIG.wireframeOpacity : 0.4})`;
   const coreOpacity = isDark ? 0.4 : 0.3;
