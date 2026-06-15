@@ -219,7 +219,7 @@ function buildSearchSuggestions(keywords, baseKeyword) {
 
   return keywords
     .filter((row) => normalizeText(row.keyword) !== normalizedBase)
-    .filter((row) => row.relevanceScore >= 55)
+    .filter((row) => row.relevanceScore >= 65)
     .sort((a, b) => {
       if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
       return b.efficiencyScore - a.efficiencyScore;
@@ -373,11 +373,11 @@ async function deriveAnalysisHints(keyword) {
   const clean = sanitizeNaverHintKeyword(keyword);
   if (!clean) return { hints: [], serpSignals: [] };
 
-  const MAX_HINTS = 8;
+  // 자동완성 + SERP 연관검색어만 사용 — 질 중심
+  const MAX_HINTS = 4;
   const seen = new Set([clean]);
   const hints = [clean];
 
-  // 1순위: 자동완성 + SERP 연관검색어 병렬
   const [acResult, relatedResult] = await Promise.allSettled([
     fetchNaverAutoComplete(keyword),
     fetchNaverRelatedSearches(keyword),
@@ -387,7 +387,7 @@ async function deriveAnalysisHints(keyword) {
   const relatedSearches = relatedResult.status === 'fulfilled' ? relatedResult.value : [];
   const serpSignals = [...acSuggestions, ...relatedSearches];
 
-  // 자동완성 우선, 연관검색어 후순위로 인터리빙
+  // 자동완성 우선, 연관검색어 후순위로 인터리빙 — 연관성 높은 것만
   const maxLen = Math.max(acSuggestions.length, relatedSearches.length);
   for (let i = 0; i < maxLen; i++) {
     if (hints.length >= MAX_HINTS) break;
@@ -400,27 +400,6 @@ async function deriveAnalysisHints(keyword) {
           hints.push(src[i]);
         }
       }
-    }
-  }
-
-  // 2순위 폴백: SERP 시그널 부족 시 접두어 분리
-  if (hints.length < 4 && clean.length >= 4) {
-    for (const ratio of [0.6, 0.45]) {
-      if (hints.length >= MAX_HINTS) break;
-      const prefixLen = Math.round(clean.length * ratio);
-      if (prefixLen >= 2 && prefixLen < clean.length) {
-        const prefix = clean.slice(0, prefixLen);
-        if (!seen.has(prefix)) { seen.add(prefix); hints.push(prefix); }
-      }
-    }
-  }
-
-  // 3순위 폴백: 여전히 부족하면 인텐트 접미어
-  if (hints.length < 3) {
-    for (const suffix of INTENT_SUFFIXES.slice(0, 3)) {
-      if (hints.length >= MAX_HINTS) break;
-      const combined = clean + suffix;
-      if (!seen.has(combined)) { seen.add(combined); hints.push(combined); }
     }
   }
 
@@ -500,12 +479,23 @@ export async function analyzeKeyword(baseKeyword) {
       .filter((r) => r.status === 'fulfilled')
       .map((r) => r.value);
 
-    const normalizedRows = dedupeKeywords(
+    const allNormalized = dedupeKeywords(
       responses.flatMap(({ hint, rows }) =>
         rows.map((row) => normalizeKeywordRow(row, baseKeyword, hint))
       )
     );
-    const keywords = sortKeywordRows(baseKeyword, normalizedRows);
+
+    // 퀄리티 필터: 연관도 낮음 제거, 제외 검토 제거
+    const qualityRows = allNormalized.filter(row => {
+      const normKw = normalizeText(row.keyword);
+      const normBase = normalizeText(baseKeyword);
+      if (normKw === normBase) return true; // 베이스 키워드는 항상 포함
+      if (row.relevanceScore < 45) return false;
+      if (row.recommendAction === '제외 검토') return false;
+      return true;
+    });
+
+    const keywords = sortKeywordRows(baseKeyword, qualityRows);
 
     // chips: SERP 신호 기반 (자동완성 + 연관검색어)
     const searchSuggestions = serpSignals.length > 0
