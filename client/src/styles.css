@@ -59,18 +59,18 @@ body {
   min-height: 100vh;
   background: var(--bg-base);
   color: var(--text-primary);
-  /* UI/본문 기본: Inter */
-  font-family: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+  /* UI/본문 기본: Pretendard */
+  font-family: 'Pretendard', -apple-system, 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 13px;
   line-height: 1.5;
 }
 
-/* 헤드라인 — Sora */
+/* 헤드라인 — Pretendard (본문과 동일, 굵기로 차별화) */
 h1, h2, h3,
 .font-headline {
-  font-family: 'Sora', 'Inter', sans-serif;
+  font-family: 'Pretendard', sans-serif;
 }
 
 /* 숫자/KPI/점수 — Space Grotesk */
