@@ -650,8 +650,11 @@ export default function App() {
 
         {/* Blog structure results */}
         {activeTab === 'blog' && blogStructure && (
-          <div className="mac-fade-in flex flex-col gap-5">
-            <BlogStructurePanel result={blogStructure} keyword={blogStructureKeyword} />
+          <div className="mac-fade-in flex flex-col" style={{ gap: 48 }}>
+            <section>
+              <SectionLabel>블로그 구조 분석</SectionLabel>
+              <BlogStructurePanel result={blogStructure} keyword={blogStructureKeyword} />
+            </section>
           </div>
         )}
       </div>

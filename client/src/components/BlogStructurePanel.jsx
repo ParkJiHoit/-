@@ -24,7 +24,7 @@ function DonutChart({ segments, size = 120, thickness = 22 }) {
   return (
     <svg width={size} height={size} style={{ flexShrink: 0, overflow: 'visible' }}>
       {/* 배경 링 */}
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={thickness} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={thickness} />
       {arcs.map((arc, i) => (
         <circle
           key={i}
@@ -62,14 +62,18 @@ function DonutCard({ title, segments, total }) {
   const cy = size / 2;
 
   return (
-    <div className="mac-card" style={{ padding: '18px 20px' }}>
-      <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: '0 0 16px' }}>
+    <div className="mac-card" style={{
+      padding: '18px 20px',
+      background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.07) 0%, transparent 55%)',
+      borderTop: '1px solid rgba(10,132,255,0.25)',
+    }}>
+      <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 16px' }}>
         {title}
       </p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         {/* SVG 도넛 */}
         <svg width={size} height={size} style={{ flexShrink: 0, overflow: 'visible' }}>
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={thickness} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={thickness} />
           {arcs.map((arc, i) => (
             <circle
               key={i}
@@ -114,16 +118,21 @@ function DonutCard({ title, segments, total }) {
 }
 
 function StatCard({ label, value, sub, color }) {
+  const accentColor = color || '#0A84FF';
   return (
-    <div className="mac-card" style={{ padding: '18px 20px', minWidth: 0 }}>
-      <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0, marginBottom: 8 }}>
+    <div className="mac-card" style={{
+      padding: '20px 20px 18px', minWidth: 0,
+      background: `radial-gradient(ellipse at top left, ${accentColor}10 0%, transparent 60%)`,
+      borderTop: `1px solid ${accentColor}30`,
+    }}>
+      <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0, marginBottom: 10 }}>
         {label}
       </p>
-      <p style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', color: color || 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
+      <p style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px', color: color || 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
         {value}
       </p>
       {sub && (
-        <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 5, marginBottom: 0 }}>
+        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6, marginBottom: 0 }}>
           {sub}
         </p>
       )}
@@ -188,11 +197,15 @@ export default function BlogStructurePanel({ result, keyword }) {
   return (
     <div className="flex flex-col gap-5">
       {/* 헤더 */}
-      <div className="mac-card" style={{ padding: '16px 20px' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0 }}>
+      <div className="mac-card" style={{
+        padding: '20px 24px',
+        background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.09) 0%, transparent 60%)',
+        borderTop: '2px solid rgba(10,132,255,0.35)',
+      }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
           블로그 구조 분석
         </p>
-        <p style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '4px 0 0' }}>
+        <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '6px 0 0' }}>
           "{keyword}"
         </p>
         <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
@@ -256,8 +269,12 @@ export default function BlogStructurePanel({ result, keyword }) {
       </div>
 
       {/* 인사이트 */}
-      <div className="mac-card" style={{ padding: '18px 20px' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: '0 0 14px' }}>
+      <div className="mac-card" style={{
+        padding: '18px 20px',
+        borderTop: '1px solid rgba(10,132,255,0.22)',
+        background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
+      }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 14px' }}>
           콘텐츠 전략 인사이트
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
@@ -266,12 +283,12 @@ export default function BlogStructurePanel({ result, keyword }) {
       </div>
 
       {/* 상위 블로그 목록 */}
-      <div className="mac-card overflow-hidden">
+      <div className="mac-card overflow-hidden" style={{ borderTop: '2px solid rgba(10,132,255,0.35)' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
             상위 블로그 상세
           </p>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
             정확도순 상위 {posts.length}개
           </p>
         </div>

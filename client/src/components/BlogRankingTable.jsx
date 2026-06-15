@@ -263,8 +263,8 @@ function TabSwitcher({ active, onChange }) {
     <div style={{
       display: 'inline-flex',
       position: 'relative',
-      background: 'rgba(255,255,255,0.06)',
-      border: '1px solid rgba(255,255,255,0.10)',
+      background: 'var(--bg-overlay)',
+      border: '1px solid var(--border)',
       borderRadius: 8,
       padding: 3,
       gap: 0,
@@ -277,9 +277,9 @@ function TabSwitcher({ active, onChange }) {
         width: 'calc((100% - 6px) / 3)',
         bottom: 3,
         borderRadius: 6,
-        background: 'rgba(255,255,255,0.15)',
-        boxShadow: 'inset 1px 1px 1px rgba(255,255,255,0.20), inset -1px -1px 1px rgba(255,255,255,0.08), 0 1px 4px rgba(0,0,0,0.3)',
-        border: '1px solid rgba(255,255,255,0.16)',
+        background: 'rgba(10,132,255,0.15)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+        border: '1px solid rgba(10,132,255,0.25)',
         transition: 'left 0.25s cubic-bezier(0.16,1,0.3,1)',
         pointerEvents: 'none',
       }} />
@@ -301,7 +301,7 @@ function TabSwitcher({ active, onChange }) {
               fontWeight: isActive ? 700 : 500,
               letterSpacing: '0.06em',
               background: 'transparent',
-              color: isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)',
+              color: isActive ? 'var(--accent)' : 'var(--text-tertiary)',
               transition: 'color 0.2s ease',
               whiteSpace: 'nowrap',
             }}
