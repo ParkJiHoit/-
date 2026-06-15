@@ -1,19 +1,18 @@
 import { ChevronDown, Clock, Search, X } from 'lucide-react';
 import { useState } from 'react';
 
-const HISTORY_KEY = 'keywordlab.searchHistory';
 const MAX_HISTORY = 8;
 
-function getHistory() {
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+function getHistory(key) {
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); }
   catch { return []; }
 }
 
-export default function KeywordSearchForm({ onSubmit, loading, suggestions = [], isMain = false }) {
+export default function KeywordSearchForm({ onSubmit, loading, suggestions = [], isMain = false, historyKey = 'keywordlab.searchHistory' }) {
   const [keyword, setKeyword] = useState('');
   const [focused, setFocused] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
-  const [history, setHistory] = useState(() => getHistory());
+  const [history, setHistory] = useState(() => getHistory(historyKey));
 
   const submitKeyword = (next = keyword) => {
     const trimmed = next.trim();
@@ -22,7 +21,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
     setKeyword(trimmed);
     const updated = [trimmed, ...history.filter((k) => k !== trimmed)].slice(0, MAX_HISTORY);
     setHistory(updated);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(historyKey, JSON.stringify(updated));
     onSubmit(trimmed);
   };
 
@@ -30,12 +29,12 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
     e.stopPropagation();
     const updated = history.filter((k) => k !== kw);
     setHistory(updated);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(historyKey, JSON.stringify(updated));
   };
 
   const clearAll = () => {
     setHistory([]);
-    localStorage.removeItem(HISTORY_KEY);
+    localStorage.removeItem(historyKey);
   };
 
   const showHistory  = isMain && history.length > 0 && suggestions.length === 0;

@@ -164,8 +164,8 @@ export default function BlogAuditPanel({ result }) {
           </div>
         </div>
 
-        {/* 핵심 지표 칩 — 세로 1열 */}
-        <div style={{ flex: '0 0 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {/* 핵심 지표 칩 — 2열 4행 */}
+        <div style={{ flex: '0 0 260px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'repeat(4, 1fr)', gap: 8 }}>
           <StatChip label="월 포스팅" value={stats.postsLast30} sub="최근 30일" color="#0A84FF" />
           <StatChip
             label="포스팅 주기"

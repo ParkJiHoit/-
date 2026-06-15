@@ -782,7 +782,7 @@ export default function App() {
             </div>
             {/* 구조 분석 폼 */}
             {blogSubTab === 'structure' && (
-              <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} />
+              <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} historyKey="keywordlab.blogHistory" />
             )}
             {/* 감사 폼 */}
             {blogSubTab === 'audit' && (
