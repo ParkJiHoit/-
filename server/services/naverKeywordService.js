@@ -219,7 +219,7 @@ function buildSearchSuggestions(keywords, baseKeyword) {
 
   return keywords
     .filter((row) => normalizeText(row.keyword) !== normalizedBase)
-    .filter((row) => row.relevanceScore >= 65)
+    .filter((row) => row.relevanceScore >= 55)
     .sort((a, b) => {
       if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
       return b.efficiencyScore - a.efficiencyScore;
@@ -374,7 +374,7 @@ async function deriveAnalysisHints(keyword) {
   if (!clean) return { hints: [], serpSignals: [] };
 
   // 자동완성 + SERP 연관검색어만 사용 — 질 중심
-  const MAX_HINTS = 4;
+  const MAX_HINTS = 8;
   const seen = new Set([clean]);
   const hints = [clean];
 
@@ -485,17 +485,7 @@ export async function analyzeKeyword(baseKeyword) {
       )
     );
 
-    // 퀄리티 필터: 연관도 낮음 제거, 제외 검토 제거
-    const qualityRows = allNormalized.filter(row => {
-      const normKw = normalizeText(row.keyword);
-      const normBase = normalizeText(baseKeyword);
-      if (normKw === normBase) return true; // 베이스 키워드는 항상 포함
-      if (row.relevanceScore < 45) return false;
-      if (row.recommendAction === '제외 검토') return false;
-      return true;
-    });
-
-    const keywords = sortKeywordRows(baseKeyword, qualityRows);
+    const keywords = sortKeywordRows(baseKeyword, allNormalized);
 
     // chips: SERP 신호 기반 (자동완성 + 연관검색어)
     const searchSuggestions = serpSignals.length > 0
