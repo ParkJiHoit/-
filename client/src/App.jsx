@@ -10,6 +10,9 @@ import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
 import KeywordInsightPanel from './components/KeywordInsightPanel';
 import KeywordSearchForm from './components/KeywordSearchForm';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
+import KeywordCardList from './components/KeywordCardList';
+import KeywordTableB from './components/KeywordTableB';
+import KeywordCardListAB from './components/KeywordCardListAB';
 import AuroraBackground from './components/AuroraBackground';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
@@ -639,7 +642,7 @@ export default function App() {
                 </div>
               </div>
               <div style={{ marginTop: 12 }}>
-                <KeywordTable rows={filteredRows} sortConfig={sortConfig} onSort={handleSort} visibleColumns={visibleColumns} isLoggedIn={!!user} onLoginPrompt={() => setLoginPrompt('keyword')} />
+                <KeywordTableB rows={filteredRows} sortConfig={sortConfig} onSort={handleSort} visibleColumns={visibleColumns} isLoggedIn={!!user} onLoginPrompt={() => setLoginPrompt('keyword')} />
               </div>
             </section>
           </div>
