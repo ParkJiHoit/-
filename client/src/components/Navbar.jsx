@@ -76,7 +76,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
     : '0 4px 24px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.9) inset';
 
   const divider = (
-    <div style={{ width: 1, height: 16, background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)', flexShrink: 0 }} />
+    <div style={{ width: 1, height: 16, background: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)', flexShrink: 0, margin: '0 4px' }} />
   );
 
   const pillItem = (id) => ({
