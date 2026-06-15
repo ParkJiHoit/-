@@ -129,10 +129,10 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Clock style={{ width: 11, height: 11, color: 'var(--text-tertiary)' }} />
+              <Clock style={{ width: 13, height: 13, color: 'var(--text-secondary)' }} />
               <span style={{
-                fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
-                color: 'var(--text-tertiary)'
+                fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                color: 'var(--text-secondary)'
               }}>
                 최근 검색어
               </span>
@@ -140,13 +140,13 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
             <button
               onClick={clearAll}
               style={{
-                fontSize: 10, fontWeight: 500, color: 'var(--text-tertiary)',
+                fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
                 background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                 letterSpacing: '0.04em',
                 transition: 'color 0.15s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-tertiary)')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
             >
               전체 삭제
             </button>
