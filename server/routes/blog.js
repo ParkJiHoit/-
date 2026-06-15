@@ -1,6 +1,7 @@
 import express from 'express';
 import { analyzeBlogKeyword } from '../services/naverBlogService.js';
 import { analyzeBlogStructure } from '../services/blogStructureService.js';
+import { auditBlog } from '../services/blogAuditService.js';
 
 const router = express.Router();
 
@@ -24,6 +25,20 @@ router.post('/structure-analysis', async (req, res, next) => {
     res.json(data);
   } catch (error) {
     console.error(`[blog-structure] ✗ ${error.message}`);
+    next(error);
+  }
+});
+
+router.post('/audit', async (req, res, next) => {
+  try {
+    const url = String(req.body?.url || '').trim();
+    if (!url) return res.status(400).json({ message: '블로그 URL을 입력해 주세요.' });
+    console.log(`[blog-audit] → "${url}"`);
+    const data = await auditBlog(url);
+    console.log(`[blog-audit] ✓ "${data.blogId}" score=${data.score.total} grade=${data.score.grade}`);
+    res.json(data);
+  } catch (error) {
+    console.error(`[blog-audit] ✗ ${error.message}`);
     next(error);
   }
 });

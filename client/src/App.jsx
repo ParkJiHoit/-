@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabase';
 import BlogStructurePanel from './components/BlogStructurePanel';
+import BlogAuditPanel from './components/BlogAuditPanel';
 import ColumnVisibilitySettings from './components/ColumnVisibilitySettings';
 import KeywordExpansionForm from './components/KeywordExpansionForm';
 import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
@@ -141,6 +142,52 @@ function ThemeToggle({ theme, onToggle }) {
   );
 }
 
+/* ── Blog Audit Form ── */
+function BlogAuditForm({ onSubmit, loading, isMain }) {
+  const [url, setUrl] = useState('');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (url.trim()) onSubmit(url.trim());
+  };
+  return (
+    <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: 620, margin: '0 auto' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 0,
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border)',
+        borderRadius: 14,
+        padding: '4px 4px 4px 18px',
+        boxShadow: '0 2px 20px rgba(0,0,0,0.08)',
+      }}>
+        <input
+          type="text"
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          placeholder="https://blog.naver.com/blogId"
+          style={{
+            flex: 1, border: 'none', background: 'transparent', outline: 'none',
+            fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
+            fontFamily: 'inherit',
+          }}
+        />
+        <button
+          type="submit"
+          disabled={loading || !url.trim()}
+          className="mac-btn mac-btn-sm"
+          style={{ flexShrink: 0, borderRadius: 10, padding: '8px 18px' }}
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '분석하기'}
+        </button>
+      </div>
+      {isMain && (
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center', marginTop: 10 }}>
+          네이버 블로그 URL을 입력하면 배포 적합성을 분석합니다
+        </p>
+      )}
+    </form>
+  );
+}
+
 /* ── Hero / compact wrapper ── */
 function HeroSection({ tab, hasResults, children }) {
   const maxW = tab === 'expansion' ? 1140 : 680;
@@ -254,6 +301,10 @@ export default function App() {
   const [expansion, setExpansion]       = useState(null);
   const [blogStructure, setBlogStructure] = useState(null);
   const [blogStructureKeyword, setBlogStructureKeyword] = useState('');
+  const [blogSubTab, setBlogSubTab] = useState('structure'); // 'structure' | 'audit'
+  const [blogAudit, setBlogAudit] = useState(null);
+  const [blogAuditLoading, setBlogAuditLoading] = useState(false);
+  const [blogAuditError, setBlogAuditError] = useState('');
   const [insights, setInsights]         = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError]     = useState(null);
@@ -273,7 +324,8 @@ export default function App() {
   const isKeywordTab  = activeTab === 'analysis' || activeTab === 'expansion';
   const activeResult  = activeTab === 'analysis' ? analysis : expansion;
   const activeRows    = activeResult?.keywords || [];
-  const hasResults    = (isKeywordTab && !!activeResult) || (activeTab === 'blog' && !!blogStructure);
+  const hasResults    = (isKeywordTab && !!activeResult) ||
+    (activeTab === 'blog' && (!!blogStructure || !!blogAudit));
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -399,6 +451,21 @@ export default function App() {
     } finally { setLoading(false); }
   };
 
+  const auditBlog = async (url) => {
+    if (!user) { setLoginPrompt('blog'); return; }
+    setBlogAudit(null);
+    setBlogAuditError('');
+    setBlogAuditLoading(true);
+    try {
+      const res  = await fetch('/api/blog/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+      const data = await parseApiResponse(res);
+      if (!res.ok) throw new Error(data.message || '블로그 감사에 실패했습니다.');
+      setBlogAudit(data);
+    } catch (e) {
+      setBlogAuditError(e.message || '블로그 감사에 실패했습니다.');
+    } finally { setBlogAuditLoading(false); }
+  };
+
   const handleViewDetail = (keyword) => {
     setActiveTab('blog');
     setError('');
@@ -430,7 +497,7 @@ export default function App() {
     setInsights(null); setInsightsLoading(false); setInsightsError(null);
     if (next === 'analysis')  setSortConfig({ key: 'efficiencyScore',  direction: 'desc' });
     if (next === 'expansion') setSortConfig({ key: 'discoveryScore',  direction: 'desc' });
-    if (next === 'blog') { setBlogStructure(null); setBlogStructureKeyword(''); }
+    if (next === 'blog') { setBlogStructure(null); setBlogStructureKeyword(''); setBlogAudit(null); setBlogAuditError(''); }
   };
 
   const goHome = () => {
@@ -534,16 +601,54 @@ export default function App() {
           <KeywordExpansionForm onSubmit={expandKeyword} loading={loading} />
         )}
         {activeTab === 'blog' && (
-          <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} />
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* 서브탭 스위처 */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 0, marginBottom: 4 }}>
+              {[{ id: 'structure', label: '블로그 구조 분석' }, { id: 'audit', label: '블로그 감사' }].map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => { setBlogSubTab(id); setError(''); setBlogAuditError(''); }}
+                  style={{
+                    padding: '8px 22px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                    fontSize: 13, fontWeight: blogSubTab === id ? 700 : 500,
+                    background: blogSubTab === id ? 'var(--accent)' : 'var(--bg-overlay)',
+                    color: blogSubTab === id ? '#fff' : 'var(--text-secondary)',
+                    borderRadius: id === 'structure' ? '8px 0 0 8px' : '0 8px 8px 0',
+                    border: `1px solid ${blogSubTab === id ? 'var(--accent)' : 'var(--border)'}`,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* 구조 분석 폼 */}
+            {blogSubTab === 'structure' && (
+              <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} />
+            )}
+            {/* 감사 폼 */}
+            {blogSubTab === 'audit' && (
+              <BlogAuditForm onSubmit={auditBlog} loading={blogAuditLoading} isMain={!hasResults} />
+            )}
+          </div>
         )}
-        {/* 블로그 첫 검색 로딩: 메인 페이지에 중앙 표시 */}
-        {activeTab === 'blog' && loading && !blogStructure && (
+        {/* 블로그 구조 첫 검색 로딩 */}
+        {activeTab === 'blog' && blogSubTab === 'structure' && loading && !blogStructure && (
           <MainPageLoading label="상위 블로그 구조를 분석 중입니다…" />
         )}
-        {/* 블로그 첫 검색 에러: 메인 페이지에 표시 */}
-        {activeTab === 'blog' && !blogStructure && error && (
+        {/* 블로그 감사 첫 검색 로딩 */}
+        {activeTab === 'blog' && blogSubTab === 'audit' && blogAuditLoading && !blogAudit && (
+          <MainPageLoading label="블로그를 분석 중입니다…" />
+        )}
+        {/* 에러 */}
+        {activeTab === 'blog' && blogSubTab === 'structure' && !blogStructure && error && (
           <p className="mac-fade-in" style={{ fontSize: 13, color: 'var(--destructive)', textAlign: 'center', marginTop: 16 }}>
             {error}
+          </p>
+        )}
+        {activeTab === 'blog' && blogSubTab === 'audit' && !blogAudit && blogAuditError && (
+          <p className="mac-fade-in" style={{ fontSize: 13, color: 'var(--destructive)', textAlign: 'center', marginTop: 16 }}>
+            {blogAuditError}
           </p>
         )}
       </HeroSection>
@@ -648,8 +753,24 @@ export default function App() {
           </div>
         )}
 
+        {/* Blog audit results */}
+        {activeTab === 'blog' && blogSubTab === 'audit' && blogAudit && !blogAuditLoading && (
+          <div className="mac-fade-in flex flex-col" style={{ gap: 48 }}>
+            <section>
+              <SectionLabel>블로그 감사 결과</SectionLabel>
+              <BlogAuditPanel result={blogAudit} />
+            </section>
+          </div>
+        )}
+        {activeTab === 'blog' && blogSubTab === 'audit' && blogAuditError && blogAudit && (
+          <div className="mac-fade-in mac-card mb-5 px-5 py-4"
+            style={{ fontSize: 13, color: 'var(--destructive)', border: '1px solid rgba(255,69,58,0.25)' }}>
+            {blogAuditError}
+          </div>
+        )}
+
         {/* Blog structure results */}
-        {activeTab === 'blog' && blogStructure && (
+        {activeTab === 'blog' && blogSubTab === 'structure' && blogStructure && (
           <div className="mac-fade-in flex flex-col" style={{ gap: 48 }}>
             <section>
               <SectionLabel>블로그 구조 분석</SectionLabel>

@@ -1,37 +1,34 @@
-uid=7_0 RootWebArea "RANKLET — 네이버 키워드 분석 대시보드" url="http://localhost:5173/"
-  uid=10_0 button
-  uid=10_1 StaticText "블로그 분석은 로그인이 필요해요"
-  uid=10_2 StaticText "블로그 구조 분석 기능은 로그인한 회원만 사용할 수 있습니다."
-  uid=10_3 button "Google로 계속하기"
-  uid=10_4 StaticText "가입하면 모든 기능을 무제한으로 이용할 수 있어요"
-  uid=7_1 navigation
-    uid=7_2 button "RANKLET"
-    uid=7_3 button "주요 서비스"
-    uid=7_4 button "요금제"
-    uid=7_5 link "사용 가이드" url="https://helix-territory-c92.notion.site/37b24604a091802abe38f48e986102d7?source=copy_link"
-      uid=7_6 StaticText "사용 가이드"
-    uid=7_7 link "업데이트" url="https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link"
-      uid=7_8 StaticText "업데이트"
-    uid=7_9 button "로그인"
-    uid=7_10 StaticText "7일 무료체험"
-  uid=7_11 button
-  uid=7_12 button
-  uid=9_0 StaticText "BLOG STRUCTURE ANALYSIS"
-  uid=7_14 heading "상위 블로그는 어떻게 구성되어 있을까요" level="1"
-  uid=9_1 StaticText "상위 1~10위 블로그 구조를 분석하고 콘텐츠 전략을 세우세요"
-  uid=9_2 form
-    uid=9_3 StaticText "NAVER"
-    uid=9_4 textbox "분석할 키워드를 입력하세요" focusable focused value="휴대폰"
-    uid=9_5 button
-  uid=9_6 StaticText "최근 검색어"
-  uid=9_7 button "전체 삭제"
-  uid=9_8 button "휴대폰"
-  uid=9_9 button
-  uid=9_10 button "휴대폰창업"
-  uid=9_11 button
-  uid=9_12 button "옆커폰창업"
-  uid=9_13 button
-  uid=9_14 button "아이폰"
-  uid=9_15 button
-  uid=9_16 button "옆커폰"
-  uid=9_17 button
+uid=11_0 RootWebArea "RANKLET — 네이버 키워드 분석 대시보드" url="http://localhost:5173/"
+  uid=11_1 navigation
+    uid=11_2 button "RANKLET"
+    uid=11_3 button "주요 서비스"
+    uid=11_4 button "요금제"
+    uid=11_5 link "사용 가이드" url="https://helix-territory-c92.notion.site/37b24604a091802abe38f48e986102d7?source=copy_link"
+      uid=11_6 StaticText "사용 가이드"
+    uid=11_7 link "업데이트" url="https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link"
+      uid=11_8 StaticText "업데이트"
+    uid=11_9 button "로그인"
+    uid=11_10 StaticText "7일 무료체험"
+  uid=11_11 button
+  uid=11_12 button
+  uid=13_0 StaticText "BLOG STRUCTURE ANALYSIS"
+  uid=11_14 heading "상위 블로그는 어떻게 구성되어 있을까요" level="1"
+  uid=13_1 StaticText "상위 1~10위 블로그 구조를 분석하고 콘텐츠 전략을 세우세요"
+  uid=13_2 button "블로그 구조 분석"
+  uid=13_3 button "블로그 감사"
+  uid=13_4 form
+    uid=13_5 StaticText "NAVER"
+    uid=13_6 textbox "분석할 키워드를 입력하세요"
+    uid=13_7 button
+  uid=13_8 StaticText "최근 검색어"
+  uid=13_9 button "전체 삭제"
+  uid=13_10 button "휴대폰"
+  uid=13_11 button
+  uid=13_12 button "휴대폰창업"
+  uid=13_13 button
+  uid=13_14 button "옆커폰창업"
+  uid=13_15 button
+  uid=13_16 button "아이폰"
+  uid=13_17 button
+  uid=13_18 button "옆커폰"
+  uid=13_19 button
