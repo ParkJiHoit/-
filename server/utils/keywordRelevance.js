@@ -69,8 +69,8 @@ function hasUnrelatedBusinessHint(candidate) {
 }
 
 export function getRelevanceLevel(score) {
-  if (score >= 65) return '높음';
-  if (score >= 45) return '중간';
+  if (score >= 55) return '높음';
+  if (score >= 35) return '중간';
   return '낮음';
 }
 
