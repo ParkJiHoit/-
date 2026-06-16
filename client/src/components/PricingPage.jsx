@@ -157,9 +157,19 @@ export default function PricingPage({ onMockAction, onGoToAuth, user }) {
           </div>
 
           {/* 가격 */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 26 }}>
-            <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-2px', color: 'var(--text-primary)', lineHeight: 1 }}>₩9,900</span>
-            <span style={{ fontSize: 14, color: 'var(--text-tertiary)', fontWeight: 500 }}> / 월</span>
+          <div style={{ marginBottom: 26 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-tertiary)', textDecoration: 'line-through', letterSpacing: '-0.5px' }}>₩34,900</span>
+              <span style={{
+                background: 'linear-gradient(135deg, #FF3B30, #FF6B35)',
+                borderRadius: 6, padding: '2px 7px',
+                fontSize: 11, fontWeight: 800, color: '#fff', letterSpacing: '0.02em',
+              }}>71% OFF</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-2px', color: 'var(--text-primary)', lineHeight: 1 }}>₩9,900</span>
+              <span style={{ fontSize: 14, color: 'var(--text-tertiary)', fontWeight: 500 }}> / 월</span>
+            </div>
           </div>
 
           <div style={{ height: 1, background: 'rgba(10,132,255,0.2)', marginBottom: 22 }} />
