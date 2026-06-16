@@ -4,6 +4,7 @@ import { analyzeKeyword, expandKeyword } from '../services/naverKeywordService.j
 import { getSearchHistory, recordMonthlySearch } from '../services/keywordHistoryService.js';
 import { fetchContentCounts } from '../services/naverSearchService.js';
 import { fetchBlogRankings } from '../services/blogRankingService.js';
+import { optionalAuth, checkDailyLimit } from '../middleware/usageLimit.js';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ function normalizeWordArray(value) {
   return value.map((word) => String(word || '').trim()).filter(Boolean).slice(0, 5);
 }
 
-router.post('/analyze', async (req, res, next) => {
+router.post('/analyze', optionalAuth, checkDailyLimit('keyword_analyze'), async (req, res, next) => {
   try {
     const keyword = String(req.body?.keyword || '').trim();
 

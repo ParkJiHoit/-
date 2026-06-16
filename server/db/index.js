@@ -68,4 +68,16 @@ export async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_rs_tracked_date ON rank_snapshots (tracked_id, snapshotted_at DESC);
   `);
   console.log('[DB] rank_tracker 테이블 준비 완료');
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS daily_usage (
+      id         SERIAL PRIMARY KEY,
+      user_id    UUID    NOT NULL,
+      action     TEXT    NOT NULL,
+      used_date  DATE    NOT NULL DEFAULT CURRENT_DATE,
+      count      INTEGER NOT NULL DEFAULT 1,
+      UNIQUE (user_id, action, used_date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_du_user_date ON daily_usage (user_id, used_date);
+  `);
+  console.log('[DB] daily_usage 테이블 준비 완료');
 }

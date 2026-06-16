@@ -4,6 +4,7 @@ import {
   listTracked, createTracked, deleteTracked,
   getSnapshots, refreshRanks,
 } from '../services/rankTrackerService.js';
+import { checkDailyLimit } from '../middleware/usageLimit.js';
 
 const router = Router();
 
@@ -54,7 +55,7 @@ router.delete('/:id', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/:id/refresh', async (req, res, next) => {
+router.post('/:id/refresh', checkDailyLimit('rank_refresh'), async (req, res, next) => {
   try {
     const data = await refreshRanks(req.userId, Number(req.params.id));
     res.json(data);

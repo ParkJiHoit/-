@@ -425,7 +425,7 @@ function QuickToggle({ label, checked, onChange, title }) {
 
 /* ═══════════════════════════════════════════ */
 export default function App() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [theme, setTheme] = useState(() =>
     window.localStorage.getItem(THEME_STORAGE_KEY) || 'dark'
   );
@@ -503,7 +503,9 @@ export default function App() {
   const requestKeywords = async (endpoint, payload, failMsg, nextSort) => {
     setLoading(true); setError('');
     try {
-      const res  = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+      const res  = await fetch(endpoint, { method:'POST', headers, body: JSON.stringify(payload) });
       const data = await parseApiResponse(res);
       if (!res.ok) throw new Error(data.message || failMsg);
       if (!data.keywords) throw new Error(data.message || '키워드 응답 형식이 올바르지 않습니다.');
@@ -568,7 +570,9 @@ export default function App() {
     setBlogStructureKeyword(keyword);
     setLoading(true); setError('');
     try {
-      const res  = await fetch('/api/blog/structure-analysis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword }) });
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+      const res  = await fetch('/api/blog/structure-analysis', { method: 'POST', headers, body: JSON.stringify({ keyword }) });
       const data = await parseApiResponse(res);
       if (!res.ok) throw new Error(data.message || '블로그 구조 분석에 실패했습니다.');
       setBlogStructure(data);
@@ -584,7 +588,9 @@ export default function App() {
     setBlogAuditError('');
     setBlogAuditLoading(true);
     try {
-      const res  = await fetch('/api/blog/audit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+      const res  = await fetch('/api/blog/audit', { method: 'POST', headers, body: JSON.stringify({ url }) });
       const data = await parseApiResponse(res);
       if (!res.ok) throw new Error(data.message || '블로그 감사에 실패했습니다.');
       setBlogAudit(data);
