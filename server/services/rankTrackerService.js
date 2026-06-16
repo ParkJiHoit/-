@@ -15,8 +15,8 @@ export async function listTracked(userId) {
   );
   const result = await Promise.all(rows.map(async (row) => {
     const { rows: snaps } = await pool.query(
-      `SELECT blog_id, rank, snapshotted_at FROM rank_snapshots
-       WHERE tracked_id = $1 ORDER BY snapshotted_at DESC LIMIT 20`,
+      `SELECT blog_id, rank, TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
+       FROM rank_snapshots WHERE tracked_id = $1 ORDER BY snapshotted_at DESC LIMIT 20`,
       [row.id]
     );
     const latestByBlog = {};
@@ -59,7 +59,8 @@ export async function getSnapshots(userId, trackedId) {
   if (!own.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
 
   const { rows: snaps } = await pool.query(
-    `SELECT blog_id, rank, post_title, post_link, snapshotted_at
+    `SELECT blog_id, rank, post_title, post_link,
+            TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
      FROM rank_snapshots WHERE tracked_id = $1
      ORDER BY snapshotted_at DESC, rank ASC NULLS LAST`,
     [trackedId]
@@ -78,7 +79,7 @@ export async function refreshRanks(userId, trackedId) {
   const { keyword, mode, blog_ids } = own[0];
   const rankings = await fetchBlogRankings(keyword, 'blog');
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const upserts = [];
 
   if (mode === 'blog') {

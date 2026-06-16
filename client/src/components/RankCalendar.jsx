@@ -8,13 +8,15 @@ function rankClass(rank) {
   return 'r10';
 }
 
+function getKSTDateString(offsetDays = 0) {
+  const d = new Date(Date.now() + 9 * 60 * 60 * 1000 - offsetDays * 86400000);
+  return d.toISOString().slice(0, 10);
+}
+
 function getDates(days) {
   const dates = [];
-  const today = new Date();
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    dates.push(d.toISOString().slice(0, 10));
+    dates.push(getKSTDateString(i));
   }
   return dates;
 }
@@ -36,7 +38,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: 8, fontWeight: 700, cursor: 'pointer',
       transition: 'transform 0.1s', border: '1px solid transparent',
-      color: 'transparent', position: 'relative',
+      position: 'relative',
     },
   };
 
@@ -96,19 +98,18 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
                   ...cellStyle.base,
                   background: bg,
                   borderColor: border,
+                  color: rank != null ? 'rgba(255,255,255,0.9)' : 'transparent',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.transform = 'scale(1.4)';
+                  e.currentTarget.style.transform = 'scale(1.5)';
                   e.currentTarget.style.zIndex = '10';
-                  e.currentTarget.style.color = rank != null ? '#fff' : 'rgba(255,255,255,0.3)';
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.transform = 'scale(1)';
                   e.currentTarget.style.zIndex = '1';
-                  e.currentTarget.style.color = 'transparent';
                 }}
               >
-                {rank != null ? rank : '–'}
+                {rank != null ? rank : ''}
               </div>
             );
           })}
