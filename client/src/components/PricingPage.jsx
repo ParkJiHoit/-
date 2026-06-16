@@ -1,4 +1,4 @@
-import { Check, Sparkles, Zap, Lock } from 'lucide-react';
+import { Check, Sparkles, Zap } from 'lucide-react';
 
 const BASIC_FEATURES = [
   { text: '연관 키워드 발굴', sub: '시드 키워드 하나로 연관 키워드 탐색' },
@@ -7,14 +7,6 @@ const BASIC_FEATURES = [
   { text: '키워드 분석 하루 10회', sub: '매일 자정 초기화' },
   { text: '블로그 분석·감사 하루 3회', sub: '구조 분석 + 블로그 감사 합산' },
   { text: '순위 추적 갱신 하루 2회', sub: '키워드 추적은 등록만 가능' },
-];
-
-const BASIC_LOCKED = [
-  { text: '효율 점수 & 종합 평가', sub: '스탠다드 전용' },
-  { text: '일별 · 월별 · 연간 트렌드 차트', sub: '스탠다드 전용' },
-  { text: '블로그 순위 추적 & 히스토리', sub: '스탠다드 전용' },
-  { text: 'Excel / CSV 다운로드', sub: '스탠다드 전용' },
-  { text: '관련 기사 실시간 피드', sub: '스탠다드 전용' },
 ];
 
 const STANDARD_FEATURES = [
@@ -28,7 +20,7 @@ const STANDARD_FEATURES = [
   { text: 'Excel / CSV 다운로드', sub: '데이터는 내 것, 가져가세요' },
 ];
 
-export default function PricingPage({ onMockAction }) {
+export default function PricingPage({ onMockAction, onGoToAuth, user }) {
   return (
     <div
       style={{
@@ -97,7 +89,7 @@ export default function PricingPage({ onMockAction }) {
           <div style={{ height: 1, background: 'var(--border)', marginBottom: 22 }} />
 
           {/* 가능한 기능 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
             {BASIC_FEATURES.map(({ text, sub }) => (
               <div key={text} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <Check size={14} color="var(--text-tertiary)" strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -109,21 +101,10 @@ export default function PricingPage({ onMockAction }) {
             ))}
           </div>
 
-          {/* 잠긴 기능 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28, padding: '14px 14px', borderRadius: 10, background: 'var(--bg-overlay)' }}>
-            <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>스탠다드에서만 사용 가능</p>
-            {BASIC_LOCKED.map(({ text }) => (
-              <div key={text} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Lock size={11} color="var(--text-tertiary)" style={{ flexShrink: 0, opacity: 0.5 }} />
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)', opacity: 0.6 }}>{text}</p>
-              </div>
-            ))}
-          </div>
-
           {/* CTA */}
           <div style={{ marginTop: 'auto' }}>
             <button
-              onClick={onMockAction}
+              onClick={user ? onMockAction : onGoToAuth}
               style={{
                 width: '100%', padding: '12px 0',
                 background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',

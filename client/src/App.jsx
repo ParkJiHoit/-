@@ -712,7 +712,7 @@ export default function App() {
       )}
 
       {activeTab === 'pricing' ? (
-        <PricingPage onMockAction={handleMockAction} />
+        <PricingPage onMockAction={handleMockAction} onGoToAuth={() => setActiveTab('auth')} user={user} />
       ) : activeTab === 'rank-tracker' ? (
         <div style={{ paddingTop: 'calc(var(--nav-offset) + 24px)', paddingBottom: 64 }}>
           <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-10">
