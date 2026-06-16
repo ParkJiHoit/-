@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, LogOut, Search, Sparkles, TrendingUp } from 'lucide-react';
+import { ChevronDown, FileText, LogOut, Search, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
 
@@ -29,7 +29,6 @@ function getAssignedAvatar(userId) {
 
 const SERVICES = [
   { id: 'analysis',     icon: Search,      label: '키워드 분석', desc: '기준 키워드로 연관 키워드 발굴' },
-  { id: 'expansion',    icon: Sparkles,    label: '키워드 확장', desc: '시드 키워드로 대량 발굴' },
   { id: 'blog',         icon: FileText,    label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' },
   { id: 'rank-tracker', icon: TrendingUp,  label: '순위 추적',   desc: '블로그 키워드 순위 일별 추적' },
 ];
@@ -40,7 +39,6 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
   const [hoveredService, setHoveredService] = useState(null);
-  const [comingSoonVisible, setComingSoonVisible] = useState(false);
   const dropdownRef = useRef(null);
   const userMenuRef = useRef(null);
 
@@ -58,12 +56,6 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
   }, []);
 
   const handleServiceClick = (id) => {
-    if (id === 'expansion') {
-      setServiceOpen(false);
-      setComingSoonVisible(true);
-      setTimeout(() => setComingSoonVisible(false), 2200);
-      return;
-    }
     onGoToService(id);
     setServiceOpen(false);
   };
@@ -195,7 +187,6 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
             {SERVICES.map(({ id, icon: Icon, label, desc }) => {
               const isActive = activeTab === id;
               const isHovered = hoveredService === id;
-              const isComingSoon = id === 'expansion';
               const highlighted = isActive || isHovered;
               return (
                 <button
@@ -225,14 +216,6 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{label}</p>
-                      {isComingSoon && (
-                        <span style={{
-                          fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
-                          color: '#FF9F0A', background: 'rgba(255,159,10,0.12)',
-                          border: '1px solid rgba(255,159,10,0.3)',
-                          borderRadius: 4, padding: '1px 5px',
-                        }}>준비중</span>
-                      )}
                     </div>
                     <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: 0 }}>{desc}</p>
                   </div>
@@ -376,34 +359,6 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       )}
     </nav>
 
-    {/* 준비중 토스트 — nav 바깥에서 렌더해야 fixed 위치가 정상 동작 */}
-    {comingSoonVisible && (
-      <div style={{
-        position: 'fixed',
-        bottom: 72,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 9999,
-        background: isDark ? 'rgba(44,44,46,0.96)' : 'rgba(255,255,255,0.96)',
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
-        borderRadius: 999,
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
-        padding: '10px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        whiteSpace: 'nowrap',
-        pointerEvents: 'none',
-        animation: 'macFadeUp 0.2s ease',
-      }}>
-        <Sparkles style={{ width: 14, height: 14, color: 'var(--accent)', flexShrink: 0 }} />
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-          키워드 확장 — 곧 출시 예정입니다
-        </span>
-      </div>
-    )}
     </>
   );
 }

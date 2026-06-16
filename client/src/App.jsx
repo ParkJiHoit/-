@@ -6,7 +6,6 @@ import { supabase } from './supabase';
 import BlogStructurePanel from './components/BlogStructurePanel';
 import BlogAuditPanel from './components/BlogAuditPanel';
 import ColumnVisibilitySettings from './components/ColumnVisibilitySettings';
-import KeywordExpansionForm from './components/KeywordExpansionForm';
 import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
 import KeywordInsightPanel from './components/KeywordInsightPanel';
 import KeywordSearchForm from './components/KeywordSearchForm';
@@ -342,7 +341,6 @@ function HeroSection({ tab, blogSubTab, hasResults, children }) {
               color: 'var(--text-tertiary)', marginBottom: 14
             }}>
               {tab === 'analysis' && 'Keyword Analysis'}
-              {tab === 'expansion' && 'Keyword Expansion'}
               {tab === 'blog' && blogSubTab === 'structure' && 'Blog Structure Analysis'}
               {tab === 'blog' && blogSubTab === 'audit'     && 'Blog Audit'}
             </p>
@@ -358,16 +356,6 @@ function HeroSection({ tab, blogSubTab, hasResults, children }) {
                     background: 'linear-gradient(120deg, #0A84FF 0%, #34C1FF 45%, #30D158 100%)',
                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
                   }}>먼저 차지하세요</span>
-                </>
-              )}
-              {tab === 'expansion' && (
-                <>
-                  아직 발굴되지 않은
-                  <br />
-                  <span style={{
-                    background: 'linear-gradient(120deg, #BF5AF2 0%, #0A84FF 55%, #34C1FF 100%)',
-                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-                  }}>키워드가 있습니다</span>
                 </>
               )}
               {tab === 'blog' && blogSubTab === 'structure' && (
@@ -393,7 +381,6 @@ function HeroSection({ tab, blogSubTab, hasResults, children }) {
             </h1>
             <p style={{ fontSize: 15, fontWeight: 400, color: 'var(--text-secondary)', marginTop: 10 }}>
               {tab === 'analysis' && '키워드를 분석하고, 가능성을 실험하는 공간'}
-              {tab === 'expansion' && '시드 키워드로 숨겨진 틈새 키워드를 한 번에 찾아드립니다'}
               {tab === 'blog' && blogSubTab === 'structure' && '상위 1~10위 블로그 구조를 분석하고 콘텐츠 전략을 세우세요'}
               {tab === 'blog' && blogSubTab === 'audit'     && '노출 가능성과 상위 노출 이력을 기반으로 블로그 적합성을 분석합니다'}
             </p>
@@ -444,7 +431,6 @@ export default function App() {
   );
   const [activeTab, setActiveTab]       = useState('analysis');
   const [analysis,  setAnalysis]        = useState(null);
-  const [expansion, setExpansion]       = useState(null);
   const [blogStructure, setBlogStructure] = useState(null);
   const [blogStructureKeyword, setBlogStructureKeyword] = useState('');
   const [blogSubTab, setBlogSubTab] = useState('structure'); // 'structure' | 'audit'
@@ -467,8 +453,8 @@ export default function App() {
   const guestCount = () => parseInt(localStorage.getItem(GUEST_COUNT_KEY) || '0', 10);
   const incGuestCount = () => localStorage.setItem(GUEST_COUNT_KEY, guestCount() + 1);
 
-  const isKeywordTab  = activeTab === 'analysis' || activeTab === 'expansion';
-  const activeResult  = activeTab === 'analysis' ? analysis : expansion;
+  const isKeywordTab  = activeTab === 'analysis';
+  const activeResult  = analysis;
   const activeRows    = activeResult?.keywords || [];
   const hasResults    = (isKeywordTab && !!activeResult) ||
     (activeTab === 'blog' && (!!blogStructure || !!blogAudit)) ||
@@ -572,12 +558,6 @@ export default function App() {
     }
   };
 
-  const expandKeyword = async (payload) => {
-    const data = await requestKeywords('/api/keywords/expand', payload,
-      '키워드 확장 데이터를 조회하지 못했습니다.', { key: 'discoveryScore', direction: 'desc' });
-    if (data) setExpansion(data);
-  };
-
   const analyzeBlogStructure = async (keyword) => {
     if (!keyword) return;
     // 비로그인 완전 차단
@@ -635,15 +615,14 @@ export default function App() {
       '효율 점수': r.efficiencyScore, '추천 액션': r.recommendAction
     }));
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), activeTab === 'analysis' ? '키워드 분석' : '키워드 확장');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '키워드 분석');
     XLSX.writeFile(wb, getDownloadFileName());
   };
 
   const switchTab = (next) => {
     setActiveTab(next); setError(''); setFilters(defaultFilters);
     setInsights(null); setInsightsLoading(false); setInsightsError(null);
-    if (next === 'analysis')  setSortConfig({ key: 'efficiencyScore',  direction: 'desc' });
-    if (next === 'expansion') setSortConfig({ key: 'discoveryScore',  direction: 'desc' });
+    if (next === 'analysis') setSortConfig({ key: 'efficiencyScore', direction: 'desc' });
     if (next === 'blog') { setBlogStructure(null); setBlogStructureKeyword(''); setBlogAudit(null); setBlogAuditError(''); }
   };
 
@@ -666,19 +645,10 @@ export default function App() {
     if (id === 'analysis') {
       setActiveTab('analysis');
       setAnalysis(null);
-      setExpansion(null);
       setInsights(null);
       setInsightsLoading(false);
       setInsightsError(null);
       setSortConfig({ key: 'efficiencyScore', direction: 'desc' });
-    } else if (id === 'expansion') {
-      setActiveTab('expansion');
-      setAnalysis(null);
-      setExpansion(null);
-      setInsights(null);
-      setInsightsLoading(false);
-      setInsightsError(null);
-      setSortConfig({ key: 'discoveryScore', direction: 'desc' });
     } else if (id === 'blog') {
       setActiveTab('blog');
       setBlogStructure(null);
@@ -752,9 +722,6 @@ export default function App() {
             suggestions={analysis?.searchSuggestions || []}
             isMain={!hasResults} />
         )}
-        {activeTab === 'expansion' && (
-          <KeywordExpansionForm onSubmit={expandKeyword} loading={loading} />
-        )}
         {activeTab === 'blog' && (
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {/* 서브탭 스위처 */}
@@ -817,10 +784,7 @@ export default function App() {
         {/* 키워드 분석/확장 탭 재검색 로딩 (결과 있을 때만) */}
         {loading && isKeywordTab && activeResult && (
           <div className="mb-5">
-            <LoadingRow label={
-              activeTab === 'analysis' ? '키워드 데이터를 분석 중입니다…' :
-              '키워드를 확장 중입니다…'
-            } />
+            <LoadingRow label="키워드 데이터를 분석 중입니다…" />
           </div>
         )}
         {/* 블로그 재검색 로딩 (기존 결과 위에) */}
