@@ -592,10 +592,10 @@ export default function App() {
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
       const res  = await fetch('/api/blog/audit', { method: 'POST', headers, body: JSON.stringify({ url }) });
       const data = await parseApiResponse(res);
-      if (!res.ok) throw new Error(data.message || '블로그 감사에 실패했습니다.');
+      if (!res.ok) throw new Error(data.message || '블로그 진단에 실패했습니다.');
       setBlogAudit(data);
     } catch (e) {
-      setBlogAuditError(e.message || '블로그 감사에 실패했습니다.');
+      setBlogAuditError(e.message || '블로그 진단에 실패했습니다.');
     } finally { setBlogAuditLoading(false); }
   };
 
@@ -740,7 +740,7 @@ export default function App() {
                 padding: 3,
                 gap: 2,
               }}>
-                {[{ id: 'structure', label: '블로그 구조 분석' }, { id: 'audit', label: '블로그 감사' }].map(({ id, label }) => {
+                {[{ id: 'structure', label: '블로그 구조 분석' }, { id: 'audit', label: '블로그 진단' }].map(({ id, label }) => {
                   const isActive = blogSubTab === id;
                   return (
                     <button
@@ -887,7 +887,7 @@ export default function App() {
         {activeTab === 'blog' && blogSubTab === 'audit' && blogAudit && !blogAuditLoading && (
           <div className="mac-fade-in flex flex-col" style={{ gap: 48 }}>
             <section>
-              <SectionLabel>블로그 감사 결과</SectionLabel>
+              <SectionLabel>블로그 진단 결과</SectionLabel>
               <BlogAuditPanel result={blogAudit} />
             </section>
           </div>

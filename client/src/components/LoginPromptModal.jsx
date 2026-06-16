@@ -68,7 +68,7 @@ export default function LoginPromptModal({ reason, onClose, onGoToAuth }) {
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
             {isBlog
               ? '블로그 구조 분석 기능은 로그인한 회원만 사용할 수 있습니다.'
-              : `비로그인 상태에서는 키워드 분석을 ${4}회까지 무료로 사용할 수 있어요. 로그인하면 제한 없이 사용할 수 있습니다.`}
+              : `비로그인 상태에서는 키워드 분석을 ${4}회까지 무료로 사용할 수 있어요. 로그인하면 하루 10회까지 사용할 수 있습니다.`}
           </p>
         </div>
 

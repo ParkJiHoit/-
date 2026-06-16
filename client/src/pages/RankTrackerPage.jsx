@@ -93,18 +93,19 @@ export default function RankTrackerPage({ onLoginRequest }) {
 
   if (!user) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 360, gap: 14 }}>
-        <div style={{ fontSize: 32, opacity: 0.3 }}>📊</div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-secondary)' }}>로그인 후 이용할 수 있습니다</div>
-        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.7 }}>
-          키워드별 블로그 순위를 날짜별로 추적하고<br/>변화를 확인해보세요
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 360, gap: 18 }}>
+        <div style={{ fontSize: 48, opacity: 0.25 }}>📊</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>로그인 후 이용할 수 있습니다</div>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.8, margin: 0 }}>
+          키워드별 블로그 순위를 날짜별로 추적하고<br/>변화를 한눈에 확인해보세요
         </p>
         <button
           onClick={onLoginRequest}
           style={{
-            padding: '10px 24px', borderRadius: 10, border: 'none',
+            padding: '12px 32px', borderRadius: 12, border: 'none',
             background: 'var(--accent)', color: '#fff',
-            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            marginTop: 4,
           }}
         >
           로그인하기
