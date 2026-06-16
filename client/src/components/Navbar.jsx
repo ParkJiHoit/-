@@ -1,6 +1,8 @@
 import { ChevronDown, FileText, LogOut, Search, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
+import logoLight from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_45_46-removebg-preview.png';
+import logoDark from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_42_18-removebg-preview.png';
 
 const NOTION_UPDATE_URL =
   'https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link';
@@ -122,35 +124,16 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       <button
         onClick={onGoHome}
         style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          padding: '0 10px 0 8px',
+          display: 'flex', alignItems: 'center',
+          padding: '0 6px 0 4px',
           border: 'none', background: 'transparent', cursor: 'pointer',
         }}
       >
-        {/* Ranklet icon: rising bars */}
-        <div
-          style={{
-            width: 24, height: 24, borderRadius: 7, flexShrink: 0,
-            background: 'linear-gradient(135deg, #0A84FF 0%, #34C1FF 100%)',
-            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-            padding: '4px 5px 3px',
-            gap: 2,
-            boxShadow: '0 2px 8px rgba(10,132,255,0.4)',
-          }}
-        >
-          {[5, 9, 7].map((h, i) => (
-            <div key={i} style={{ width: 3, height: h, borderRadius: 1.5, background: '#fff', opacity: i === 1 ? 1 : 0.75 }} />
-          ))}
-        </div>
-        <span style={{
-          fontSize: 13, fontWeight: 800, letterSpacing: '0.04em',
-          fontFamily: "'Pretendard Variable', 'Pretendard', sans-serif",
-          color: 'var(--text-primary)',
-          lineHeight: '1',
-          paddingTop: 1,
-        }}>
-          RANKLET
-        </span>
+        <img
+          src={isDark ? logoDark : logoLight}
+          alt="RANKLET"
+          style={{ height: 28, width: 'auto', display: 'block' }}
+        />
       </button>
 
       {divider}
