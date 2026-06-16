@@ -19,6 +19,7 @@ import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
 import LoginPromptModal from './components/LoginPromptModal';
 import AuthPage from './pages/AuthPage';
+import RankTrackerPage from './pages/RankTrackerPage';
 import SummaryCards from './components/SummaryCards';
 import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
@@ -470,7 +471,8 @@ export default function App() {
   const activeResult  = activeTab === 'analysis' ? analysis : expansion;
   const activeRows    = activeResult?.keywords || [];
   const hasResults    = (isKeywordTab && !!activeResult) ||
-    (activeTab === 'blog' && (!!blogStructure || !!blogAudit));
+    (activeTab === 'blog' && (!!blogStructure || !!blogAudit)) ||
+    activeTab === 'rank-tracker';
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -681,6 +683,8 @@ export default function App() {
       setActiveTab('blog');
       setBlogStructure(null);
       setBlogStructureKeyword('');
+    } else if (id === 'rank-tracker') {
+      setActiveTab('rank-tracker');
     }
   };
 
@@ -733,6 +737,12 @@ export default function App() {
 
       {activeTab === 'pricing' ? (
         <PricingPage onMockAction={handleMockAction} />
+      ) : activeTab === 'rank-tracker' ? (
+        <div style={{ paddingTop: 'calc(var(--nav-offset) + 24px)', paddingBottom: 64 }}>
+          <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-10">
+            <RankTrackerPage onLoginRequest={() => switchTab('auth')} />
+          </div>
+        </div>
       ) : (
       <>
 

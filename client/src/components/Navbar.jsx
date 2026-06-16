@@ -28,9 +28,10 @@ function getAssignedAvatar(userId) {
 }
 
 const SERVICES = [
-  { id: 'analysis',  icon: Search,   label: '키워드 분석', desc: '기준 키워드로 연관 키워드 발굴' },
-  { id: 'expansion', icon: Sparkles, label: '키워드 확장', desc: '시드 키워드로 대량 발굴' },
-  { id: 'blog',      icon: FileText, label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' }
+  { id: 'analysis',     icon: Search,      label: '키워드 분석', desc: '기준 키워드로 연관 키워드 발굴' },
+  { id: 'expansion',    icon: Sparkles,    label: '키워드 확장', desc: '시드 키워드로 대량 발굴' },
+  { id: 'blog',         icon: FileText,    label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' },
+  { id: 'rank-tracker', icon: TrendingUp,  label: '순위 추적',   desc: '블로그 키워드 순위 일별 추적' },
 ];
 
 export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, theme }) {
