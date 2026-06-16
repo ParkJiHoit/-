@@ -43,4 +43,27 @@ export async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_kh_keyword ON keyword_history (keyword);
   `);
   console.log('[DB] keyword_history 테이블 준비 완료');
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS tracked_keywords (
+      id         SERIAL PRIMARY KEY,
+      user_id    UUID        NOT NULL,
+      keyword    TEXT        NOT NULL,
+      mode       TEXT        NOT NULL CHECK (mode IN ('blog','all')),
+      blog_ids   TEXT[]      DEFAULT '{}',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (user_id, keyword, mode)
+    );
+    CREATE TABLE IF NOT EXISTS rank_snapshots (
+      id             SERIAL PRIMARY KEY,
+      tracked_id     INTEGER     NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,
+      blog_id        TEXT        NOT NULL,
+      rank           SMALLINT,
+      post_title     TEXT,
+      post_link      TEXT,
+      snapshotted_at DATE        NOT NULL DEFAULT CURRENT_DATE,
+      UNIQUE (tracked_id, blog_id, snapshotted_at)
+    );
+    CREATE INDEX IF NOT EXISTS idx_rs_tracked_date ON rank_snapshots (tracked_id, snapshotted_at DESC);
+  `);
+  console.log('[DB] rank_tracker 테이블 준비 완료');
 }
