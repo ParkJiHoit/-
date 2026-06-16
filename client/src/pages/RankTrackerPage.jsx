@@ -276,8 +276,8 @@ export default function RankTrackerPage({ onLoginRequest }) {
         {selected && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-            <div className="mac-card" style={{ padding: '18px 22px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div className="mac-card" style={{ padding: '0 22px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 64, borderBottom: mode === 'blog' && blogIds.length > 0 ? '1px solid var(--border)' : 'none', marginBottom: mode === 'blog' && blogIds.length > 0 ? 0 : 0 }}>
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 3 }}>
                     {selected.keyword}
@@ -318,7 +318,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
                   ? Math.max(1, Math.round((Date.now() - new Date(selected.created_at)) / 86400000))
                   : 0;
                 return (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '14px 0' }}>
                     {[
                       { label: '현재 순위', value: curRank != null ? `${curRank}위` : '미노출', color: curRank != null && curRank <= 3 ? '#30D158' : curRank != null && curRank <= 6 ? '#FF9F0A' : 'var(--text-tertiary)' },
                       { label: '최고 순위', value: bestRank != null ? `${bestRank}위` : '—', color: '#30D158' },
