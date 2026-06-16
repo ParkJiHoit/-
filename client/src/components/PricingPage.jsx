@@ -69,33 +69,33 @@ export default function PricingPage({ onMockAction, onGoToAuth, user }) {
 
         {/* ── 베이직 플랜 ── */}
         <div className="mac-card" style={{
-          flex: '1 1 340px', maxWidth: 400,
-          padding: '32px 30px',
+          flex: '1 1 300px', maxWidth: 360,
+          padding: '22px 22px',
           border: '1px solid var(--border)',
-          opacity: 0.82,
+          opacity: 0.78,
           display: 'flex', flexDirection: 'column',
         }}>
           {/* 플랜 이름 */}
-          <div style={{ marginBottom: 22 }}>
-            <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ranklet</p>
-            <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--text-secondary)' }}>베이직 플랜</p>
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ margin: '0 0 3px', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ranklet</p>
+            <p style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--text-secondary)' }}>베이직 플랜</p>
           </div>
 
           {/* 가격 */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 26 }}>
-            <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-2px', color: 'var(--text-secondary)', lineHeight: 1 }}>무료</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 18 }}>
+            <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-2px', color: 'var(--text-secondary)', lineHeight: 1 }}>무료</span>
           </div>
 
-          <div style={{ height: 1, background: 'var(--border)', marginBottom: 22 }} />
+          <div style={{ height: 1, background: 'var(--border)', marginBottom: 16 }} />
 
           {/* 가능한 기능 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 20 }}>
             {BASIC_FEATURES.map(({ text, sub }) => (
               <div key={text} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <Check size={14} color="var(--text-tertiary)" strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2 }} />
+                <Check size={12} color="var(--text-tertiary)" strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2 }} />
                 <div>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>{text}</p>
-                  {sub && <p style={{ margin: 0, fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>{sub}</p>}
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>{text}</p>
+                  {sub && <p style={{ margin: 0, fontSize: 10, color: 'var(--text-tertiary)', marginTop: 1 }}>{sub}</p>}
                 </div>
               </div>
             ))}
@@ -106,9 +106,9 @@ export default function PricingPage({ onMockAction, onGoToAuth, user }) {
             <button
               onClick={user ? onMockAction : onGoToAuth}
               style={{
-                width: '100%', padding: '12px 0',
+                width: '100%', padding: '10px 0',
                 background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
-                borderRadius: 12, fontSize: 13, fontWeight: 600,
+                borderRadius: 10, fontSize: 12, fontWeight: 600,
                 color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
                 transition: 'background 0.15s',
               }}
