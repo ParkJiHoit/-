@@ -1,6 +1,34 @@
 import { useState, useEffect } from 'react';
+import { HelpCircle } from 'lucide-react';
 import { formatNumber, formatPercent, formatScore } from '../utils/formatters';
 import BlogRankingTable from './BlogRankingTable';
+
+function InfoTooltip({ text }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: 4, verticalAlign: 'middle' }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <HelpCircle style={{ width: 12, height: 12, color: 'var(--text-tertiary)', cursor: 'default' }} />
+      {show && (
+        <span style={{
+          position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 300, width: 240,
+          background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+          borderRadius: 10, padding: '10px 13px',
+          fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6,
+          boxShadow: '0 8px 28px rgba(0,0,0,0.4)',
+          pointerEvents: 'none', whiteSpace: 'normal', textAlign: 'left',
+          fontWeight: 400, letterSpacing: 0, textTransform: 'none',
+        }}>
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
 
 /* ─── Skeleton ─── */
 function Skeleton({ width = '100%', height = 8, radius = 6 }) {
@@ -710,7 +738,13 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
               <p style={{
                 fontSize: 12, color: 'var(--text-tertiary)', margin: 0,
                 fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase',
-              }}>{label}</p>
+                display: 'flex', alignItems: 'center',
+              }}>
+                {label}
+                {label === '효율 점수' && (
+                  <InfoTooltip text="RANKLET만의 독자 알고리즘으로 산정한 점수입니다. 검색량·경쟁도·CTR·포화도를 종합해 0~100점으로 나타내며, 높을수록 블로그 글 작성 대비 상위 노출 가능성이 높은 키워드입니다." />
+                )}
+              </p>
 
               {/* 값 */}
               <p style={{
