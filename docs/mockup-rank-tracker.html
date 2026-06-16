@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>순위 추적 대시보드 — Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-overlay: #3A3A3C;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text-primary: #F5F5F7;
+    --text-secondary: #C4C4C8;
+    --text-tertiary: #8E8E93;
+    --accent: #0A84FF;
+    --green: #30D158;
+    --orange: #FF9F0A;
+    --red: #FF453A;
+    --purple: #BF5AF2;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+    z-index: 100;
+    background: rgba(28,28,30,0.82);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    padding: 0 8px;
+    display: flex; align-items: center; gap: 2px;
+    height: 44px;
+    white-space: nowrap;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 7px;
+    padding: 0 10px 0 4px;
+    border-right: 1px solid var(--border);
+    margin-right: 4px;
+  }
+  .nav-icon {
+    width: 24px; height: 24px; border-radius: 7px;
+    background: linear-gradient(135deg,#0A84FF,#34C1FF);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: 4px 5px 3px; gap: 2px;
+  }
+  .nav-icon span { width: 3px; border-radius: 1.5px; background: #fff; }
+  .nav-logo-text { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
+  .nav-tab {
+    padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    border: none; background: none;
+  }
+  .nav-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+  .nav-tab.active { color: var(--text-primary); background: rgba(255,255,255,0.10); font-weight: 600; }
+
+  /* MAIN */
+  .main { padding: 80px 32px 48px; max-width: 1200px; margin: 0 auto; }
+
+  /* PAGE HEADER */
+  .page-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .page-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .page-sub { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; }
+  .btn-primary {
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 10px;
+    background: var(--accent); border: none; color: #fff;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 2px 10px rgba(10,132,255,0.35);
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: #409CFF; }
+  .btn-secondary {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 8px;
+    background: rgba(255,255,255,0.07); border: 1px solid var(--border-strong);
+    color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.11); color: var(--text-primary); }
+
+  /* CARD */
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+  }
+  .card-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.10em;
+    text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 14px;
+  }
+
+  /* MODE TABS */
+  .mode-tabs {
+    display: flex; gap: 8px; margin-bottom: 28px;
+  }
+  .mode-tab {
+    flex: 1; padding: 14px 18px; border-radius: 14px;
+    border: 1.5px solid var(--border); background: var(--bg-elevated);
+    cursor: pointer; transition: all 0.18s; text-align: left;
+  }
+  .mode-tab.active {
+    border-color: var(--accent);
+    background: rgba(10,132,255,0.08);
+  }
+  .mode-tab-title { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 3px; }
+  .mode-tab.active .mode-tab-title { color: var(--accent); }
+  .mode-tab-desc { font-size: 12px; color: var(--text-tertiary); }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+
+  /* TRACKING ITEM */
+  .tracking-list { display: flex; flex-direction: column; gap: 10px; }
+  .tracking-item {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tracking-item:hover, .tracking-item.selected {
+    border-color: var(--accent);
+    background: rgba(10,132,255,0.06);
+  }
+  .tracking-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .keyword-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(10,132,255,0.15); border: 1px solid rgba(10,132,255,0.3);
+    font-size: 12px; font-weight: 700; color: var(--accent);
+  }
+  .tracking-meta { font-size: 11px; color: var(--text-tertiary); }
+  .blog-list { display: flex; flex-direction: column; gap: 5px; }
+  .blog-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 8px; border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+  }
+  .blog-id { font-size: 12px; color: var(--text-secondary); }
+  .rank-badge {
+    font-size: 13px; font-weight: 800;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--green);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .rank-badge.mid { color: var(--orange); }
+  .rank-badge.low { color: var(--text-tertiary); }
+  .rank-change { font-size: 10px; font-weight: 700; }
+  .rank-change.up { color: var(--green); }
+  .rank-change.down { color: var(--red); }
+  .rank-change.same { color: var(--text-tertiary); }
+
+  /* DETAIL PANEL */
+  .detail-panel { display: flex; flex-direction: column; gap: 16px; }
+
+  /* CALENDAR HEATMAP */
+  .calendar-wrap { overflow-x: auto; }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: 32px repeat(18, 1fr);
+    gap: 3px;
+    min-width: 560px;
+  }
+  .cal-header { font-size: 9px; color: var(--text-tertiary); text-align: center; padding: 2px 0; letter-spacing: 0.04em; }
+  .cal-day-label { font-size: 9px; color: var(--text-tertiary); text-align: right; padding-right: 6px; line-height: 18px; }
+  .cal-cell {
+    width: 100%; aspect-ratio: 1;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.04);
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; color: transparent;
+  }
+  .cal-cell:hover { transform: scale(1.3); z-index: 10; color: #fff; }
+  .cal-cell.r1  { background: rgba(48,209,88,0.85);  border-color: rgba(48,209,88,0.4); }
+  .cal-cell.r2  { background: rgba(48,209,88,0.65);  border-color: rgba(48,209,88,0.3); }
+  .cal-cell.r3  { background: rgba(48,209,88,0.45);  border-color: rgba(48,209,88,0.2); }
+  .cal-cell.r4  { background: rgba(255,159,10,0.55); border-color: rgba(255,159,10,0.3); }
+  .cal-cell.r5  { background: rgba(255,159,10,0.40); border-color: rgba(255,159,10,0.2); }
+  .cal-cell.r6  { background: rgba(255,159,10,0.28); border-color: rgba(255,159,10,0.15); }
+  .cal-cell.r7  { background: rgba(255,69,58,0.40);  border-color: rgba(255,69,58,0.2); }
+  .cal-cell.r10 { background: rgba(255,69,58,0.25);  border-color: rgba(255,69,58,0.12); }
+  .cal-cell.out { background: rgba(255,255,255,0.02); }
+
+  .legend { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text-tertiary); }
+  .legend-box { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* CHART */
+  .chart-area { position: relative; height: 160px; }
+  svg.line-chart { width: 100%; height: 100%; overflow: visible; }
+  .chart-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+  .chart-label { font-size: 10px; color: var(--text-tertiary); }
+
+  /* RANK TABLE */
+  .rank-table { width: 100%; border-collapse: collapse; }
+  .rank-table th {
+    padding: 8px 12px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-tertiary); text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .rank-table td {
+    padding: 10px 12px; font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  .rank-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .rank-num {
+    font-size: 15px; font-weight: 800;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text-primary);
+  }
+  .rank-num.top3 { color: var(--green); }
+  .post-title { color: var(--text-primary); font-weight: 500; }
+  .tag {
+    display: inline-block; padding: 2px 7px; border-radius: 5px;
+    font-size: 10px; font-weight: 600;
+  }
+  .tag-green { background: rgba(48,209,88,0.12); color: var(--green); border: 1px solid rgba(48,209,88,0.25); }
+  .tag-orange { background: rgba(255,159,10,0.12); color: var(--orange); border: 1px solid rgba(255,159,10,0.25); }
+
+  /* EMPTY STATE */
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 48px 24px;
+    color: var(--text-tertiary); text-align: center;
+  }
+  .empty-icon { font-size: 32px; opacity: 0.4; }
+  .empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+  .empty-desc { font-size: 12px; line-height: 1.7; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: #2C2C2E; border: 1px solid var(--border-strong);
+    border-radius: 20px; padding: 28px 32px; width: 480px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--text-tertiary); letter-spacing: 0.06em; margin-bottom: 5px; display: block; text-transform: uppercase; }
+  .form-input {
+    width: 100%; padding: 9px 12px; border-radius: 9px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border-strong);
+    color: var(--text-primary); font-size: 13px; font-family: inherit;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(10,132,255,0.15); }
+  .url-add-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .url-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.07); border: 1px solid var(--border-strong);
+    font-size: 12px; color: var(--text-secondary); margin: 3px;
+  }
+  .url-chip-x { font-size: 10px; cursor: pointer; color: var(--text-tertiary); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+  .btn-cancel {
+    padding: 9px 16px; border-radius: 9px; border: 1px solid var(--border-strong);
+    background: transparent; color: var(--text-secondary); font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+
+  /* REFRESH ROW */
+  .refresh-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .last-updated { font-size: 11px; color: var(--text-tertiary); }
+
+  .divider { width: 1px; height: 16px; background: var(--border-strong); }
+
+  /* STAT ROW */
+  .stat-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat-chip {
+    padding: 6px 14px; border-radius: 10px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 1px; min-width: 80px;
+  }
+  .stat-chip-label { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+  .stat-chip-value { font-size: 18px; font-weight: 800; font-family: 'Space Grotesk', sans-serif; color: var(--text-primary); }
+  .stat-chip-value.green { color: var(--green); }
+  .stat-chip-value.orange { color: var(--orange); }
+
+  /* SECTION DIVIDER */
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+  }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-icon">
+      <span style="height:5px;opacity:.75"></span>
+      <span style="height:9px"></span>
+      <span style="height:7px;opacity:.75"></span>
+    </div>
+    <span class="nav-logo-text">RANKLET</span>
+  </div>
+  <button class="nav-tab">키워드 분석</button>
+  <button class="nav-tab">블로그</button>
+  <button class="nav-tab active">순위 추적</button>
+  <div class="divider" style="margin:0 6px"></div>
+  <button class="nav-tab" style="font-size:12px">업데이트</button>
+  <div class="divider" style="margin:0 6px"></div>
+  <button class="nav-tab" style="color:var(--accent);font-weight:600">로그인</button>
+</nav>
+
+<div class="main">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">순위 추적</div>
+      <div class="page-sub">키워드별 블로그 노출 순위를 날짜별로 추적하고 변화를 확인합니다</div>
+    </div>
+    <button class="btn-primary" onclick="document.getElementById('modal').style.display='flex'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      추적 등록
+    </button>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="mode-tabs">
+    <div class="mode-tab active" onclick="switchMode('blog')">
+      <div class="mode-tab-title">블로그 추적 모드</div>
+      <div class="mode-tab-desc">특정 블로그가 키워드에서 몇 위인지 추적</div>
+    </div>
+    <div class="mode-tab" onclick="switchMode('all')">
+      <div class="mode-tab-title">전체 순위 모드</div>
+      <div class="mode-tab-desc">키워드 블로그탭 상위 10개 스냅샷 기록</div>
+    </div>
+  </div>
+
+  <!-- BLOG TRACKING MODE -->
+  <div id="mode-blog" class="two-col">
+
+    <!-- LEFT: 추적 목록 -->
+    <div>
+      <div class="card-label" style="padding-left:4px">등록된 추적 항목 <span style="color:var(--accent)">3</span></div>
+      <div class="tracking-list">
+
+        <div class="tracking-item selected">
+          <div class="tracking-item-header">
+            <span class="keyword-badge">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              휴대폰창업
+            </span>
+            <span class="tracking-meta">블로그 3개</span>
+          </div>
+          <div class="blog-list">
+            <div class="blog-row">
+              <span class="blog-id">myblog123</span>
+              <span class="rank-badge">2위 <span class="rank-change up">▲1</span></span>
+            </div>
+            <div class="blog-row">
+              <span class="blog-id">techblog_kr</span>
+              <span class="rank-badge mid">5위 <span class="rank-change same">—</span></span>
+            </div>
+            <div class="blog-row">
+              <span class="blog-id">startup_daily</span>
+              <span class="rank-badge low">미노출 <span class="rank-change down">▼</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tracking-item">
+          <div class="tracking-item-header">
+            <span class="keyword-badge">옆커피창업</span>
+            <span class="tracking-meta">블로그 2개</span>
+          </div>
+          <div class="blog-list">
+            <div class="blog-row">
+              <span class="blog-id">myblog123</span>
+              <span class="rank-badge">1위 <span class="rank-change up">▲2</span></span>
+            </div>
+            <div class="blog-row">
+              <span class="blog-id">coffee_note</span>
+              <span class="rank-badge mid">7위 <span class="rank-change down">▼1</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tracking-item">
+          <div class="tracking-item-header">
+            <span class="keyword-badge">무인창업아이템</span>
+            <span class="tracking-meta">블로그 1개</span>
+          </div>
+          <div class="blog-list">
+            <div class="blog-row">
+              <span class="blog-id">myblog123</span>
+              <span class="rank-badge mid">4위 <span class="rank-change same">—</span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: 디테일 패널 -->
+    <div class="detail-panel">
+
+      <!-- 상단 정보 바 -->
+      <div class="card">
+        <div class="refresh-row">
+          <div>
+            <div style="font-size:15px;font-weight:700;margin-bottom:2px">휴대폰창업 — myblog123</div>
+            <div class="last-updated">마지막 갱신: 2026.06.16 09:32</div>
+          </div>
+          <button class="btn-secondary">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-5.49"/></svg>
+            순위 갱신
+          </button>
+        </div>
+        <div class="stat-chips">
+          <div class="stat-chip">
+            <span class="stat-chip-label">현재 순위</span>
+            <span class="stat-chip-value green">2위</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-chip-label">전일 대비</span>
+            <span class="stat-chip-value green">▲1</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-chip-label">최고 순위</span>
+            <span class="stat-chip-value">1위</span>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-chip-label">추적 기간</span>
+            <span class="stat-chip-value" style="font-size:14px">18일</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 캘린더 히트맵 -->
+      <div class="card">
+        <div class="section-title">일별 노출 순위 — 캘린더</div>
+        <div class="calendar-wrap">
+          <div class="calendar-grid">
+            <!-- header row -->
+            <div></div>
+            <div class="cal-header">5/30</div><div class="cal-header">5/31</div>
+            <div class="cal-header">6/1</div><div class="cal-header">6/2</div>
+            <div class="cal-header">6/3</div><div class="cal-header">6/4</div>
+            <div class="cal-header">6/5</div><div class="cal-header">6/6</div>
+            <div class="cal-header">6/7</div><div class="cal-header">6/8</div>
+            <div class="cal-header">6/9</div><div class="cal-header">6/10</div>
+            <div class="cal-header">6/11</div><div class="cal-header">6/12</div>
+            <div class="cal-header">6/13</div><div class="cal-header">6/14</div>
+            <div class="cal-header">6/15</div><div class="cal-header">6/16</div>
+
+            <!-- myblog123 row -->
+            <div class="cal-day-label">myblog</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r4" title="4위">4</div>
+            <div class="cal-cell r3" title="3위">3</div>
+            <div class="cal-cell r3" title="3위">3</div>
+            <div class="cal-cell r4" title="4위">4</div>
+            <div class="cal-cell out" title="미노출">-</div>
+            <div class="cal-cell out" title="미노출">-</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r3" title="3위">3</div>
+            <div class="cal-cell r2" title="2위">2</div>
+            <div class="cal-cell r1" title="1위">1</div>
+            <div class="cal-cell r2" title="2위">2</div>
+            <div class="cal-cell r2" title="2위">2</div>
+            <div class="cal-cell r3" title="3위">3</div>
+            <div class="cal-cell r2" title="2위">2</div>
+            <div class="cal-cell r1" title="1위">1</div>
+            <div class="cal-cell r2" title="2위">2</div>
+            <div class="cal-cell r2" title="현재 2위">2</div>
+
+            <!-- techblog row -->
+            <div class="cal-day-label">techblog</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell r7" title="7위">7</div>
+            <div class="cal-cell r6" title="6위">6</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r6" title="6위">6</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r4" title="4위">4</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r6" title="6위">6</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r4" title="4위">4</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r6" title="6위">6</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r5" title="5위">5</div>
+            <div class="cal-cell r5" title="현재 5위">5</div>
+
+            <!-- startup row -->
+            <div class="cal-day-label">startup</div>
+            <div class="cal-cell r3" title="3위">3</div>
+            <div class="cal-cell r2" title="2위">2</div>
+            <div class="cal-cell r4" title="4위">4</div>
+            <div class="cal-cell r7" title="7위">7</div>
+            <div class="cal-cell r10" title="10위">10</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out">-</div>
+            <div class="cal-cell out" title="미노출">-</div>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+          <span style="font-size:10px;color:var(--text-tertiary);margin-right:4px">순위:</span>
+          <div class="legend-item"><div class="legend-box r1"></div>1위</div>
+          <div class="legend-item"><div class="legend-box r2"></div>2위</div>
+          <div class="legend-item"><div class="legend-box r3"></div>3위</div>
+          <div class="legend-item"><div class="legend-box r5" style="background:rgba(255,159,10,0.4)"></div>5위</div>
+          <div class="legend-item"><div class="legend-box r7" style="background:rgba(255,69,58,0.35)"></div>7위↓</div>
+          <div class="legend-item"><div class="legend-box out" style="background:rgba(255,255,255,0.05);border:1px solid var(--border)"></div>미노출</div>
+        </div>
+      </div>
+
+      <!-- 순위 추이 차트 -->
+      <div class="card">
+        <div class="refresh-row" style="margin-bottom:8px">
+          <div class="section-title" style="margin:0">순위 추이</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-secondary" style="padding:4px 10px;font-size:11px;background:rgba(10,132,255,0.12);border-color:rgba(10,132,255,0.3);color:var(--accent)">7일</button>
+            <button class="btn-secondary" style="padding:4px 10px;font-size:11px">30일</button>
+          </div>
+        </div>
+        <div class="chart-area">
+          <svg class="line-chart" viewBox="0 0 700 140" preserveAspectRatio="none">
+            <!-- 그리드 -->
+            <line x1="0" y1="28" x2="700" y2="28" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <line x1="0" y1="56" x2="700" y2="56" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <line x1="0" y1="84" x2="700" y2="84" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <line x1="0" y1="112" x2="700" y2="112" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+            <!-- Y 레이블 -->
+            <text x="2" y="26" font-size="9" fill="rgba(255,255,255,0.25)">1위</text>
+            <text x="2" y="54" font-size="9" fill="rgba(255,255,255,0.25)">3위</text>
+            <text x="2" y="82" font-size="9" fill="rgba(255,255,255,0.25)">5위</text>
+            <text x="2" y="110" font-size="9" fill="rgba(255,255,255,0.25)">7위</text>
+
+            <!-- myblog line (green) — 순위 낮을수록 y 작음 -->
+            <!-- ranks: 5,3,3,5,5,3,2,1,2,2,3,2,1,2,2 → y = (rank-1)/9 * 112 + 14 -->
+            <polyline
+              fill="none" stroke="#30D158" stroke-width="2" stroke-linejoin="round"
+              points="20,70 66,42 113,42 160,70 206,70 253,42 300,28 346,14 393,28 440,28 486,42 533,28 580,14 626,28 673,28"
+            />
+            <polyline
+              fill="url(#greenFade)" stroke="none"
+              points="20,70 66,42 113,42 160,70 206,70 253,42 300,28 346,14 393,28 440,28 486,42 533,28 580,14 626,28 673,28 673,140 20,140"
+            />
+            <!-- techblog line (orange) -->
+            <polyline
+              fill="none" stroke="#FF9F0A" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5,3"
+              points="20,84 66,70 113,84 160,70 206,70 253,84 300,70 346,84 393,70 440,84 486,70 533,70 580,56 626,70 673,70"
+            />
+            <!-- dots -->
+            <circle cx="673" cy="28" r="4" fill="#30D158"/>
+            <circle cx="673" cy="70" r="4" fill="#FF9F0A"/>
+            <!-- current rank labels -->
+            <text x="679" y="31" font-size="9" fill="#30D158" font-weight="700">2위</text>
+            <text x="679" y="73" font-size="9" fill="#FF9F0A" font-weight="700">5위</text>
+
+            <defs>
+              <linearGradient id="greenFade" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#30D158" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="#30D158" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="chart-labels">
+          <span class="chart-label">6/2</span>
+          <span class="chart-label">6/4</span>
+          <span class="chart-label">6/6</span>
+          <span class="chart-label">6/8</span>
+          <span class="chart-label">6/10</span>
+          <span class="chart-label">6/12</span>
+          <span class="chart-label">6/14</span>
+          <span class="chart-label">6/16</span>
+        </div>
+        <!-- 범례 -->
+        <div style="display:flex;gap:14px;margin-top:10px">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
+            <div style="width:20px;height:2px;background:#30D158;border-radius:1px"></div>myblog123
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary)">
+            <div style="width:20px;height:2px;background:#FF9F0A;border-radius:1px;border-top:2px dashed #FF9F0A;height:0"></div>techblog_kr
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ALL RANKING MODE (hidden) -->
+  <div id="mode-all" style="display:none">
+    <div class="two-col">
+      <div>
+        <div class="card-label" style="padding-left:4px">등록된 키워드 <span style="color:var(--accent)">2</span></div>
+        <div class="tracking-list">
+          <div class="tracking-item selected">
+            <div class="tracking-item-header">
+              <span class="keyword-badge">휴대폰창업</span>
+              <span class="tracking-meta">스냅샷 12회</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">마지막: 2026.06.16 09:32</div>
+          </div>
+          <div class="tracking-item">
+            <div class="tracking-item-header">
+              <span class="keyword-badge">무인창업아이템</span>
+              <span class="tracking-meta">스냅샷 5회</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">마지막: 2026.06.15 14:10</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-panel">
+        <div class="card">
+          <div class="refresh-row">
+            <div>
+              <div style="font-size:15px;font-weight:700;margin-bottom:2px">휴대폰창업 — 전체 순위</div>
+              <div class="last-updated">마지막 갱신: 2026.06.16 09:32</div>
+            </div>
+            <button class="btn-secondary">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.49-5.49"/></svg>
+              순위 갱신
+            </button>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border)">
+            <div class="section-title" style="margin:0">현재 블로그탭 상위 10위</div>
+          </div>
+          <table class="rank-table">
+            <thead>
+              <tr>
+                <th style="width:48px">순위</th>
+                <th>포스팅 제목</th>
+                <th>블로그</th>
+                <th>작성일</th>
+                <th>변화</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rank-num top3">1</span></td>
+                <td class="post-title">휴대폰 창업 현실 후기 — 6개월 매출 공개</td>
+                <td style="color:var(--accent)">myblog123</td>
+                <td>3일 전</td>
+                <td><span class="rank-change up" style="font-size:12px">▲2</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num top3">2</span></td>
+                <td class="post-title">2026년 휴대폰 창업 비용과 수익 총정리</td>
+                <td>techreview_k</td>
+                <td>1일 전</td>
+                <td><span class="rank-change same" style="font-size:12px">—</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num top3">3</span></td>
+                <td class="post-title">휴대폰 판매점 창업 성공하는 방법</td>
+                <td>startup2024</td>
+                <td>오늘</td>
+                <td><span class="rank-change up" style="font-size:12px">▲1</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">4</span></td>
+                <td class="post-title">대리점 vs 판매점 창업 비교 분석</td>
+                <td>bizlife_kr</td>
+                <td>5일 전</td>
+                <td><span class="rank-change down" style="font-size:12px">▼1</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">5</span></td>
+                <td class="post-title">휴대폰 창업 단점 솔직하게 말해드림</td>
+                <td>honest_blog</td>
+                <td>2일 전</td>
+                <td><span class="rank-change down" style="font-size:12px">▼2</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">6</span></td>
+                <td class="post-title">소자본 휴대폰 창업 가능할까?</td>
+                <td>smallbiz99</td>
+                <td>7일 전</td>
+                <td><span class="rank-change same" style="font-size:12px">—</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">7</span></td>
+                <td class="post-title">통신사 대리점 창업 준비 체크리스트</td>
+                <td>telecom_start</td>
+                <td>어제</td>
+                <td><span class="tag tag-green" style="font-size:10px">NEW</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">8</span></td>
+                <td class="post-title">핸드폰 가게 창업 비용 현실적인 계산</td>
+                <td>realbiz2026</td>
+                <td>4일 전</td>
+                <td><span class="rank-change down" style="font-size:12px">▼1</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">9</span></td>
+                <td class="post-title">창업 전 꼭 알아야 할 휴대폰 마진</td>
+                <td>margin_note</td>
+                <td>6일 전</td>
+                <td><span class="rank-change same" style="font-size:12px">—</span></td>
+              </tr>
+              <tr>
+                <td><span class="rank-num">10</span></td>
+                <td class="post-title">휴대폰 창업 6개월 후기</td>
+                <td>life_record</td>
+                <td>어제</td>
+                <td><span class="tag tag-orange" style="font-size:10px">▼OUT</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title">추적 등록</div>
+
+    <!-- Mode select -->
+    <div style="display:flex;gap:8px;margin-bottom:18px">
+      <div id="m-blog" onclick="switchModalMode('blog')" style="flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid var(--accent);background:rgba(10,132,255,0.08);cursor:pointer">
+        <div style="font-size:12px;font-weight:700;color:var(--accent)">블로그 추적</div>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">내 블로그 순위 추적</div>
+      </div>
+      <div id="m-all" onclick="switchModalMode('all')" style="flex:1;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer">
+        <div style="font-size:12px;font-weight:700;color:var(--text-secondary)">전체 순위</div>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">상위 10위 스냅샷</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">타겟 키워드</label>
+      <input class="form-input" type="text" placeholder="예: 휴대폰창업" />
+    </div>
+
+    <div id="blog-url-section" class="form-group">
+      <label class="form-label">추적할 블로그 URL</label>
+      <div class="url-add-row">
+        <input class="form-input" type="text" placeholder="https://blog.naver.com/myblog" style="flex:1"/>
+        <button class="btn-primary" style="padding:9px 14px;white-space:nowrap;flex-shrink:0">추가</button>
+      </div>
+      <div style="margin-top:6px">
+        <span class="url-chip">myblog123 <span class="url-chip-x">✕</span></span>
+        <span class="url-chip">techblog_kr <span class="url-chip-x">✕</span></span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="document.getElementById('modal').style.display='none'">취소</button>
+      <button class="btn-primary">등록하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchMode(mode) {
+  document.querySelectorAll('.mode-tab').forEach((t,i) => {
+    t.classList.toggle('active', (mode==='blog' && i===0)||(mode==='all' && i===1));
+  });
+  document.getElementById('mode-blog').style.display = mode==='blog' ? 'grid' : 'none';
+  document.getElementById('mode-all').style.display  = mode==='all'  ? 'block' : 'none';
+}
+function switchModalMode(mode) {
+  const blog = document.getElementById('m-blog');
+  const all  = document.getElementById('m-all');
+  const sec  = document.getElementById('blog-url-section');
+  if(mode==='blog'){
+    blog.style.borderColor='var(--accent)'; blog.style.background='rgba(10,132,255,0.08)';
+    blog.querySelector('div').style.color='var(--accent)';
+    all.style.borderColor='var(--border)'; all.style.background='transparent';
+    all.querySelector('div').style.color='var(--text-secondary)';
+    sec.style.display='block';
+  } else {
+    all.style.borderColor='var(--accent)'; all.style.background='rgba(10,132,255,0.08)';
+    all.querySelector('div').style.color='var(--accent)';
+    blog.style.borderColor='var(--border)'; blog.style.background='transparent';
+    blog.querySelector('div').style.color='var(--text-secondary)';
+    sec.style.display='none';
+  }
+}
+document.querySelectorAll('.tracking-item').forEach(item => {
+  item.addEventListener('click', function() {
+    this.closest('.tracking-list').querySelectorAll('.tracking-item').forEach(i=>i.classList.remove('selected'));
+    this.classList.add('selected');
+  });
+});
+</script>
+</body>
+</html>
