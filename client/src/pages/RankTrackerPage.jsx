@@ -146,7 +146,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
 
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
               {mode === 'blog' ? '블로그 추적' : '전체 순위'} <span style={{ color: 'var(--accent)' }}>{filteredItems.length}</span>
             </span>
             <button
@@ -186,25 +186,55 @@ export default function RankTrackerPage({ onLoginRequest }) {
                       display: 'inline-flex', alignItems: 'center', gap: 5,
                       padding: '3px 10px', borderRadius: 999,
                       background: 'rgba(10,132,255,0.15)', border: '1px solid rgba(10,132,255,0.3)',
-                      fontSize: 12, fontWeight: 700, color: 'var(--accent)',
+                      fontSize: 13, fontWeight: 700, color: 'var(--accent)',
                     }}>
                       {item.keyword}
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       {item.mode === 'blog' && (
                         <button
                           onClick={e => { e.stopPropagation(); setEditItem(item); setShowModal(true); }}
                           title="블로그 URL 추가"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: 4, display: 'flex' }}
+                          className="icon-btn-plus"
+                          style={{
+                            background: 'none', border: '1px solid transparent', cursor: 'pointer',
+                            color: 'var(--accent)', padding: 6, display: 'flex', borderRadius: 7,
+                            transition: 'background 0.15s, border-color 0.15s',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = 'rgba(10,132,255,0.12)';
+                            e.currentTarget.style.borderColor = 'rgba(10,132,255,0.3)';
+                            e.currentTarget.querySelector('svg').style.transform = 'rotate(180deg)';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'none';
+                            e.currentTarget.style.borderColor = 'transparent';
+                            e.currentTarget.querySelector('svg').style.transform = 'rotate(0deg)';
+                          }}
                         >
-                          <Plus size={12} />
+                          <Plus size={14} style={{ transition: 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1)' }} />
                         </button>
                       )}
                       <button
                         onClick={e => { e.stopPropagation(); handleDelete(item.id); }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, display: 'flex' }}
+                        title="삭제"
+                        style={{
+                          background: 'none', border: '1px solid transparent', cursor: 'pointer',
+                          color: 'var(--text-tertiary)', padding: 6, display: 'flex', borderRadius: 7,
+                          transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.background = 'rgba(255,69,58,0.10)';
+                          e.currentTarget.style.borderColor = 'rgba(255,69,58,0.25)';
+                          e.currentTarget.style.color = '#FF453A';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.background = 'none';
+                          e.currentTarget.style.borderColor = 'transparent';
+                          e.currentTarget.style.color = 'var(--text-tertiary)';
+                        }}
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -215,9 +245,9 @@ export default function RankTrackerPage({ onLoginRequest }) {
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '4px 6px', borderRadius: 6, background: 'rgba(255,255,255,0.03)', marginBottom: 3,
                       }}>
-                        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{blogId}</span>
+                        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{blogId}</span>
                         <span style={{
-                          fontSize: 13, fontWeight: 800,
+                          fontSize: 14, fontWeight: 800,
                           fontFamily: "'Space Grotesk', sans-serif",
                           color: rank == null ? 'var(--text-tertiary)' : rank <= 3 ? '#30D158' : rank <= 6 ? '#FF9F0A' : 'var(--text-secondary)',
                         }}>
@@ -252,11 +282,11 @@ export default function RankTrackerPage({ onLoginRequest }) {
             <div className="mac-card" style={{ padding: '18px 22px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 3 }}>
                     {selected.keyword}
-                    {mode === 'blog' && blogIds.length > 0 && <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 8 }}>블로그 {blogIds.length}개 추적</span>}
+                    {mode === 'blog' && blogIds.length > 0 && <span style={{ fontSize: 13, color: 'var(--text-tertiary)', marginLeft: 10 }}>블로그 {blogIds.length}개 추적</span>}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
                     {latestDate ? `마지막 갱신: ${latestDate}` : '아직 갱신 내역 없음'}
                   </div>
                 </div>
@@ -296,8 +326,8 @@ export default function RankTrackerPage({ onLoginRequest }) {
                         background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)',
                         display: 'flex', flexDirection: 'column', gap: 2,
                       }}>
-                        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{chip.label}</span>
-                        <span style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif", color: chip.color, lineHeight: 1 }}>{chip.value}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{chip.label}</span>
+                        <span style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif", color: chip.color, lineHeight: 1 }}>{chip.value}</span>
                       </div>
                     ))}
                   </div>
@@ -306,7 +336,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
             </div>
 
             <div className="mac-card" style={{ padding: '18px 22px' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 14 }}>
                 일별 노출 순위 — 캘린더
               </div>
               <RankCalendar
@@ -318,7 +348,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
 
             {mode === 'blog' && (
               <div className="mac-card" style={{ padding: '18px 22px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 14 }}>
                   순위 추이
                 </div>
                 <RankChart snapshots={snapshots} blogIds={blogIds} />
@@ -328,7 +358,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
             {mode === 'all' && latestSnapshot.length > 0 && (
               <div className="mac-card" style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--accent)' }}>
                     현재 블로그탭 상위 10위 ({latestDate})
                   </div>
                 </div>

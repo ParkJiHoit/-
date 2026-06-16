@@ -115,7 +115,7 @@ export default function RankChart({ snapshots = [], blogIds = [] }) {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', paddingLeft: PAD_L, paddingRight: PAD_R, marginTop: 4 }}>
           {dates.filter((_, i) => i === 0 || i === Math.floor(dates.length / 2) || i === dates.length - 1).map(d => (
-            <span key={d} style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
+            <span key={d} style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
               {d.slice(5).replace('-', '/')}
             </span>
           ))}
@@ -126,7 +126,7 @@ export default function RankChart({ snapshots = [], blogIds = [] }) {
         {displayBlogIds.map((blogId, i) => (
           <div key={blogId} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 20, height: 2, background: CHART_COLORS[i % CHART_COLORS.length], borderRadius: 1 }} />
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{blogId}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{blogId}</span>
           </div>
         ))}
       </div>

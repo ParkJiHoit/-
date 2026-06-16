@@ -37,7 +37,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
     base: {
       width: '100%', aspectRatio: '1', borderRadius: 3,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 8, fontWeight: 800, cursor: 'pointer',
+      fontSize: 10, fontWeight: 800, cursor: 'pointer',
       transition: 'transform 0.1s', border: '1px solid transparent',
       position: 'relative',
     },
@@ -71,8 +71,8 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
         <div />
         {dates.map(d => (
           <div key={d} style={{
-            fontSize: 9, color: 'var(--text-tertiary)',
-            textAlign: 'center', letterSpacing: '0.02em',
+            fontSize: 11, color: 'var(--text-tertiary)',
+            textAlign: 'center', letterSpacing: '0.01em',
           }}>
             {d.slice(5).replace('-', '/')}
           </div>
@@ -86,10 +86,10 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
           gap: 3, minWidth: 480, marginBottom: 3,
         }}>
           <div style={{
-            fontSize: 10, color: 'var(--text-tertiary)',
+            fontSize: 12, color: 'var(--text-tertiary)',
             textAlign: 'right', paddingRight: 6,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            lineHeight: '18px',
+            lineHeight: '20px',
           }} title={blogId}>
             {blogId.length > 8 ? blogId.slice(0, 8) + '…' : blogId}
           </div>
@@ -126,20 +126,20 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
       ))}
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>순위:</span>
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>순위:</span>
         {[
           { cls: 'r1', label: '1위' }, { cls: 'r2', label: '2위' },
           { cls: 'r3', label: '3위' }, { cls: 'r5', label: '5위' },
           { cls: 'r7', label: '7위' }, { cls: 'r10', label: '10위' },
           { cls: 'out', label: '미노출' },
         ].map(({ cls, label }) => (
-          <div key={cls} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div key={cls} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{
-              width: 12, height: 12, borderRadius: 3,
+              width: 14, height: 14, borderRadius: 3,
               background: colorMap[cls].bg,
               border: `1px solid ${colorMap[cls].border}`,
             }} />
-            <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{label}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</span>
           </div>
         ))}
       </div>
