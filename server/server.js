@@ -8,6 +8,7 @@ import cron from 'node-cron';
 import { initDb } from './db/index.js';
 import { runRefresh } from './jobs/refreshKeywordHistory.js';
 import blogRoutes from './routes/blog.js';
+import rankTrackerRoutes from './routes/rankTracker.js';
 import jobRoutes from './routes/jobs.js';
 import keywordRoutes from './routes/keywords.js';
 
@@ -34,6 +35,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/keywords', keywordRoutes);
 app.use('/api/blog', blogRoutes);
+app.use('/api/rank-tracker', rankTrackerRoutes);
 app.use('/api/jobs', jobRoutes);
 
 app.use('/api', (_req, res) => {
