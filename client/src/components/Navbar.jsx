@@ -132,7 +132,10 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         <img
           src={isDark ? logoDark : logoLight}
           alt="RANKLET"
-          style={{ height: 28, width: 'auto', display: 'block' }}
+          style={{
+            height: 28, width: 'auto', display: 'block',
+            mixBlendMode: isDark ? 'screen' : 'multiply',
+          }}
         />
       </button>
 
