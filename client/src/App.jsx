@@ -214,7 +214,7 @@ function BlogAuditForm({ onSubmit, loading }) {
           onChange={e => setUrl(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder="https://blog.naver.com/blogId"
+          placeholder=""
           disabled={loading}
           style={{
             flex: 1, height: '100%',

@@ -45,14 +45,16 @@ export async function initDb() {
   console.log('[DB] keyword_history 테이블 준비 완료');
   await p.query(`
     CREATE TABLE IF NOT EXISTS tracked_keywords (
-      id         SERIAL PRIMARY KEY,
-      user_id    UUID        NOT NULL,
-      keyword    TEXT        NOT NULL,
-      mode       TEXT        NOT NULL CHECK (mode IN ('blog','all')),
-      blog_ids   TEXT[]      DEFAULT '{}',
-      created_at TIMESTAMPTZ DEFAULT NOW(),
+      id                SERIAL PRIMARY KEY,
+      user_id           UUID        NOT NULL,
+      keyword           TEXT        NOT NULL,
+      mode              TEXT        NOT NULL CHECK (mode IN ('blog','all')),
+      blog_ids          TEXT[]      DEFAULT '{}',
+      created_at        TIMESTAMPTZ DEFAULT NOW(),
+      last_refreshed_at TIMESTAMPTZ,
       UNIQUE (user_id, keyword, mode)
     );
+    ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS last_refreshed_at TIMESTAMPTZ;
     CREATE TABLE IF NOT EXISTS rank_snapshots (
       id             SERIAL PRIMARY KEY,
       tracked_id     INTEGER     NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,

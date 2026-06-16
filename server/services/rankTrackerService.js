@@ -9,7 +9,7 @@ function extractBlogId(url) {
 export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids, created_at FROM tracked_keywords
+    `SELECT id, keyword, mode, blog_ids, created_at, last_refreshed_at FROM tracked_keywords
      WHERE user_id = $1 ORDER BY created_at DESC`,
     [userId]
   );
@@ -104,6 +104,8 @@ export async function refreshRanks(userId, trackedId) {
     }
   }
 
+  const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19);
+
   for (const u of upserts) {
     await pool.query(
       `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, snapshotted_at)
@@ -113,6 +115,11 @@ export async function refreshRanks(userId, trackedId) {
       [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, today]
     );
   }
+
+  await pool.query(
+    `UPDATE tracked_keywords SET last_refreshed_at = NOW() WHERE id = $1`,
+    [trackedId]
+  );
 
   console.log(`[rank-tracker] refresh ✓ "${keyword}" mode=${mode} upserted=${upserts.length}`);
   return { refreshed: upserts.length, date: today };

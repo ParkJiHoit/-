@@ -1,4 +1,5 @@
-import { Lock, ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { useState } from 'react';
+import { Lock, ArrowDown, ArrowUp, ArrowUpDown, HelpCircle } from 'lucide-react';
 import { formatNumber, formatPercent, formatScore } from '../utils/formatters';
 import { SORTABLE_COLUMNS } from '../utils/tableSort';
 import KeywordBadge from './KeywordBadge';
@@ -73,23 +74,27 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns,
                   style={{ textAlign: col.align === 'right' ? 'right' : 'left' }}
                 >
                   {col.sortable ? (
-                    <button
-                      className="inline-flex items-center gap-1 rounded px-1 py-0.5 transition"
-                      style={{ color: 'inherit', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                      type="button"
-                      onClick={() => onSort(col.key)}
-                      title={`${SORTABLE_COLUMNS[col.key]} 정렬`}
-                    >
-                      {col.label}
-                      {sortConfig.key === col.key
-                        ? sortConfig.direction === 'asc'
-                          ? <ArrowUp className="h-3 w-3" />
-                          : <ArrowDown className="h-3 w-3" />
-                        : <ArrowUpDown className="h-3 w-3" style={{ opacity: 0.4 }} />
-                      }
-                    </button>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <button
+                        className="inline-flex items-center gap-1 rounded px-1 py-0.5 transition"
+                        style={{ color: 'inherit', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 'inherit', fontSize: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        type="button"
+                        onClick={() => onSort(col.key)}
+                        title={`${SORTABLE_COLUMNS[col.key]} 정렬`}
+                      >
+                        {col.label}
+                        {sortConfig.key === col.key
+                          ? sortConfig.direction === 'asc'
+                            ? <ArrowUp className="h-3 w-3" />
+                            : <ArrowDown className="h-3 w-3" />
+                          : <ArrowUpDown className="h-3 w-3" style={{ opacity: 0.4 }} />
+                        }
+                      </button>
+                      {col.key === 'efficiencyScore' && <InfoTooltip text="RANKLET만의 독자 알고리즘으로 산정한 점수입니다. 검색량·경쟁도·CTR·포화도를 종합해 0~100점으로 나타내며, 높을수록 블로그 글 작성 대비 상위 노출 가능성이 높은 키워드입니다." />}
+                      {col.key === 'saturationScore' && <InfoTooltip text="해당 키워드로 이미 경쟁 중인 콘텐츠가 얼마나 많은지를 나타냅니다. 100에 가까울수록 경쟁이 치열해 상위 노출이 어렵습니다." />}
+                    </div>
                   ) : col.label}
                 </th>
               ))}
@@ -181,6 +186,33 @@ function TableCell({ column, row, isLoggedIn, onLoginPrompt }) {
     <td style={{ textAlign: 'right', fontWeight: isStrong ? 600 : 400, color: isStrong ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
       {numericValue}
     </td>
+  );
+}
+
+function InfoTooltip({ text }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <HelpCircle style={{ width: 12, height: 12, color: 'var(--text-tertiary)', cursor: 'default', flexShrink: 0 }} />
+      {show && (
+        <span style={{
+          position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 200, width: 240,
+          background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+          borderRadius: 10, padding: '10px 13px',
+          fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6,
+          boxShadow: '0 8px 28px rgba(0,0,0,0.4)',
+          pointerEvents: 'none', whiteSpace: 'normal', textAlign: 'left',
+          fontWeight: 400, letterSpacing: 0, textTransform: 'none',
+        }}>
+          {text}
+        </span>
+      )}
+    </span>
   );
 }
 

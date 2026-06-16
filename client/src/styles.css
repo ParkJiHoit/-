@@ -23,6 +23,7 @@
   --accent-hover:  #409CFF;
   --destructive:   #FF453A;
   --success:       #30D158;
+  --success-vivid: #30D158;
   --warning:       #FF9F0A;
   --nav-h: 52px;
   --nav-offset: 76px; /* floating nav: 16px top + 44px height + 16px gap */
@@ -45,8 +46,9 @@
   --accent:        #007AFF;
   --accent-hover:  #0A84FF;
   --destructive:   #FF3B30;
-  --success:       #34C759;
-  --warning:       #FF9500;
+  --success:       #1A8C3A;
+  --success-vivid: #1A8C3A;
+  --warning:       #C96A00;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

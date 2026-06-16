@@ -61,9 +61,14 @@ export default function RankTrackerPage({ onLoginRequest }) {
     setRefreshing(true);
     try {
       await apiFetch(`/${selected.id}/refresh`, { method: 'POST' }, token);
-      const data = await apiFetch(`/${selected.id}/snapshots`, {}, token);
-      setSnapshots(data.snapshots || []);
-      await loadItems();
+      const [snapshotData, listData] = await Promise.all([
+        apiFetch(`/${selected.id}/snapshots`, {}, token),
+        apiFetch('', {}, token),
+      ]);
+      setSnapshots(snapshotData.snapshots || []);
+      setItems(listData);
+      const refreshed = listData.find(i => i.id === selected.id);
+      if (refreshed) setSelected(refreshed);
     } catch (e) { setError(e.message); }
     finally { setRefreshing(false); }
   };
@@ -287,7 +292,14 @@ export default function RankTrackerPage({ onLoginRequest }) {
                     {mode === 'blog' && blogIds.length > 0 && <span style={{ fontSize: 13, color: 'var(--text-tertiary)', marginLeft: 10 }}>블로그 {blogIds.length}개 추적</span>}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
-                    {latestDate ? `마지막 갱신: ${latestDate}` : '아직 갱신 내역 없음'}
+                    {selected.last_refreshed_at
+                      ? (() => {
+                          const d = new Date(new Date(selected.last_refreshed_at).getTime() + 9 * 60 * 60 * 1000);
+                          const date = d.toISOString().slice(0, 10);
+                          const hm = d.toISOString().slice(11, 16);
+                          return `마지막 갱신: ${date} ${hm}`;
+                        })()
+                      : latestDate ? `마지막 갱신: ${latestDate}` : '아직 갱신 내역 없음'}
                   </div>
                 </div>
                 <button
@@ -500,7 +512,7 @@ function AddTrackerModal({ mode: defaultMode, token, editItem, onClose, onAdded 
               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 5 }}>타겟 키워드</label>
               <input
                 value={keyword} onChange={e => setKeyword(e.target.value)}
-                placeholder="예: 휴대폰창업"
+                placeholder=""
                 style={{
                   width: '100%', padding: '9px 12px', borderRadius: 9, boxSizing: 'border-box',
                   background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)',
@@ -517,7 +529,7 @@ function AddTrackerModal({ mode: defaultMode, token, editItem, onClose, onAdded 
                 <input
                   value={urlInput} onChange={e => setUrlInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addUrl(); } }}
-                  placeholder="https://blog.naver.com/myblog"
+                  placeholder=""
                   style={{
                     flex: 1, padding: '9px 12px', borderRadius: 9, boxSizing: 'border-box',
                     background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)',
