@@ -35,7 +35,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
 
   const cellStyle = {
     base: {
-      width: '100%', aspectRatio: '1', borderRadius: 3,
+      width: 44, height: 44, borderRadius: 7,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: 10, fontWeight: 800, cursor: 'pointer',
       transition: 'transform 0.1s', border: '1px solid transparent',
@@ -61,18 +61,24 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
     out: { bg: 'rgba(0,0,0,0.06)',       border: 'rgba(0,0,0,0.12)',      text: 'transparent' },
   };
 
+  const CELL = 44;
+  const GAP = 5;
+  const LABEL_W = 64;
+
   return (
     <div style={{ overflowX: 'auto' }}>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: `56px repeat(${dates.length}, minmax(18px, 1fr))`,
-        gap: 3, minWidth: 480, marginBottom: 4,
+        gridTemplateColumns: `${LABEL_W}px repeat(${dates.length}, ${CELL}px)`,
+        gap: GAP, marginBottom: 4,
+        width: 'max-content',
       }}>
         <div />
         {dates.map(d => (
           <div key={d} style={{
             fontSize: 11, color: 'var(--text-tertiary)',
             textAlign: 'center', letterSpacing: '0.01em',
+            width: CELL,
           }}>
             {d.slice(5).replace('-', '/')}
           </div>
@@ -82,14 +88,15 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
       {displayBlogIds.map(blogId => (
         <div key={blogId} style={{
           display: 'grid',
-          gridTemplateColumns: `56px repeat(${dates.length}, minmax(18px, 1fr))`,
-          gap: 3, minWidth: 480, marginBottom: 3,
+          gridTemplateColumns: `${LABEL_W}px repeat(${dates.length}, ${CELL}px)`,
+          gap: GAP, marginBottom: GAP,
+          width: 'max-content',
         }}>
           <div style={{
             fontSize: 12, color: 'var(--text-tertiary)',
             textAlign: 'right', paddingRight: 6,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            lineHeight: '20px',
+            lineHeight: '44px',
           }} title={blogId}>
             {blogId.length > 8 ? blogId.slice(0, 8) + '…' : blogId}
           </div>
