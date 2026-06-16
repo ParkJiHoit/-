@@ -23,6 +23,7 @@ function getDates(days) {
 
 export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }) {
   const dates = getDates(days);
+  const isDark = document.documentElement.dataset.theme !== 'light';
 
   const byBlogDate = {};
   for (const s of snapshots) {
@@ -36,20 +37,28 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
     base: {
       width: '100%', aspectRatio: '1', borderRadius: 3,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 8, fontWeight: 700, cursor: 'pointer',
+      fontSize: 8, fontWeight: 800, cursor: 'pointer',
       transition: 'transform 0.1s', border: '1px solid transparent',
       position: 'relative',
     },
   };
 
-  const colorMap = {
-    r1:  { bg: 'rgba(48,209,88,0.85)',  border: 'rgba(48,209,88,0.4)' },
-    r2:  { bg: 'rgba(48,209,88,0.65)',  border: 'rgba(48,209,88,0.3)' },
-    r3:  { bg: 'rgba(48,209,88,0.45)',  border: 'rgba(48,209,88,0.2)' },
-    r5:  { bg: 'rgba(255,159,10,0.50)', border: 'rgba(255,159,10,0.3)' },
-    r7:  { bg: 'rgba(255,159,10,0.32)', border: 'rgba(255,159,10,0.15)' },
-    r10: { bg: 'rgba(255,69,58,0.35)',  border: 'rgba(255,69,58,0.2)' },
-    out: { bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.06)' },
+  const colorMap = isDark ? {
+    r1:  { bg: 'rgba(48,209,88,0.85)',   border: 'rgba(48,209,88,0.5)',   text: '#fff' },
+    r2:  { bg: 'rgba(48,209,88,0.65)',   border: 'rgba(48,209,88,0.35)',  text: '#fff' },
+    r3:  { bg: 'rgba(48,209,88,0.45)',   border: 'rgba(48,209,88,0.25)',  text: '#fff' },
+    r5:  { bg: 'rgba(255,159,10,0.55)',  border: 'rgba(255,159,10,0.35)', text: '#fff' },
+    r7:  { bg: 'rgba(255,159,10,0.35)',  border: 'rgba(255,159,10,0.2)',  text: 'rgba(255,255,255,0.8)' },
+    r10: { bg: 'rgba(255,69,58,0.40)',   border: 'rgba(255,69,58,0.25)',  text: '#fff' },
+    out: { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.08)', text: 'transparent' },
+  } : {
+    r1:  { bg: 'rgba(22,163,74,0.85)',   border: 'rgba(22,163,74,0.5)',   text: '#fff' },
+    r2:  { bg: 'rgba(22,163,74,0.65)',   border: 'rgba(22,163,74,0.35)',  text: '#fff' },
+    r3:  { bg: 'rgba(22,163,74,0.45)',   border: 'rgba(22,163,74,0.25)',  text: 'rgba(0,0,0,0.7)' },
+    r5:  { bg: 'rgba(217,119,6,0.55)',   border: 'rgba(217,119,6,0.35)',  text: '#fff' },
+    r7:  { bg: 'rgba(217,119,6,0.35)',   border: 'rgba(217,119,6,0.2)',   text: 'rgba(0,0,0,0.6)' },
+    r10: { bg: 'rgba(220,38,38,0.40)',   border: 'rgba(220,38,38,0.25)',  text: '#fff' },
+    out: { bg: 'rgba(0,0,0,0.06)',       border: 'rgba(0,0,0,0.12)',      text: 'transparent' },
   };
 
   return (
@@ -88,7 +97,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
             const snap = byBlogDate[blogId]?.[date];
             const rank = snap?.rank ?? null;
             const cls = rankClass(rank);
-            const { bg, border } = colorMap[cls];
+            const { bg, border, text } = colorMap[cls];
             const label = rank != null ? `${rank}위` : '미노출';
             return (
               <div
@@ -98,7 +107,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
                   ...cellStyle.base,
                   background: bg,
                   borderColor: border,
-                  color: rank != null ? 'rgba(255,255,255,0.9)' : 'transparent',
+                  color: text,
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.transform = 'scale(1.5)';
@@ -130,7 +139,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
               background: colorMap[cls].bg,
               border: `1px solid ${colorMap[cls].border}`,
             }} />
-            <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>{label}</span>
+            <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{label}</span>
           </div>
         ))}
       </div>
