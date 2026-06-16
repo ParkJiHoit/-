@@ -70,26 +70,26 @@ export default function PricingPage({ onMockAction, onGoToAuth, user }) {
         {/* ── 베이직 플랜 ── */}
         <div className="mac-card" style={{
           flex: '1 1 280px', maxWidth: 320,
-          padding: '32px 30px',
+          padding: '20px 24px',
           border: '1px solid var(--border)',
           opacity: 0.82,
           display: 'flex', flexDirection: 'column',
         }}>
           {/* 플랜 이름 */}
-          <div style={{ marginBottom: 22 }}>
+          <div style={{ marginBottom: 12 }}>
             <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ranklet</p>
             <p style={{ margin: 0, fontSize: 20, fontWeight: 800, color: 'var(--text-secondary)' }}>베이직 플랜</p>
           </div>
 
           {/* 가격 */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 26 }}>
-            <span style={{ fontSize: 44, fontWeight: 800, letterSpacing: '-2px', color: 'var(--text-secondary)', lineHeight: 1 }}>무료</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 14 }}>
+            <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-2px', color: 'var(--text-secondary)', lineHeight: 1 }}>무료</span>
           </div>
 
-          <div style={{ height: 1, background: 'var(--border)', marginBottom: 22 }} />
+          <div style={{ height: 1, background: 'var(--border)', marginBottom: 14 }} />
 
           {/* 가능한 기능 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 18 }}>
             {BASIC_FEATURES.map(({ text, sub }) => (
               <div key={text} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <Check size={14} color="var(--text-tertiary)" strokeWidth={2.5} style={{ flexShrink: 0, marginTop: 2 }} />
