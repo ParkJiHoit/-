@@ -31,6 +31,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState(null); // null = 신규, item = 수정
   const [error, setError] = useState('');
 
   const loadItems = useCallback(async () => {
@@ -149,7 +150,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
               {mode === 'blog' ? '블로그 추적' : '전체 순위'} <span style={{ color: 'var(--accent)' }}>{filteredItems.length}</span>
             </span>
             <button
-              onClick={() => setShowModal(true)}
+              onClick={() => { setEditItem(null); setShowModal(true); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '6px 12px', borderRadius: 8, border: 'none',
@@ -189,12 +190,23 @@ export default function RankTrackerPage({ onLoginRequest }) {
                     }}>
                       {item.keyword}
                     </span>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDelete(item.id); }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, display: 'flex' }}
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      {item.mode === 'blog' && (
+                        <button
+                          onClick={e => { e.stopPropagation(); setEditItem(item); setShowModal(true); }}
+                          title="블로그 URL 추가"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: 4, display: 'flex' }}
+                        >
+                          <Plus size={12} />
+                        </button>
+                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDelete(item.id); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, display: 'flex' }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
                   {mode === 'blog' && item.blog_ids?.map(blogId => {
                     const rank = item.latestRanks?.[blogId] ?? null;
@@ -362,8 +374,9 @@ export default function RankTrackerPage({ onLoginRequest }) {
         <AddTrackerModal
           mode={mode}
           token={token}
-          onClose={() => setShowModal(false)}
-          onAdded={async () => { setShowModal(false); await loadItems(); }}
+          editItem={editItem}
+          onClose={() => { setShowModal(false); setEditItem(null); }}
+          onAdded={async () => { setShowModal(false); setEditItem(null); await loadItems(); }}
         />
       )}
 
@@ -374,11 +387,12 @@ export default function RankTrackerPage({ onLoginRequest }) {
   );
 }
 
-function AddTrackerModal({ mode: defaultMode, token, onClose, onAdded }) {
-  const [modalMode, setModalMode] = useState(defaultMode);
-  const [keyword, setKeyword] = useState('');
+function AddTrackerModal({ mode: defaultMode, token, editItem, onClose, onAdded }) {
+  const isEdit = !!editItem;
+  const [modalMode, setModalMode] = useState(editItem?.mode || defaultMode);
+  const [keyword, setKeyword] = useState(editItem?.keyword || '');
   const [urlInput, setUrlInput] = useState('');
-  const [blogUrls, setBlogUrls] = useState([]);
+  const [blogUrls, setBlogUrls] = useState(editItem?.blog_ids || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -428,39 +442,43 @@ function AddTrackerModal({ mode: defaultMode, token, onClose, onAdded }) {
         boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>추적 등록</div>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>{isEdit ? `URL 추가 — ${editItem.keyword}` : '추적 등록'}</div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}>
             <X size={18} />
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-          {[{ id: 'blog', label: '블로그 추적', desc: '내 블로그 순위 추적' }, { id: 'all', label: '전체 순위', desc: '상위 10위 스냅샷' }].map(m => (
-            <div key={m.id} onClick={() => setModalMode(m.id)} style={{
-              flex: 1, padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-              border: `1.5px solid ${modalMode === m.id ? 'var(--accent)' : 'var(--border)'}`,
-              background: modalMode === m.id ? 'rgba(10,132,255,0.08)' : 'transparent',
-              transition: 'all 0.15s',
-            }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: modalMode === m.id ? 'var(--accent)' : 'var(--text-secondary)' }}>{m.label}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{m.desc}</div>
-            </div>
-          ))}
-        </div>
+        {!isEdit && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+            {[{ id: 'blog', label: '블로그 추적', desc: '내 블로그 순위 추적' }, { id: 'all', label: '전체 순위', desc: '상위 10위 스냅샷' }].map(m => (
+              <div key={m.id} onClick={() => setModalMode(m.id)} style={{
+                flex: 1, padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                border: `1.5px solid ${modalMode === m.id ? 'var(--accent)' : 'var(--border)'}`,
+                background: modalMode === m.id ? 'rgba(10,132,255,0.08)' : 'transparent',
+                transition: 'all 0.15s',
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: modalMode === m.id ? 'var(--accent)' : 'var(--text-secondary)' }}>{m.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{m.desc}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 5 }}>타겟 키워드</label>
-            <input
-              value={keyword} onChange={e => setKeyword(e.target.value)}
-              placeholder="예: 휴대폰창업"
-              style={{
-                width: '100%', padding: '9px 12px', borderRadius: 9, boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)',
-                color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none',
-              }}
-            />
-          </div>
+          {!isEdit && (
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 5 }}>타겟 키워드</label>
+              <input
+                value={keyword} onChange={e => setKeyword(e.target.value)}
+                placeholder="예: 휴대폰창업"
+                style={{
+                  width: '100%', padding: '9px 12px', borderRadius: 9, boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none',
+                }}
+              />
+            </div>
+          )}
 
           {modalMode === 'blog' && (
             <div>
@@ -510,7 +528,7 @@ function AddTrackerModal({ mode: defaultMode, token, onClose, onAdded }) {
             <button type="submit" disabled={loading} style={{
               padding: '9px 20px', borderRadius: 9, border: 'none',
               background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-            }}>{loading ? '등록 중…' : '등록하기'}</button>
+            }}>{loading ? (isEdit ? '저장 중…' : '등록 중…') : (isEdit ? '저장하기' : '등록하기')}</button>
           </div>
         </form>
       </div>
