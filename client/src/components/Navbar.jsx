@@ -1,8 +1,8 @@
 import { ChevronDown, FileText, LogOut, Search, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
-import logoLight from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_45_46-removebg-preview.png';
-import logoDark from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_42_18-removebg-preview.png';
+import logoLight from '../assets/logo-light.png';
+import logoDark from '../assets/logo-dark.png';
 
 const NOTION_UPDATE_URL =
   'https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link';
@@ -133,7 +133,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
           src={isDark ? logoDark : logoLight}
           alt="RANKLET"
           style={{
-            height: 36, width: 'auto', display: 'block',
+            height: 22, width: 'auto', display: 'block',
             mixBlendMode: isDark ? 'screen' : 'multiply',
           }}
         />
