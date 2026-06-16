@@ -272,16 +272,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
           )}
         </div>
 
-        {!selected ? (
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            minHeight: 360, color: 'var(--text-tertiary)', gap: 10, textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 28, opacity: 0.2 }}>←</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>항목을 선택하세요</div>
-            <div style={{ fontSize: 12, lineHeight: 1.7 }}>왼쪽 목록에서 추적 항목을 선택하면<br/>순위 기록과 차트를 확인할 수 있습니다</div>
-          </div>
-        ) : (
+        {selected && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             <div className="mac-card" style={{ padding: '18px 22px' }}>
