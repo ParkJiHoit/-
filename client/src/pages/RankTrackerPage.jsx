@@ -343,13 +343,11 @@ export default function RankTrackerPage({ onLoginRequest }) {
               <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 14 }}>
                 일별 노출 순위 — 캘린더
               </div>
-              <div style={{ overflowX: 'auto', overflowY: 'hidden' }} className="mac-scroll">
-                <RankCalendar
-                  snapshots={snapshots}
-                  blogIds={mode === 'blog' ? blogIds : [...new Set(snapshots.map(s => s.blog_id))]}
-                  days={30}
-                />
-              </div>
+              <RankCalendar
+                snapshots={snapshots}
+                blogIds={mode === 'blog' ? blogIds : [...new Set(snapshots.map(s => s.blog_id))]}
+                days={30}
+              />
             </div>
 
             {mode === 'blog' && (

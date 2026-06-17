@@ -59,6 +59,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--bg-base);
   color: var(--text-primary);
   /* UI/본문 기본: Pretendard */
