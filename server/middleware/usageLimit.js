@@ -8,6 +8,8 @@ const BASIC_LIMITS = {
   rank_refresh:      2,
 };
 
+export const ADMIN_EMAILS = ['qkrwlgh52660724@gmail.com'];
+
 // 토큰이 있으면 userId 세팅, 없으면 그냥 통과 (비로그인 허용)
 export async function optionalAuth(req, _res, next) {
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
@@ -15,7 +17,10 @@ export async function optionalAuth(req, _res, next) {
   try {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
     const { data: { user } } = await supabase.auth.getUser(token);
-    if (user) req.userId = user.id;
+    if (user) {
+      req.userId = user.id;
+      req.isAdmin = ADMIN_EMAILS.includes(user.email);
+    }
   } catch { /* 인증 실패해도 non-blocking */ }
   next();
 }
@@ -25,8 +30,8 @@ export async function optionalAuth(req, _res, next) {
 export function checkDailyLimit(action) {
   return async (req, res, next) => {
     const userId = req.userId;
-    // 비로그인이면 제한 없음 (또는 별도 처리 가능)
     if (!userId) return next();
+    if (req.isAdmin) return next(); // 관리자 무제한
 
     const pool = getPool();
     if (!pool) return next(); // DB 없으면 skip

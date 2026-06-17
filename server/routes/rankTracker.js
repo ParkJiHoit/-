@@ -4,7 +4,7 @@ import {
   listTracked, createTracked, deleteTracked,
   getSnapshots, refreshRanks,
 } from '../services/rankTrackerService.js';
-import { checkDailyLimit } from '../middleware/usageLimit.js';
+import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
 
 const router = Router();
 
@@ -21,6 +21,7 @@ async function requireAuth(req, res, next) {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error || !user) return res.status(401).json({ message: '인증에 실패했습니다.' });
     req.userId = user.id;
+    req.isAdmin = ADMIN_EMAILS.includes(user.email);
     next();
   } catch {
     res.status(401).json({ message: '인증에 실패했습니다.' });
