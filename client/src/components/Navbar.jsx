@@ -389,10 +389,10 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         zIndex: 2000, padding: 24,
       }}>
         <div onClick={e => e.stopPropagation()} style={{
-          background: 'var(--bg-primary)', borderRadius: 16, padding: '28px 28px',
+          background: isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 16, padding: '28px 28px',
           maxWidth: 460, width: '100%',
-          border: '1px solid var(--border)',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+          border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--text-primary)' }}>피드백 보내기</h2>
@@ -414,7 +414,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                     style={{
                       flex: 1, padding: '8px 0', borderRadius: 10,
                       border: feedbackType === id ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
-                      background: feedbackType === id ? 'rgba(10,132,255,0.10)' : 'var(--bg-overlay)',
+                      background: feedbackType === id ? 'rgba(10,132,255,0.12)' : isDark ? '#2C2C2E' : '#F2F2F7',
                       color: feedbackType === id ? 'var(--accent)' : 'var(--text-secondary)',
                       fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                       transition: 'all 0.15s',
@@ -434,7 +434,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                 style={{
                   width: '100%', borderRadius: 10, padding: '12px 14px',
                   border: '1.5px solid var(--border)',
-                  background: 'var(--bg-overlay)', color: 'var(--text-primary)',
+                  background: isDark ? '#2C2C2E' : '#F2F2F7', color: 'var(--text-primary)',
                   fontSize: 13, fontFamily: 'inherit', resize: 'none',
                   outline: 'none', boxSizing: 'border-box', lineHeight: 1.6,
                 }}
@@ -445,7 +445,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                 disabled={feedbackSending || !feedbackContent.trim()}
                 style={{
                   width: '100%', marginTop: 12, padding: '11px 0',
-                  background: feedbackContent.trim() ? 'var(--accent)' : 'var(--bg-overlay)',
+                  background: feedbackContent.trim() ? 'var(--accent)' : isDark ? '#2C2C2E' : '#F2F2F7',
                   border: 'none', borderRadius: 10,
                   fontSize: 13, fontWeight: 700,
                   color: feedbackContent.trim() ? '#fff' : 'var(--text-tertiary)',
