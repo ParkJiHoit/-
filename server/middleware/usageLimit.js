@@ -20,6 +20,16 @@ export async function optionalAuth(req, _res, next) {
     if (user) {
       req.userId = user.id;
       req.isAdmin = ADMIN_EMAILS.includes(user.email);
+      if (!req.isAdmin) {
+        const pool = getPool();
+        if (pool) {
+          const { rows } = await pool.query(
+            `SELECT status FROM subscriptions WHERE user_id = $1 LIMIT 1`,
+            [user.id]
+          );
+          req.isSubscribed = rows[0]?.status === 'active';
+        }
+      }
     }
   } catch { /* 인증 실패해도 non-blocking */ }
   next();
@@ -32,6 +42,7 @@ export function checkDailyLimit(action) {
     const userId = req.userId;
     if (!userId) return next();
     if (req.isAdmin) return next(); // 관리자 무제한
+    if (req.isSubscribed) return next(); // 스탠다드 구독자 무제한
 
     const pool = getPool();
     if (!pool) return next(); // DB 없으면 skip

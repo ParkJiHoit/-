@@ -5,6 +5,7 @@ import {
   getSnapshots, refreshRanks,
 } from '../services/rankTrackerService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
+import { getPool } from '../db/index.js';
 
 const router = Router();
 
@@ -22,6 +23,16 @@ async function requireAuth(req, res, next) {
     if (error || !user) return res.status(401).json({ message: '인증에 실패했습니다.' });
     req.userId = user.id;
     req.isAdmin = ADMIN_EMAILS.includes(user.email);
+    if (!req.isAdmin) {
+      const pool = getPool();
+      if (pool) {
+        const { rows } = await pool.query(
+          `SELECT status FROM subscriptions WHERE user_id = $1 LIMIT 1`,
+          [user.id]
+        );
+        req.isSubscribed = rows[0]?.status === 'active';
+      }
+    }
     next();
   } catch {
     res.status(401).json({ message: '인증에 실패했습니다.' });

@@ -80,4 +80,19 @@ export async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_du_user_date ON daily_usage (user_id, used_date);
   `);
   console.log('[DB] daily_usage 테이블 준비 완료');
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id                  SERIAL PRIMARY KEY,
+      user_id             UUID        NOT NULL UNIQUE,
+      ls_subscription_id  TEXT        NOT NULL,
+      ls_customer_id      TEXT,
+      status              TEXT        NOT NULL DEFAULT 'active',
+      variant_id          TEXT,
+      current_period_end  TIMESTAMPTZ,
+      created_at          TIMESTAMPTZ DEFAULT NOW(),
+      updated_at          TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_sub_user ON subscriptions (user_id);
+  `);
+  console.log('[DB] subscriptions 테이블 준비 완료');
 }

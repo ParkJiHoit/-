@@ -11,6 +11,8 @@ import blogRoutes from './routes/blog.js';
 import rankTrackerRoutes from './routes/rankTracker.js';
 import jobRoutes from './routes/jobs.js';
 import keywordRoutes from './routes/keywords.js';
+import webhookRoutes from './routes/webhooks.js';
+import billingRoutes from './routes/billing.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const clientDistPath = path.resolve(__dirname, '..', 'client', 'dist');
@@ -27,13 +29,21 @@ if (clientOrigin) {
 } else if (process.env.NODE_ENV !== 'production') {
   app.use(cors({ origin: 'http://localhost:5173' }));
 }
-app.use(express.json());
+// 웹훅용 raw body 보존
+app.use((req, _res, next) => {
+  express.json({
+    verify: (req, _res, buf) => { req.rawBody = buf.toString(); }
+  })(req, _res, next);
+});
+
+app.use('/api/webhooks', webhookRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
 app.use('/api/keywords', keywordRoutes);
+app.use('/api/billing', billingRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/rank-tracker', rankTrackerRoutes);
 app.use('/api/jobs', jobRoutes);

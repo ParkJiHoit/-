@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Check, Sparkles, Zap } from 'lucide-react';
 
 const BASIC_FEATURES = [
@@ -20,7 +21,30 @@ const STANDARD_FEATURES = [
   'Excel / CSV 다운로드',
 ];
 
-export default function PricingPage({ onMockAction, onGoToAuth, user }) {
+export default function PricingPage({ onGoToAuth, user, token }) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubscribe() {
+    if (!user) { onGoToAuth(); return; }
+    setLoading(true);
+    try {
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (json.url) {
+        window.location.href = json.url;
+      } else {
+        alert(json.message || '결제 URL 생성에 실패했습니다.');
+      }
+    } catch {
+      alert('결제 요청 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -170,22 +194,23 @@ export default function PricingPage({ onMockAction, onGoToAuth, user }) {
 
           <div style={{ marginTop: 'auto' }}>
             <button
-              onClick={onMockAction}
+              onClick={handleSubscribe}
+              disabled={loading}
               style={{
                 width: '100%', padding: '12px 0',
-                background: 'linear-gradient(135deg, #0A84FF 0%, #34C1FF 100%)',
+                background: loading ? 'rgba(10,132,255,0.5)' : 'linear-gradient(135deg, #0A84FF 0%, #34C1FF 100%)',
                 border: 'none', borderRadius: 10,
                 fontSize: 13, fontWeight: 700, color: '#fff',
-                cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit',
+                cursor: loading ? 'default' : 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit',
                 boxShadow: '0 4px 20px rgba(10,132,255,0.4)',
                 transition: 'opacity 0.15s, transform 0.15s',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
               onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               <Zap size={13} />
-              시작하기 (준비 중)
+              {loading ? '연결 중...' : '시작하기'}
             </button>
             <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'center' }}>
               구독 즉시 이용 · 언제든 해지 가능

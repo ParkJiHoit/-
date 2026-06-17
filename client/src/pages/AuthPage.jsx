@@ -277,6 +277,8 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    if (password.length < 8) { setError('패스워드는 8자 이상이어야 합니다.'); return; }
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) { setError('패스워드는 영문과 숫자를 모두 포함해야 합니다.'); return; }
     if (password !== passwordConfirm) { setError('패스워드가 일치하지 않습니다.'); return; }
     setLoading(true);
     const { error } = await signUpWithEmail(email, password, name, '');
@@ -332,6 +334,9 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
         <FormField label="패스워드" isDark={isDark}>
           <AuthInput type="password" value={password} onChange={e => setPassword(e.target.value)}
             placeholder="••••••••" autoComplete="new-password" required isDark={isDark} />
+          <p style={{ margin: '3px 0 0', fontSize: 11, color: isDark ? '#636366' : '#8E8E93' }}>
+            8자 이상, 영문+숫자 포함
+          </p>
         </FormField>
         <FormField label="패스워드 확인" isDark={isDark}>
           <AuthInput type="password" value={passwordConfirm} onChange={e => setPasswordConfirm(e.target.value)}
