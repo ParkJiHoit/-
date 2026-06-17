@@ -339,7 +339,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
               })()}
             </div>
 
-            <div className="mac-card" style={{ padding: '18px 22px' }}>
+            <div className="mac-card" style={{ padding: '18px 22px', minWidth: 0, overflow: 'hidden' }}>
               <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 14 }}>
                 일별 노출 순위 — 캘린더
               </div>

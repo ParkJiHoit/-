@@ -66,7 +66,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
   const LABEL_W = 64;
 
   return (
-    <div style={{ overflowX: 'auto', overflowY: 'visible' }}>
+    <div style={{ overflowX: 'auto', overflowY: 'visible', width: '100%' }}>
       <div style={{
         display: 'grid',
         gridTemplateColumns: `${LABEL_W}px repeat(${dates.length}, ${CELL}px)`,
