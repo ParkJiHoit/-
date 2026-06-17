@@ -348,7 +348,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
               borderRadius: 999, padding: '6px 14px', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'var(--accent)', color: '#fff',
-              fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', lineHeight: 1,
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
               cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
@@ -413,12 +413,12 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                     key={id}
                     onClick={() => setFeedbackType(id)}
                     style={{
-                      flex: 1, padding: '8px 0', borderRadius: 10,
+                      flex: 1, height: 40, borderRadius: 10,
                       border: feedbackType === id ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
                       background: feedbackType === id ? 'rgba(10,132,255,0.12)' : isDark ? '#2C2C2E' : '#F2F2F7',
                       color: feedbackType === id ? 'var(--accent)' : 'var(--text-secondary)',
                       fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                      transition: 'all 0.15s', lineHeight: 1,
+                      transition: 'all 0.15s',
                       textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
