@@ -418,6 +418,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                       color: feedbackType === id ? 'var(--accent)' : 'var(--text-secondary)',
                       fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
                       transition: 'all 0.15s',
+                      textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
                     {label}
