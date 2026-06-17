@@ -25,6 +25,7 @@ const ADMIN_EMAILS = ['qkrwlgh52660724@gmail.com'];
 
 export default function PricingPage({ onGoToAuth, user, token }) {
   const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState(null); // 'privacy' | 'terms' | null
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
   async function handleSubscribe() {
@@ -238,6 +239,92 @@ export default function PricingPage({ onGoToAuth, user, token }) {
       <p style={{ marginTop: 32, fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.7 }}>
         * 아직 베타 서비스입니다. 정식 출시 시 요금제가 확정됩니다.
       </p>
+
+      <div style={{ marginTop: 12, display: 'flex', gap: 16, justifyContent: 'center' }}>
+        <button onClick={() => setModal('privacy')} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>개인정보처리방침</button>
+        <button onClick={() => setModal('terms')} style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--text-tertiary)', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>이용약관</button>
+      </div>
+
+      {modal && (
+        <div onClick={() => setModal(null)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: 24,
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: 'var(--bg-card)', borderRadius: 16, padding: '28px 32px',
+            maxWidth: 560, width: '100%', maxHeight: '80vh', overflowY: 'auto',
+            border: '1px solid var(--border)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+                {modal === 'privacy' ? '개인정보처리방침' : '이용약관'}
+              </h2>
+              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}>✕</button>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
+              {modal === 'privacy' ? <PrivacyContent /> : <TermsContent />}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function PrivacyContent() {
+  return (
+    <>
+      <p><strong>시행일: 2026년 6월 17일</strong></p>
+      <p>Ranklet(이하 "서비스")은 이용자의 개인정보를 중요하게 여기며, 개인정보보호법에 따라 아래와 같이 처리합니다.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>1. 수집하는 개인정보</h3>
+      <p>• 이메일 주소 (회원가입 시)<br />• 서비스 이용 기록 (키워드 분석, 순위 추적 등)<br />• 결제 정보 (LemonSqueezy를 통해 처리, 당사 서버에 저장하지 않음)</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>2. 수집 목적</h3>
+      <p>• 회원 인증 및 서비스 제공<br />• 구독 관리 및 결제 처리<br />• 서비스 개선 및 통계 분석</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>3. 보관 기간</h3>
+      <p>회원 탈퇴 시까지 보관하며, 탈퇴 후 즉시 파기합니다. 단, 관련 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>4. 제3자 제공</h3>
+      <p>이용자의 개인정보는 원칙적으로 제3자에게 제공하지 않습니다. 단, 서비스 운영을 위해 아래 업체에 최소한의 정보를 위탁합니다.<br />• Supabase (인증 서버 운영)<br />• LemonSqueezy (결제 처리)</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>5. 이용자 권리</h3>
+      <p>이용자는 언제든지 개인정보 조회, 수정, 삭제를 요청할 수 있습니다. 요청은 아래 이메일로 문의해주세요.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>6. 문의</h3>
+      <p>개인정보 관련 문의: <strong>qkrwlgh52660724@gmail.com</strong></p>
+    </>
+  );
+}
+
+function TermsContent() {
+  return (
+    <>
+      <p><strong>시행일: 2026년 6월 17일</strong></p>
+      <p>본 약관은 Ranklet(이하 "서비스")의 이용 조건을 규정합니다.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>1. 서비스 설명</h3>
+      <p>Ranklet은 네이버 키워드 분석, 블로그 순위 추적, 블로그 진단 기능을 제공하는 SaaS 서비스입니다.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>2. 이용 자격</h3>
+      <p>만 14세 이상 누구나 가입할 수 있습니다. 타인의 정보를 도용하거나 허위 정보로 가입하는 경우 계정이 정지될 수 있습니다.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>3. 구독 및 결제</h3>
+      <p>• 스탠다드 플랜은 월 ₩9,900이며 매월 자동 결제됩니다.<br />• 구독은 언제든지 해지할 수 있으며, 해지 후 해당 월 말까지 이용 가능합니다.<br />• 환불은 결제일로부터 7일 이내 요청 시 전액 환불됩니다.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>4. 데이터 정확도</h3>
+      <p>서비스에서 제공하는 검색량, 순위 데이터는 네이버 API 기반이며 실제 수치와 차이가 있을 수 있습니다. 데이터 정확도를 100% 보장하지 않습니다.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>5. 서비스 변경 및 종료</h3>
+      <p>서비스 내용은 사전 공지 후 변경될 수 있습니다. 서비스 종료 시 30일 전 공지하며, 잔여 구독 기간에 대해 환불합니다.</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>6. 금지 행위</h3>
+      <p>• 서비스를 통한 자동화 크롤링, API 남용<br />• 타인의 계정 도용<br />• 서비스 운영 방해 행위</p>
+
+      <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>7. 문의</h3>
+      <p>서비스 관련 문의: <strong>qkrwlgh52660724@gmail.com</strong></p>
+    </>
   );
 }
