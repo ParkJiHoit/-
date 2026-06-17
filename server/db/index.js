@@ -95,4 +95,14 @@ export async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_sub_user ON subscriptions (user_id);
   `);
   console.log('[DB] subscriptions 테이블 준비 완료');
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS feedback (
+      id         SERIAL PRIMARY KEY,
+      type       TEXT        NOT NULL,
+      content    TEXT        NOT NULL,
+      email      TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+  console.log('[DB] feedback 테이블 준비 완료');
 }
