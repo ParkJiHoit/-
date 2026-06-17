@@ -214,7 +214,7 @@ function BlogAuditForm({ onSubmit, loading }) {
           onChange={e => setUrl(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder=""
+          placeholder="블로그 링크를 입력하세요"
           disabled={loading}
           style={{
             flex: 1, height: '100%',
