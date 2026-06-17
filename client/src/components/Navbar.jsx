@@ -346,6 +346,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
             onClick={() => onSwitchTab('auth')}
             style={{
               borderRadius: 999, padding: '6px 14px', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'var(--accent)', color: '#fff',
               fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
               cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s',
