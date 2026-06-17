@@ -57,18 +57,6 @@ export default function PricingPage({ onGoToAuth, user, token }) {
       alignItems: 'center',
       padding: 'calc(var(--nav-offset) + 32px) 24px 48px',
     }}>
-      {/* 배지 */}
-      <div style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6,
-        background: 'rgba(10,132,255,0.12)', border: '1px solid rgba(10,132,255,0.3)',
-        borderRadius: 999, padding: '5px 14px',
-        fontSize: 11, fontWeight: 700, color: 'var(--accent)',
-        letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 16,
-      }}>
-        <Sparkles size={11} />
-        심플한 요금제
-      </div>
-
       {/* 헤드라인 */}
       <h1 style={{
         fontSize: 40, fontWeight: 800, letterSpacing: '-1.5px',
