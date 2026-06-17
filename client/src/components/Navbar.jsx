@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, LogOut, Search, TrendingUp } from 'lucide-react';
+import { ChevronDown, FileText, LogOut, MessageSquarePlus, Search, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import logoLight from '../assets/logo-light.png';
@@ -41,8 +41,32 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
   const [hoveredService, setHoveredService] = useState(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackType, setFeedbackType] = useState('bug');
+  const [feedbackContent, setFeedbackContent] = useState('');
+  const [feedbackSending, setFeedbackSending] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
   const dropdownRef = useRef(null);
   const userMenuRef = useRef(null);
+
+  async function handleFeedbackSubmit() {
+    if (!feedbackContent.trim()) return;
+    setFeedbackSending(true);
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: feedbackType, content: feedbackContent, email: user?.email }),
+      });
+      setFeedbackDone(true);
+      setFeedbackContent('');
+      setTimeout(() => { setFeedbackOpen(false); setFeedbackDone(false); }, 1500);
+    } catch {
+      alert('전송에 실패했습니다.');
+    } finally {
+      setFeedbackSending(false);
+    }
+  }
 
   useEffect(() => {
     const handler = (e) => {
@@ -248,6 +272,19 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
 
       {divider}
 
+      {/* 피드백 버튼 */}
+      <button
+        onClick={() => setFeedbackOpen(true)}
+        style={pillItem('feedback')}
+        onMouseEnter={() => setHoveredNav('feedback')}
+        onMouseLeave={() => setHoveredNav(null)}
+      >
+        <MessageSquarePlus size={11} />
+        피드백
+      </button>
+
+      {divider}
+
       {user ? (
         /* ── 로그인 상태: 아바타 + 드롭다운 ── */
         <div style={{ position: 'relative', flexShrink: 0 }} ref={userMenuRef}>
@@ -345,6 +382,84 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       )}
     </nav>
 
+    {feedbackOpen && (
+      <div onClick={() => setFeedbackOpen(false)} style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 2000, padding: 24,
+      }}>
+        <div onClick={e => e.stopPropagation()} style={{
+          background: 'var(--bg-primary)', borderRadius: 16, padding: '28px 28px',
+          maxWidth: 460, width: '100%',
+          border: '1px solid var(--border)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--text-primary)' }}>피드백 보내기</h2>
+            <button onClick={() => setFeedbackOpen(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}>✕</button>
+          </div>
+
+          {feedbackDone ? (
+            <div style={{ textAlign: 'center', padding: '24px 0', fontSize: 15, color: 'var(--text-primary)', fontWeight: 700 }}>
+              감사합니다! 소중한 피드백을 잘 받았습니다 🙏
+            </div>
+          ) : (
+            <>
+              {/* 유형 선택 */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                {[{ id: 'bug', label: '🐛 버그 신고' }, { id: 'feature', label: '💡 기능 제안' }].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => setFeedbackType(id)}
+                    style={{
+                      flex: 1, padding: '8px 0', borderRadius: 10,
+                      border: feedbackType === id ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
+                      background: feedbackType === id ? 'rgba(10,132,255,0.10)' : 'var(--bg-overlay)',
+                      color: feedbackType === id ? 'var(--accent)' : 'var(--text-secondary)',
+                      fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* 내용 입력 */}
+              <textarea
+                value={feedbackContent}
+                onChange={e => setFeedbackContent(e.target.value)}
+                placeholder={feedbackType === 'bug' ? '어떤 버그를 발견하셨나요? 재현 방법을 알려주시면 더 빨리 해결할 수 있어요.' : '어떤 기능이 있으면 좋을 것 같나요?'}
+                rows={5}
+                style={{
+                  width: '100%', borderRadius: 10, padding: '12px 14px',
+                  border: '1.5px solid var(--border)',
+                  background: 'var(--bg-overlay)', color: 'var(--text-primary)',
+                  fontSize: 13, fontFamily: 'inherit', resize: 'none',
+                  outline: 'none', boxSizing: 'border-box', lineHeight: 1.6,
+                }}
+              />
+
+              <button
+                onClick={handleFeedbackSubmit}
+                disabled={feedbackSending || !feedbackContent.trim()}
+                style={{
+                  width: '100%', marginTop: 12, padding: '11px 0',
+                  background: feedbackContent.trim() ? 'var(--accent)' : 'var(--bg-overlay)',
+                  border: 'none', borderRadius: 10,
+                  fontSize: 13, fontWeight: 700,
+                  color: feedbackContent.trim() ? '#fff' : 'var(--text-tertiary)',
+                  cursor: feedbackContent.trim() ? 'pointer' : 'default',
+                  fontFamily: 'inherit', transition: 'all 0.15s',
+                }}
+              >
+                {feedbackSending ? '전송 중...' : '보내기'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    )}
     </>
   );
 }
