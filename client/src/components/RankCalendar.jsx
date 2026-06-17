@@ -35,7 +35,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
 
   const cellStyle = {
     base: {
-      width: 44, height: 44, borderRadius: 7,
+      width: 36, height: 36, borderRadius: 6,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: 10, fontWeight: 800, cursor: 'pointer',
       transition: 'transform 0.1s', border: '1px solid transparent',
@@ -61,9 +61,9 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
     out: { bg: 'rgba(0,0,0,0.06)',       border: 'rgba(0,0,0,0.12)',      text: 'transparent' },
   };
 
-  const CELL = 44;
-  const GAP = 5;
-  const LABEL_W = 64;
+  const CELL = 36;
+  const GAP = 4;
+  const LABEL_W = 60;
 
   return (
     <div style={{ overflowX: 'auto', overflowY: 'visible', width: '100%' }}>

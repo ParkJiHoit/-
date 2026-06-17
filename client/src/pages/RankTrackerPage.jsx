@@ -148,7 +148,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '300px minmax(0, 1fr)', gap: 16, alignItems: 'start' }}>
 
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -274,7 +274,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
         </div>
 
         {selected && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
 
             <div className="mac-card" style={{ padding: '0 22px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 64, borderBottom: mode === 'blog' && blogIds.length > 0 ? '1px solid var(--border)' : 'none', marginBottom: mode === 'blog' && blogIds.length > 0 ? 0 : 0 }}>
