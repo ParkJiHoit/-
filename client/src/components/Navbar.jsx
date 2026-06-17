@@ -247,28 +247,24 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       </button>
 
       {/* 사용 가이드 */}
-      <a
-        href={NOTION_GUIDE_URL}
-        target="_blank"
-        rel="noreferrer"
+      <button
         style={pillItem('guide')}
         onMouseEnter={() => setHoveredNav('guide')}
         onMouseLeave={() => setHoveredNav(null)}
+        onClick={() => alert('준비 중입니다.')}
       >
         사용 가이드
-      </a>
+      </button>
 
       {/* 업데이트 */}
-      <a
-        href={NOTION_UPDATE_URL}
-        target="_blank"
-        rel="noreferrer"
+      <button
         style={pillItem('updates')}
         onMouseEnter={() => setHoveredNav('updates')}
         onMouseLeave={() => setHoveredNav(null)}
+        onClick={() => alert('준비 중입니다.')}
       >
         업데이트
-      </a>
+      </button>
 
       {divider}
 
