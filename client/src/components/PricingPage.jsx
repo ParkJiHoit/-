@@ -252,9 +252,10 @@ export default function PricingPage({ onGoToAuth, user, token }) {
           zIndex: 1000, padding: 24,
         }}>
           <div onClick={e => e.stopPropagation()} style={{
-            background: 'var(--bg-card)', borderRadius: 16, padding: '28px 32px',
+            background: 'var(--bg-primary)', borderRadius: 16, padding: '28px 32px',
             maxWidth: 560, width: '100%', maxHeight: '80vh', overflowY: 'auto',
             border: '1px solid var(--border)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
