@@ -122,7 +122,7 @@ export default function PricingPage({ onGoToAuth, user, token }) {
 
           <div style={{ marginTop: 'auto' }}>
             <button
-              onClick={user ? onMockAction : onGoToAuth}
+              onClick={user ? undefined : onGoToAuth}
               style={{
                 width: '100%', padding: '10px 0',
                 background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
