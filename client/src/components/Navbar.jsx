@@ -346,7 +346,6 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
             onClick={() => onSwitchTab('auth')}
             style={{
               borderRadius: 999, padding: '6px 14px', border: 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'var(--accent)', color: '#fff',
               fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
               cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s',
@@ -408,7 +407,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
             <>
               {/* 유형 선택 */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                {[{ id: 'bug', label: '🐛 버그 신고' }, { id: 'feature', label: '💡 기능 제안' }].map(({ id, label }) => (
+                {[{ id: 'bug', label: '버그 신고' }, { id: 'feature', label: '기능 제안' }].map(({ id, label }) => (
                   <button
                     key={id}
                     onClick={() => setFeedbackType(id)}
