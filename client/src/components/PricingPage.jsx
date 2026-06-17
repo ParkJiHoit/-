@@ -21,8 +21,11 @@ const STANDARD_FEATURES = [
   'Excel / CSV 다운로드',
 ];
 
+const ADMIN_EMAILS = ['qkrwlgh52660724@gmail.com'];
+
 export default function PricingPage({ onGoToAuth, user, token }) {
   const [loading, setLoading] = useState(false);
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
   async function handleSubscribe() {
     if (!user) { onGoToAuth(); return; }
@@ -193,25 +196,37 @@ export default function PricingPage({ onGoToAuth, user, token }) {
           </div>
 
           <div style={{ marginTop: 'auto' }}>
-            <button
-              onClick={handleSubscribe}
-              disabled={loading}
-              style={{
+            {isAdmin ? (
+              <div style={{
                 width: '100%', padding: '12px 0',
-                background: loading ? 'rgba(10,132,255,0.5)' : 'linear-gradient(135deg, #0A84FF 0%, #34C1FF 100%)',
-                border: 'none', borderRadius: 10,
-                fontSize: 13, fontWeight: 700, color: '#fff',
-                cursor: loading ? 'default' : 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit',
-                boxShadow: '0 4px 20px rgba(10,132,255,0.4)',
-                transition: 'opacity 0.15s, transform 0.15s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
-              onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
-            >
-              <Zap size={13} />
-              {loading ? '연결 중...' : '시작하기'}
-            </button>
+                background: 'rgba(10,132,255,0.12)',
+                border: '1px solid rgba(10,132,255,0.3)',
+                borderRadius: 10, fontSize: 13, fontWeight: 700,
+                color: 'var(--accent)', textAlign: 'center',
+              }}>
+                관리자 계정 (무제한)
+              </div>
+            ) : (
+              <button
+                onClick={handleSubscribe}
+                disabled={loading}
+                style={{
+                  width: '100%', padding: '12px 0',
+                  background: loading ? 'rgba(10,132,255,0.5)' : 'linear-gradient(135deg, #0A84FF 0%, #34C1FF 100%)',
+                  border: 'none', borderRadius: 10,
+                  fontSize: 13, fontWeight: 700, color: '#fff',
+                  cursor: loading ? 'default' : 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit',
+                  boxShadow: '0 4px 20px rgba(10,132,255,0.4)',
+                  transition: 'opacity 0.15s, transform 0.15s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+                onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              >
+                <Zap size={13} />
+                {loading ? '연결 중...' : '시작하기'}
+              </button>
+            )}
             <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'center' }}>
               구독 즉시 이용 · 언제든 해지 가능
             </p>
