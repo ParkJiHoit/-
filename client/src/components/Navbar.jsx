@@ -348,7 +348,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
               borderRadius: 999, padding: '6px 14px', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'var(--accent)', color: '#fff',
-              fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', lineHeight: 1,
               cursor: 'pointer', fontFamily: 'inherit', transition: 'background 0.15s',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent-hover)')}
@@ -418,7 +418,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                       background: feedbackType === id ? 'rgba(10,132,255,0.12)' : isDark ? '#2C2C2E' : '#F2F2F7',
                       color: feedbackType === id ? 'var(--accent)' : 'var(--text-secondary)',
                       fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                      transition: 'all 0.15s',
+                      transition: 'all 0.15s', lineHeight: 1,
                       textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
