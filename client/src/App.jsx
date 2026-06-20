@@ -481,7 +481,16 @@ export default function App() {
   const [error,   setError]             = useState('');
   const [toast,   setToast]             = useState('');
   const [loginPrompt, setLoginPrompt]   = useState(null); // null | 'keyword' | 'blog'
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const toastRef = useRef(null);
+
+  useEffect(() => {
+    if (!session?.access_token) { setIsSubscribed(false); return; }
+    fetch('/api/billing/status', { headers: { Authorization: `Bearer ${session.access_token}` } })
+      .then(r => r.json())
+      .then(d => setIsSubscribed(!!d.isSubscribed))
+      .catch(() => setIsSubscribed(false));
+  }, [session?.access_token]);
 
   // 비로그인 키워드 분석 횟수
   const guestCount = () => parseInt(localStorage.getItem(GUEST_COUNT_KEY) || '0', 10);
@@ -737,7 +746,7 @@ export default function App() {
       )}
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-      <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} />
+      <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} isSubscribed={isSubscribed} />
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
 
       {/* Auth 모달 오버레이 */}

@@ -52,7 +52,8 @@ export async function optionalAuth(req, _res, next) {
             `SELECT status FROM subscriptions WHERE user_id = $1 LIMIT 1`,
             [user.id]
           );
-          req.isSubscribed = rows[0]?.status === 'active';
+          const s = rows[0]?.status;
+          req.isSubscribed = s === 'active' || s === 'trialing';
         }
       }
     }

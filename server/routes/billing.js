@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { ADMIN_EMAILS } from '../middleware/usageLimit.js';
+import { getPool } from '../db/index.js';
 
 const router = Router();
 
@@ -81,6 +82,25 @@ router.post('/checkout', requireAuth, async (req, res) => {
   } catch (e) {
     console.error('[billing] 오류:', e.message);
     res.status(500).json({ message: '결제 요청 중 오류가 발생했습니다.' });
+  }
+});
+
+// 구독 상태 조회
+router.get('/status', requireAuth, async (req, res) => {
+  if (req.isAdmin) return res.json({ status: 'admin', isSubscribed: true });
+  try {
+    const pool = getPool();
+    if (!pool) return res.json({ status: 'none', isSubscribed: false });
+    const { rows } = await pool.query(
+      `SELECT status FROM subscriptions WHERE user_id = $1 LIMIT 1`,
+      [req.userId]
+    );
+    const status = rows[0]?.status || 'none';
+    const isSubscribed = status === 'active' || status === 'trialing';
+    res.json({ status, isSubscribed });
+  } catch (e) {
+    console.error('[billing/status] 오류:', e.message);
+    res.json({ status: 'none', isSubscribed: false });
   }
 });
 

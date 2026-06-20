@@ -220,7 +220,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme }) {
                 onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 <Zap size={13} />
-                {loading ? '연결 중...' : '시작하기'}
+                {loading ? '연결 중...' : '7일 무료로 시작하기'}
               </button>
             )}
             <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'center' }}>
