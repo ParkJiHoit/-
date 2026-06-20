@@ -1,20 +1,8 @@
 import { ChevronDown, Clock, Search, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
-const KEYWORD_PLACEHOLDERS = [
-  '스마트스토어 창업',
-  '다이어트 식단',
-  '제주도 여행 코스',
-  '재테크 방법',
-  '홈카페 원두',
-];
-
-const BLOG_PLACEHOLDERS = [
-  '블로그 마케팅',
-  '네이버 블로그 운영',
-  '블로그 수익화',
-  '블로그 글쓰기',
-];
+const KEYWORD_PLACEHOLDERS = ['키워드를 입력하세요'];
+const BLOG_PLACEHOLDERS = ['키워드를 입력하세요'];
 
 function useTypingPlaceholder(items) {
   const [placeholder, setPlaceholder] = useState('');
@@ -72,7 +60,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
   const [validationMessage, setValidationMessage] = useState('');
   const [history, setHistory] = useState(() => getHistory(historyKey));
   const placeholders = historyKey === 'keywordlab.blogHistory' ? BLOG_PLACEHOLDERS : KEYWORD_PLACEHOLDERS;
-  const animatedPlaceholder = useTypingPlaceholder(placeholders);
+  const animatedPlaceholder = placeholders[0];
 
   const submitKeyword = (next = keyword) => {
     const trimmed = next.trim();

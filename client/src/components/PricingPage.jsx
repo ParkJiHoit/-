@@ -23,10 +23,11 @@ const STANDARD_FEATURES = [
 
 const ADMIN_EMAILS = ['qkrwlgh52660724@gmail.com'];
 
-export default function PricingPage({ onGoToAuth, user, token }) {
+export default function PricingPage({ onGoToAuth, user, token, theme }) {
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState(null); // 'privacy' | 'terms' | null
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
+  const isDark = theme !== 'light';
 
   async function handleSubscribe() {
     if (!user) { onGoToAuth(); return; }
@@ -240,10 +241,10 @@ export default function PricingPage({ onGoToAuth, user, token }) {
           zIndex: 1000, padding: 24,
         }}>
           <div onClick={e => e.stopPropagation()} style={{
-            background: '#1C1C1E', borderRadius: 16, padding: '28px 32px',
+            background: isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 16, padding: '28px 32px',
             maxWidth: 560, width: '100%', maxHeight: '80vh', overflowY: 'auto',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+            border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
