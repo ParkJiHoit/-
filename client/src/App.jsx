@@ -151,10 +151,44 @@ function getAuditHistory() {
   catch { return []; }
 }
 
+const AUDIT_PLACEHOLDERS = [
+  'https://blog.naver.com/example',
+  'https://blog.naver.com/mystore',
+  'https://blog.naver.com/traveler',
+];
+
+function useTypingPlaceholder(items) {
+  const [placeholder, setPlaceholder] = useState('');
+  const idx = useRef(0);
+  const charIdx = useRef(0);
+  const deleting = useRef(false);
+  useEffect(() => {
+    let timer;
+    const tick = () => {
+      const current = items[idx.current];
+      if (!deleting.current) {
+        charIdx.current++;
+        setPlaceholder(current.slice(0, charIdx.current));
+        if (charIdx.current === current.length) { deleting.current = true; timer = setTimeout(tick, 1800); }
+        else { timer = setTimeout(tick, 80); }
+      } else {
+        charIdx.current--;
+        setPlaceholder(current.slice(0, charIdx.current));
+        if (charIdx.current === 0) { deleting.current = false; idx.current = (idx.current + 1) % items.length; timer = setTimeout(tick, 400); }
+        else { timer = setTimeout(tick, 40); }
+      }
+    };
+    timer = setTimeout(tick, 800);
+    return () => clearTimeout(timer);
+  }, [items]);
+  return placeholder;
+}
+
 function BlogAuditForm({ onSubmit, loading }) {
   const [url, setUrl] = useState('');
   const [focused, setFocused] = useState(false);
   const [history, setHistory] = useState(() => getAuditHistory());
+  const animatedPlaceholder = useTypingPlaceholder(AUDIT_PLACEHOLDERS);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -214,7 +248,7 @@ function BlogAuditForm({ onSubmit, loading }) {
           onChange={e => setUrl(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          placeholder="블로그 링크를 입력하세요"
+          placeholder={focused || url ? '' : animatedPlaceholder}
           disabled={loading}
           style={{
             flex: 1, height: '100%',

@@ -1,5 +1,58 @@
 import { ChevronDown, Clock, Search, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+const KEYWORD_PLACEHOLDERS = [
+  '스마트스토어 창업',
+  '다이어트 식단',
+  '제주도 여행 코스',
+  '재테크 방법',
+  '홈카페 원두',
+];
+
+const BLOG_PLACEHOLDERS = [
+  '블로그 마케팅',
+  '네이버 블로그 운영',
+  '블로그 수익화',
+  '블로그 글쓰기',
+];
+
+function useTypingPlaceholder(items) {
+  const [placeholder, setPlaceholder] = useState('');
+  const idx = useRef(0);
+  const charIdx = useRef(0);
+  const deleting = useRef(false);
+
+  useEffect(() => {
+    let timer;
+    const tick = () => {
+      const current = items[idx.current];
+      if (!deleting.current) {
+        charIdx.current++;
+        setPlaceholder(current.slice(0, charIdx.current));
+        if (charIdx.current === current.length) {
+          deleting.current = true;
+          timer = setTimeout(tick, 1800);
+        } else {
+          timer = setTimeout(tick, 80);
+        }
+      } else {
+        charIdx.current--;
+        setPlaceholder(current.slice(0, charIdx.current));
+        if (charIdx.current === 0) {
+          deleting.current = false;
+          idx.current = (idx.current + 1) % items.length;
+          timer = setTimeout(tick, 400);
+        } else {
+          timer = setTimeout(tick, 40);
+        }
+      }
+    };
+    timer = setTimeout(tick, 800);
+    return () => clearTimeout(timer);
+  }, [items]);
+
+  return placeholder;
+}
 
 const MAX_HISTORY = 8;
 
@@ -18,6 +71,8 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
   const [focused, setFocused] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
   const [history, setHistory] = useState(() => getHistory(historyKey));
+  const placeholders = historyKey === 'keywordlab.blogHistory' ? BLOG_PLACEHOLDERS : KEYWORD_PLACEHOLDERS;
+  const animatedPlaceholder = useTypingPlaceholder(placeholders);
 
   const submitKeyword = (next = keyword) => {
     const trimmed = next.trim();
@@ -90,7 +145,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
             fontSize: 17, fontWeight: 400,
             color: 'var(--text-primary)', fontFamily: 'inherit'
           }}
-          placeholder="분석할 키워드를 입력하세요"
+          placeholder={focused || keyword ? '' : animatedPlaceholder}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           onFocus={() => setFocused(true)}
