@@ -10,14 +10,15 @@ const BASIC_FEATURES = [
   '순위 추적 갱신 하루 2회',
 ];
 
-const STANDARD_FEATURES = [
-  '연관 키워드 발굴',
-  '블로그탭 순위 실시간 확인',
+const PREMIUM_FEATURES = [
+  '키워드 분석 분당 15회 · 일 300회',
+  '블로그 구조 분석 하루 50회',
+  '블로그 진단 하루 20회',
+  '순위 추적 수동 갱신 하루 10회',
+  '순위 추적 키워드 최대 30개',
   '키워드 효율 점수 & 종합 평가',
   '일별 · 월별 · 연간 트렌드 차트',
-  '블로그 순위 추적 & 히스토리',
   '관련 기사 실시간 피드',
-  '검색 횟수 제한 없음',
   'Excel / CSV 다운로드',
 ];
 
@@ -131,7 +132,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme }) {
           </div>
         </div>
 
-        {/* ── 스탠다드 플랜 ── */}
+        {/* ── 프리미엄 플랜 ── */}
         <div className="mac-card" style={{
           flex: '1 1 300px', maxWidth: 380,
           padding: '20px 24px',
@@ -150,7 +151,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme }) {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
             <div>
               <p style={{ margin: '0 0 2px', fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Ranklet</p>
-              <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>스탠다드 플랜</p>
+              <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>프리미엄 플랜</p>
             </div>
             <div style={{
               background: 'linear-gradient(135deg, #0A84FF, #34C1FF)',
@@ -159,7 +160,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme }) {
             }}>추천</div>
           </div>
 
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-tertiary)', textDecoration: 'line-through' }}>₩34,900</span>
               <span style={{
@@ -174,10 +175,20 @@ export default function PricingPage({ onGoToAuth, user, token, theme }) {
             </div>
           </div>
 
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: 'linear-gradient(135deg, rgba(255,59,48,0.15), rgba(255,107,53,0.15))',
+            border: '1px solid rgba(255,59,48,0.3)',
+            borderRadius: 6, padding: '4px 10px', marginBottom: 12,
+          }}>
+            <Sparkles size={10} color="#FF6B35" />
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#FF6B35' }}>출시 기념 · 한달 한정 특가</span>
+          </div>
+
           <div style={{ height: 1, background: 'rgba(10,132,255,0.2)', marginBottom: 12 }} />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-            {STANDARD_FEATURES.map(text => (
+            {PREMIUM_FEATURES.map(text => (
               <div key={text} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <Check size={13} color="var(--accent)" strokeWidth={2.8} style={{ flexShrink: 0 }} />
                 <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>{text}</p>
@@ -302,7 +313,7 @@ function TermsContent() {
       <p>만 14세 이상 누구나 가입할 수 있습니다. 타인의 정보를 도용하거나 허위 정보로 가입하는 경우 계정이 정지될 수 있습니다.</p>
 
       <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>3. 구독 및 결제</h3>
-      <p>• 스탠다드 플랜은 월 ₩9,900이며 매월 자동 결제됩니다.<br />• 구독은 언제든지 해지할 수 있으며, 해지 후 해당 월 말까지 이용 가능합니다.<br />• 환불은 결제일로부터 7일 이내 요청 시 전액 환불됩니다.</p>
+      <p>• 프리미엄 플랜은 월 ₩9,900이며 매월 자동 결제됩니다.<br />• 구독은 언제든지 해지할 수 있으며, 해지 후 해당 월 말까지 이용 가능합니다.<br />• 환불은 결제일로부터 7일 이내 요청 시 전액 환불됩니다.</p>
 
       <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>4. 데이터 정확도</h3>
       <p>서비스에서 제공하는 검색량, 순위 데이터는 네이버 API 기반이며 실제 수치와 차이가 있을 수 있습니다. 데이터 정확도를 100% 보장하지 않습니다.</p>

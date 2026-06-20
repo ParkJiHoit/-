@@ -16,7 +16,7 @@ router.post('/analyze', async (req, res, next) => {
   }
 });
 
-router.post('/structure-analysis', optionalAuth, checkDailyLimit('blog_audit'), async (req, res, next) => {
+router.post('/structure-analysis', optionalAuth, checkDailyLimit('blog_structure'), async (req, res, next) => {
   try {
     const keyword = String(req.body?.keyword || '').trim();
     if (!keyword) return res.status(400).json({ message: '키워드를 입력해 주세요.' });

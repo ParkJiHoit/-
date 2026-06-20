@@ -592,9 +592,9 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
       sub: keywordRow ? (keywordRow.averageCtr >= 10 ? '클릭률 높음' : keywordRow.averageCtr >= 3 ? '클릭률 보통' : '클릭률 낮음') : null,
     },
     {
-      label: '효율 점수', value: keywordRow ? formatScore(keywordRow.efficiencyScore) : '—', showChange: false,
-      bar: keywordRow ? keywordRow.efficiencyScore : null, barColor: keywordRow?.efficiencyScore >= 60 ? '#30D158' : keywordRow?.efficiencyScore >= 40 ? '#FF9F0A' : '#FF453A',
-      sub: keywordRow ? (keywordRow.efficiencyScore >= 60 ? '발굴 가치 높음' : keywordRow.efficiencyScore >= 40 ? '발굴 가치 보통' : '발굴 가치 낮음') : null,
+      label: '효율 점수', value: keywordRow ? (isLoggedIn ? formatScore(keywordRow.efficiencyScore) : '0점') : '—', showChange: false,
+      bar: keywordRow && isLoggedIn ? keywordRow.efficiencyScore : null, barColor: keywordRow?.efficiencyScore >= 60 ? '#30D158' : keywordRow?.efficiencyScore >= 40 ? '#FF9F0A' : '#FF453A',
+      sub: keywordRow ? (isLoggedIn ? (keywordRow.efficiencyScore >= 60 ? '발굴 가치 높음' : keywordRow.efficiencyScore >= 40 ? '발굴 가치 보통' : '발굴 가치 낮음') : '발굴 가치 ??') : null,
     },
   ];
 
