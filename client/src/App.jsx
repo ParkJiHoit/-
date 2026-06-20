@@ -482,7 +482,7 @@ export default function App() {
   const [toast,   setToast]             = useState('');
   const [loginPrompt, setLoginPrompt]   = useState(null); // null | 'keyword' | 'blog'
   const [limitExceeded, setLimitExceeded] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false); // false | true | 'admin'
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const toastRef = useRef(null);
 
@@ -490,7 +490,7 @@ export default function App() {
     if (!session?.access_token) { setIsSubscribed(false); return; }
     fetch('/api/billing/status', { headers: { Authorization: `Bearer ${session.access_token}` } })
       .then(r => r.json())
-      .then(d => setIsSubscribed(!!d.isSubscribed))
+      .then(d => setIsSubscribed(d.status === 'admin' ? 'admin' : !!d.isSubscribed))
       .catch(() => setIsSubscribed(false));
   }, [session?.access_token]);
 
@@ -832,11 +832,11 @@ export default function App() {
       )}
 
       {activeTab === 'pricing' ? (
-        <PricingPage onGoToAuth={() => setActiveTab('auth')} user={user} token={session?.access_token} theme={theme} />
+        <PricingPage onGoToAuth={() => setActiveTab('auth')} user={user} token={session?.access_token} theme={theme} isSubscribed={isSubscribed} />
       ) : activeTab === 'rank-tracker' ? (
         <div style={{ paddingTop: 'calc(var(--nav-offset) + 24px)', paddingBottom: 64 }}>
           <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-10">
-            <RankTrackerPage onLoginRequest={() => switchTab('auth')} />
+            <RankTrackerPage onLoginRequest={() => switchTab('auth')} onGoPricing={() => switchTab('pricing')} />
           </div>
         </div>
       ) : (

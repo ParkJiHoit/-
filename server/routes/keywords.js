@@ -20,6 +20,9 @@ router.post('/analyze', optionalAuth, checkDailyLimit('keyword_analyze'), async 
     if (!keyword) {
       return res.status(400).json({ message: '분석할 키워드를 입력해 주세요.' });
     }
+    if (keyword.length > 50) {
+      return res.status(400).json({ message: '키워드는 50자 이내로 입력해 주세요.' });
+    }
 
     const result = await analyzeKeyword(keyword);
     console.log(`[analyze] ✓ "${keyword}" → ${result.keywords?.length} keywords`);

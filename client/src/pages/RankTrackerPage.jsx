@@ -16,11 +16,16 @@ async function apiFetch(path, options, token) {
     },
   });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.message || '오류가 발생했습니다.');
+  if (!res.ok) {
+    const err = new Error(body.message || '오류가 발생했습니다.');
+    err.premiumOnly = !!body.premiumOnly;
+    err.status = res.status;
+    throw err;
+  }
   return body;
 }
 
-export default function RankTrackerPage({ onLoginRequest }) {
+export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const { user, session } = useAuth();
   const token = session?.access_token;
 
@@ -35,6 +40,7 @@ export default function RankTrackerPage({ onLoginRequest }) {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null); // null = 신규, item = 수정
   const [error, setError] = useState('');
+  const [premiumOnly, setPremiumOnly] = useState(false);
 
   const loadItems = useCallback(async () => {
     if (!token) return;
@@ -42,7 +48,10 @@ export default function RankTrackerPage({ onLoginRequest }) {
     try {
       const data = await apiFetch('', {}, token);
       setItems(data);
-    } catch (e) { setError(e.message); }
+    } catch (e) {
+      if (e.premiumOnly) { setPremiumOnly(true); }
+      else { setError(e.message); }
+    }
     finally { setLoading(false); }
   }, [token]);
 
@@ -119,6 +128,29 @@ export default function RankTrackerPage({ onLoginRequest }) {
   const latestSnapshot = selected?.mode === 'all'
     ? snapshots.filter(s => s.snapshotted_at === latestDate).sort((a, b) => (a.rank || 99) - (b.rank || 99))
     : [];
+
+  if (premiumOnly) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 360, gap: 18 }}>
+        <div style={{ fontSize: 48, opacity: 0.25 }}>🔒</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>프리미엄 전용 기능입니다</div>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.8, margin: 0 }}>
+          순위 추적은 프리미엄 플랜 구독자만 이용할 수 있어요.<br />7일 무료 체험으로 먼저 써보세요.
+        </p>
+        <button
+          onClick={onGoPricing}
+          style={{
+            padding: '12px 32px', borderRadius: 12, border: 'none',
+            background: 'linear-gradient(135deg,#0A84FF,#34C1FF)', color: '#fff',
+            fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            marginTop: 4, boxShadow: '0 4px 20px rgba(10,132,255,0.4)',
+          }}
+        >
+          7일 무료로 시작하기
+        </button>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

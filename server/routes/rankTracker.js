@@ -43,6 +43,9 @@ async function requireAuth(req, res, next) {
 router.use(requireAuth);
 
 router.get('/', async (req, res, next) => {
+  if (!req.isAdmin && !req.isSubscribed) {
+    return res.status(403).json({ message: '순위 추적은 프리미엄 플랜 전용 기능입니다.', premiumOnly: true });
+  }
   try {
     const data = await listTracked(req.userId);
     res.json(data);

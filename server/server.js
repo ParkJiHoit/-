@@ -70,6 +70,19 @@ if (fs.existsSync(clientDistPath)) {
 }
 
 app.use((error, _req, res, _next) => {
+  const naverStatus = error.response?.status;
+
+  // 네이버 API 에러를 사용자 친화적 메시지로 변환
+  if (naverStatus === 429 || error.message?.includes('429')) {
+    return res.status(503).json({ message: '네이버 API 요청 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.' });
+  }
+  if (naverStatus === 401 || naverStatus === 403) {
+    return res.status(503).json({ message: '네이버 API 인증 오류가 발생했습니다. 관리자에게 문의해 주세요.' });
+  }
+  if (naverStatus >= 500 || error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+    return res.status(503).json({ message: '네이버 서버가 일시적으로 불안정합니다. 잠시 후 다시 시도해 주세요.' });
+  }
+
   const status = error.status || 500;
   res.status(status).json({
     message: error.message || '키워드 분석 중 오류가 발생했습니다.'

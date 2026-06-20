@@ -22,12 +22,10 @@ const PREMIUM_FEATURES = [
   'Excel / CSV 다운로드',
 ];
 
-const ADMIN_EMAILS = ['qkrwlgh52660724@gmail.com'];
-
-export default function PricingPage({ onGoToAuth, user, token, theme }) {
+export default function PricingPage({ onGoToAuth, user, token, theme, isSubscribed }) {
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState(null); // 'privacy' | 'terms' | null
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email);
+  const isAdmin = isSubscribed === 'admin';
   const isDark = theme !== 'light';
 
   async function handleSubscribe() {

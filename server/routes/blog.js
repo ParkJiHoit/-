@@ -20,6 +20,7 @@ router.post('/structure-analysis', optionalAuth, checkDailyLimit('blog_structure
   try {
     const keyword = String(req.body?.keyword || '').trim();
     if (!keyword) return res.status(400).json({ message: '키워드를 입력해 주세요.' });
+    if (keyword.length > 50) return res.status(400).json({ message: '키워드는 50자 이내로 입력해 주세요.' });
     console.log(`[blog-structure] → "${keyword}"`);
     const data = await analyzeBlogStructure(keyword);
     console.log(`[blog-structure] ✓ "${keyword}" posts=${data.posts?.length}`);

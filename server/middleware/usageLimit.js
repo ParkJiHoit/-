@@ -17,7 +17,9 @@ const PREMIUM_LIMITS = {
   rank_refresh:      10,
 };
 
-export const ADMIN_EMAILS = ['qkrwlgh52660724@gmail.com'];
+export const ADMIN_EMAILS = process.env.ADMIN_EMAILS
+  ? process.env.ADMIN_EMAILS.split(',').map(e => e.trim())
+  : ['qkrwlgh52660724@gmail.com'];
 
 // 분당 15회 rate limit (프리미엄 전용, 인메모리)
 // { userId: [timestamp, ...] }
