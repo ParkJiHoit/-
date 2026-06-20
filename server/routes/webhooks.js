@@ -9,13 +9,19 @@ router.post('/lemonsqueezy', async (req, res) => {
   const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
   const signature = req.headers['x-signature'];
 
-  if (secret && signature) {
-    const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(req.rawBody || '');
-    const digest = hmac.digest('hex');
-    if (digest !== signature) {
-      return res.status(401).json({ message: '서명 불일치' });
-    }
+  if (!secret) {
+    console.error('[webhook] LEMONSQUEEZY_WEBHOOK_SECRET 환경변수 누락');
+    return res.status(500).json({ message: '서버 설정 오류' });
+  }
+  if (!signature) {
+    return res.status(401).json({ message: '서명 없음' });
+  }
+
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(req.rawBody || '');
+  const digest = hmac.digest('hex');
+  if (digest !== signature) {
+    return res.status(401).json({ message: '서명 불일치' });
   }
 
   const event = req.headers['x-event-name'];

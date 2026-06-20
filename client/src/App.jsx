@@ -483,6 +483,7 @@ export default function App() {
   const [loginPrompt, setLoginPrompt]   = useState(null); // null | 'keyword' | 'blog'
   const [limitExceeded, setLimitExceeded] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const toastRef = useRef(null);
 
   useEffect(() => {
@@ -491,6 +492,29 @@ export default function App() {
       .then(r => r.json())
       .then(d => setIsSubscribed(!!d.isSubscribed))
       .catch(() => setIsSubscribed(false));
+  }, [session?.access_token]);
+
+  // 결제 완료 후 리다이렉트 감지 + 구독 상태 폴링
+  useEffect(() => {
+    if (!window.location.pathname.includes('payment-success')) return;
+    setPaymentSuccess(true);
+    window.history.replaceState({}, '', '/');
+    if (!session?.access_token) return;
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      fetch('/api/billing/status', { headers: { Authorization: `Bearer ${session.access_token}` } })
+        .then(r => r.json())
+        .then(d => {
+          if (d.isSubscribed) {
+            setIsSubscribed(true);
+            clearInterval(poll);
+          }
+        })
+        .catch(() => {});
+      if (attempts >= 10) clearInterval(poll); // 최대 20초
+    }, 2000);
+    return () => clearInterval(poll);
   }, [session?.access_token]);
 
   // 비로그인 키워드 분석 횟수
@@ -727,6 +751,50 @@ export default function App() {
           onClose={() => setLoginPrompt(null)}
           onGoToAuth={() => { setLoginPrompt(null); switchTab('auth'); }}
         />
+      )}
+
+      {paymentSuccess && (
+        <div onClick={() => setPaymentSuccess(false)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 3000, padding: 24,
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: theme !== 'light' ? '#1C1C1E' : '#FFFFFF',
+            borderRadius: 20, padding: '36px 32px', maxWidth: 400, width: '100%',
+            textAlign: 'center',
+            border: theme !== 'light' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+            <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>
+              프리미엄 시작!
+            </h2>
+            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              {isSubscribed
+                ? '구독이 활성화됐어요. 모든 기능을 자유롭게 사용해보세요.'
+                : '결제가 확인되는 중이에요. 잠시 후 자동으로 활성화됩니다.'}
+            </p>
+            {!isSubscribed && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 20 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#FF9F0A', animation: 'pulse 1.5s infinite' }} />
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>구독 상태 확인 중...</span>
+              </div>
+            )}
+            <button
+              onClick={() => setPaymentSuccess(false)}
+              style={{
+                width: '100%', padding: '12px 0',
+                background: 'linear-gradient(135deg,#0A84FF,#34C1FF)',
+                border: 'none', borderRadius: 12,
+                fontSize: 14, fontWeight: 700, color: '#fff',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              시작하기
+            </button>
+          </div>
+        </div>
       )}
       <AuroraBackground theme={theme} hidden={hasResults} loading={loading || blogAuditLoading} />
       {/* 결과 페이지 배경 */}
