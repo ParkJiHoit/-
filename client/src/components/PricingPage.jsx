@@ -175,12 +175,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme }) {
             </div>
           </div>
 
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            background: 'linear-gradient(135deg, rgba(255,59,48,0.15), rgba(255,107,53,0.15))',
-            border: '1px solid rgba(255,59,48,0.3)',
-            borderRadius: 6, padding: '4px 10px', marginBottom: 12,
-          }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 12 }}>
             <Sparkles size={10} color="#FF6B35" />
             <span style={{ fontSize: 10, fontWeight: 700, color: '#FF6B35' }}>출시 기념 · 한달 한정 특가</span>
           </div>
