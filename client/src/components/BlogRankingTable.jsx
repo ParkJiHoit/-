@@ -304,6 +304,7 @@ function TabSwitcher({ active, onChange }) {
               color: isActive ? 'var(--accent)' : 'var(--text-tertiary)',
               transition: 'color 0.2s ease',
               whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
             {label}
