@@ -481,6 +481,7 @@ export default function App() {
   const [error,   setError]             = useState('');
   const [toast,   setToast]             = useState('');
   const [loginPrompt, setLoginPrompt]   = useState(null); // null | 'keyword' | 'blog'
+  const [limitExceeded, setLimitExceeded] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const toastRef = useRef(null);
 
@@ -544,12 +545,17 @@ export default function App() {
   const currentSummary = useMemo(() => buildSummary(filteredRows), [filteredRows]);
 
   const requestKeywords = async (endpoint, payload, failMsg, nextSort) => {
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setLimitExceeded(false);
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
       const res  = await fetch(endpoint, { method:'POST', headers, body: JSON.stringify(payload) });
       const data = await parseApiResponse(res);
+      if (res.status === 429) {
+        setLimitExceeded(true);
+        setError(data.message || failMsg);
+        return null;
+      }
       if (!res.ok) throw new Error(data.message || failMsg);
       if (!data.keywords) throw new Error(data.message || '키워드 응답 형식이 올바르지 않습니다.');
       setFilters(defaultFilters);
@@ -611,12 +617,13 @@ export default function App() {
       return;
     }
     setBlogStructureKeyword(keyword);
-    setLoading(true); setError('');
+    setLoading(true); setError(''); setLimitExceeded(false);
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
       const res  = await fetch('/api/blog/structure-analysis', { method: 'POST', headers, body: JSON.stringify({ keyword }) });
       const data = await parseApiResponse(res);
+      if (res.status === 429) { setLimitExceeded(true); setError(data.message || '블로그 구조 분석에 실패했습니다.'); return; }
       if (!res.ok) throw new Error(data.message || '블로그 구조 분석에 실패했습니다.');
       setBlogStructure(data);
       saveSearchHistory('blog', keyword);
@@ -630,11 +637,13 @@ export default function App() {
     setBlogAudit(null);
     setBlogAuditError('');
     setBlogAuditLoading(true);
+    setLimitExceeded(false);
     try {
       const headers = { 'Content-Type': 'application/json' };
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
       const res  = await fetch('/api/blog/audit', { method: 'POST', headers, body: JSON.stringify({ url }) });
       const data = await parseApiResponse(res);
+      if (res.status === 429) { setLimitExceeded(true); setBlogAuditError(data.message || '블로그 진단에 실패했습니다.'); return; }
       if (!res.ok) throw new Error(data.message || '블로그 진단에 실패했습니다.');
       setBlogAudit(data);
     } catch (e) {
@@ -823,9 +832,14 @@ export default function App() {
           </p>
         )}
         {activeTab === 'blog' && blogSubTab === 'audit' && !blogAudit && blogAuditError && (
-          <p className="mac-fade-in" style={{ fontSize: 13, color: 'var(--destructive)', textAlign: 'center', marginTop: 16 }}>
-            {blogAuditError}
-          </p>
+          <div className="mac-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+            <p style={{ fontSize: 13, color: limitExceeded ? '#FF9F0A' : 'var(--destructive)', margin: 0 }}>{blogAuditError}</p>
+            {limitExceeded && !isSubscribed && (
+              <button onClick={() => switchTab('pricing')} style={{ padding: '6px 14px', background: 'linear-gradient(135deg,#0A84FF,#34C1FF)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+                프리미엄 업그레이드
+              </button>
+            )}
+          </div>
         )}
       </HeroSection>
 
@@ -845,14 +859,24 @@ export default function App() {
 
         {error && isKeywordTab && (
           <div className="mac-fade-in mac-card mb-5 px-5 py-4"
-            style={{ fontSize: 13, color: 'var(--destructive)', border: '1px solid rgba(255,69,58,0.25)' }}>
-            {error}
+            style={{ border: limitExceeded ? '1px solid rgba(255,159,10,0.35)' : '1px solid rgba(255,69,58,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: limitExceeded ? '#FF9F0A' : 'var(--destructive)' }}>{error}</span>
+            {limitExceeded && !isSubscribed && (
+              <button onClick={() => switchTab('pricing')} style={{ flexShrink: 0, padding: '6px 14px', background: 'linear-gradient(135deg,#0A84FF,#34C1FF)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+                프리미엄 업그레이드
+              </button>
+            )}
           </div>
         )}
         {error && activeTab === 'blog' && blogStructure && (
           <div className="mac-fade-in mac-card mb-5 px-5 py-4"
-            style={{ fontSize: 13, color: 'var(--destructive)', border: '1px solid rgba(255,69,58,0.25)' }}>
-            {error}
+            style={{ border: limitExceeded ? '1px solid rgba(255,159,10,0.35)' : '1px solid rgba(255,69,58,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: limitExceeded ? '#FF9F0A' : 'var(--destructive)' }}>{error}</span>
+            {limitExceeded && !isSubscribed && (
+              <button onClick={() => switchTab('pricing')} style={{ flexShrink: 0, padding: '6px 14px', background: 'linear-gradient(135deg,#0A84FF,#34C1FF)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+                프리미엄 업그레이드
+              </button>
+            )}
           </div>
         )}
 
