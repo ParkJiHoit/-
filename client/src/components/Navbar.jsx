@@ -246,7 +246,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         >
           요금제
         </button>
-        {(!isSubscribed) && (
+        {(!isSubscribed && !serviceOpen) && (
           <div style={{
             position: 'absolute', top: 'calc(100% + 12px)', left: '50%',
             transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10,
