@@ -27,14 +27,20 @@ export function parseBulkImportText(text) {
   let urlIdx = firstCells.findIndex(c => URL_HEADERS.includes(normalizeHeader(c)));
 
   let startIdx;
-  if (keywordIdx !== -1 && urlIdx !== -1) {
+  if (keywordIdx !== -1 || urlIdx !== -1) {
+    // 헤더 이름이 하나라도 인식되면 이 행은 헤더로 취급하고,
+    // 인식되지 않은 나머지 컬럼은 남은 위치로 채운다.
+    if (keywordIdx === -1) keywordIdx = urlIdx === 0 ? 1 : 0;
+    if (urlIdx === -1) urlIdx = keywordIdx === 0 ? 1 : 0;
     startIdx = 1;
   } else {
+    // 헤더 이름을 전혀 인식하지 못하면 항상 첫 행을 데이터로 처리한다.
+    // (첫 행을 "헤더처럼 보이지 않으면 헤더"로 추측하던 이전 방식은
+    //  실제 데이터의 첫 행이 우연히 잘못된 URL을 담고 있을 때
+    //  그 행을 아무 오류 표시도 없이 통째로 버리는 문제가 있었다.)
     keywordIdx = 0;
     urlIdx = 1;
-    const looksLikeHeader = firstCells.length >= 2 &&
-      !isNaverBlogUrl(firstCells[0]) && !isNaverBlogUrl(firstCells[1]);
-    startIdx = looksLikeHeader ? 1 : 0;
+    startIdx = 0;
   }
 
   const rows = [];

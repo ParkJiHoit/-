@@ -80,3 +80,22 @@ test('groupParsedRows: 같은 URL이 중복되면 하나로 합친다', () => {
   const groups = groupParsedRows(rows, new Set());
   assert.equal(groups[0].urls.length, 1);
 });
+
+test('헤더 없는 입력에서 첫 행의 URL이 잘못돼도 조용히 사라지지 않고 오류로 남는다', () => {
+  const text = '강남맛집,https://example.com/1\n서울카페,https://blog.naver.com/seoul/555';
+  const { rows, errors } = parseBulkImportText(text);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].keyword, '서울카페');
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].rowNumber, 1);
+  assert.match(errors[0].reason, /blog\.naver\.com/);
+});
+
+test('헤더 중 하나만 인식돼도 나머지 컬럼 위치를 올바르게 채운다', () => {
+  const text = 'url,검색 키워드\nhttps://blog.naver.com/foo/1,강릉여행';
+  const { rows, errors } = parseBulkImportText(text);
+  assert.equal(errors.length, 0);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].keyword, '강릉여행');
+  assert.equal(rows[0].url, 'https://blog.naver.com/foo/1');
+});
