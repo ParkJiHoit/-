@@ -1,9 +1,41 @@
 import { getPool } from '../db/index.js';
 import { fetchBlogRankings } from './blogRankingService.js';
 
-function extractBlogId(url) {
-  const m = String(url).match(/blog\.naver\.com\/([^/?#\s]+)/);
-  return m ? m[1].toLowerCase() : null;
+export function extractPostKey(url) {
+  const str = String(url || '').trim();
+
+  let m = str.match(/(?:m\.)?blog\.naver\.com\/([^/?#\s]+)\/(\d+)/);
+  if (m) return { blogId: m[1].toLowerCase(), logNo: m[2] };
+
+  if (/blog\.naver\.com\/PostView\.naver\?/.test(str)) {
+    const blogIdMatch = str.match(/[?&]blogId=([^&]+)/);
+    const logNoMatch = str.match(/[?&]logNo=([^&]+)/);
+    if (blogIdMatch && logNoMatch) {
+      return { blogId: decodeURIComponent(blogIdMatch[1]).toLowerCase(), logNo: logNoMatch[1] };
+    }
+  }
+
+  m = str.match(/blog\.naver\.com\/([^/?#\s]+)/);
+  if (m) return { blogId: m[1].toLowerCase(), logNo: null };
+
+  return null;
+}
+
+export function postKeyToString({ blogId, logNo }) {
+  return logNo ? `${blogId}/${logNo}` : blogId;
+}
+
+export function parsePostKeyString(stored) {
+  const [blogId, logNo] = String(stored).split('/');
+  return { blogId, logNo: logNo || null };
+}
+
+export function findMatchingRank(rankings, storedKey) {
+  const { blogId, logNo } = parsePostKeyString(storedKey);
+  if (logNo) {
+    return rankings.find(r => r.blogId?.toLowerCase() === blogId && r.logNo === logNo) || null;
+  }
+  return rankings.find(r => r.blogId?.toLowerCase() === blogId) || null;
 }
 
 export async function listTracked(userId) {
