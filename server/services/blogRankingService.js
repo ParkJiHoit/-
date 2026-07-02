@@ -59,7 +59,7 @@ function detectType(url) {
 
 // 블로그/카페 URL인지 검증 (리다이렉트 후 결과 필터)
 function isValidNaverUrl(url, domains) {
-  const isBlog = /blog\.naver\.com\/[^/?#\s]+\/\d{5,}/.test(url);
+  const isBlog = /blog\.naver\.com\/[^/?#\s]+(?:\/\d{5,})?/.test(url);
   // 카페: /cafeName/articleId 형식 OR 구형 articleid 쿼리 파라미터
   const isCafe = /cafe\.naver\.com\/[^/?#\s]+\/\d+/.test(url) ||
                  (/cafe\.naver\.com/.test(url) && /[?&]articleid=\d+/i.test(url));
@@ -185,18 +185,26 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
     })
   );
 
+  return buildRankingList(raw, config.domains);
+}
+
+export function buildRankingList(raw, domains) {
   return raw
-    .filter(r => r.postLink && isValidNaverUrl(r.postLink, config.domains))
-    .map((r, i) => ({
-      rank: i + 1,
-      title: r.title,
-      author: r.author,
-      date: formatDate(r.dateRaw),
-      daysAgo: parseDaysAgo(r.dateRaw),
-      postLink: r.postLink,
-      type: r.type || detectType(r.postLink),
-      blogId: r.postLink.match(/blog\.naver\.com\/([^/?#\s]+)\//)?.[1] || '',
-    }));
+    .filter(r => r.postLink && isValidNaverUrl(r.postLink, domains))
+    .map((r, i) => {
+      const m = r.postLink.match(/blog\.naver\.com\/([^/?#\s]+)(?:\/(\d+))?/);
+      return {
+        rank: i + 1,
+        title: r.title,
+        author: r.author,
+        date: formatDate(r.dateRaw),
+        daysAgo: parseDaysAgo(r.dateRaw),
+        postLink: r.postLink,
+        type: r.type || detectType(r.postLink),
+        blogId: m?.[1]?.toLowerCase() || '',
+        logNo: m?.[2] || null,
+      };
+    });
 }
 
 async function fetchDailyVisitors(blogId) {
