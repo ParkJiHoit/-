@@ -3,6 +3,7 @@ import { refreshRanks } from './rankTrackerService.js';
 
 const CHUNK_SIZE = 5;
 const ITEM_DELAY_MS = 700;
+const CHUNK_TIME_BUDGET_MS = 20000;
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -65,7 +66,9 @@ export async function processNextChunk(userId, jobId) {
     [jobId, CHUNK_SIZE]
   );
 
+  const chunkStartedAt = Date.now();
   for (let i = 0; i < items.length; i++) {
+    if (Date.now() - chunkStartedAt > CHUNK_TIME_BUDGET_MS) break;
     const item = items[i];
     try {
       await refreshRanks(userId, item.tracked_id);
