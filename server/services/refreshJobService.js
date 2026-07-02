@@ -17,11 +17,17 @@ export async function createRefreshJob(userId, trackedIds = null) {
   const pool = getPool();
   if (!pool) throw Object.assign(new Error('DB가 설정되지 않았습니다.'), { status: 503 });
 
-  let ids = trackedIds;
-  if (!ids || !ids.length) {
+  let ids;
+  if (!trackedIds || !trackedIds.length) {
     const { rows } = await pool.query(
       `SELECT id FROM tracked_keywords WHERE user_id = $1`,
       [userId]
+    );
+    ids = rows.map(r => r.id);
+  } else {
+    const { rows } = await pool.query(
+      `SELECT id FROM tracked_keywords WHERE id = ANY($1) AND user_id = $2`,
+      [trackedIds, userId]
     );
     ids = rows.map(r => r.id);
   }

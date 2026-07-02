@@ -44,6 +44,13 @@ async function requireAuth(req, res, next) {
 
 router.use(requireAuth);
 
+function requirePremium(req, res, next) {
+  if (!req.isAdmin && !req.isSubscribed) {
+    return res.status(403).json({ message: '순위 추적은 프리미엄 플랜 전용 기능입니다.', premiumOnly: true });
+  }
+  next();
+}
+
 async function assertKeywordCapacity(req, additionalCount) {
   if (req.isAdmin) return;
   const pool = getPool();
@@ -66,10 +73,7 @@ async function assertKeywordCapacity(req, additionalCount) {
   }
 }
 
-router.get('/', async (req, res, next) => {
-  if (!req.isAdmin && !req.isSubscribed) {
-    return res.status(403).json({ message: '순위 추적은 프리미엄 플랜 전용 기능입니다.', premiumOnly: true });
-  }
+router.get('/', requirePremium, async (req, res, next) => {
   try {
     const data = await listTracked(req.userId);
     res.json(data);
@@ -115,7 +119,7 @@ router.get('/:id/snapshots', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/bulk-import/preview', async (req, res, next) => {
+router.post('/bulk-import/preview', requirePremium, async (req, res, next) => {
   try {
     const { text } = req.body || {};
     if (!text || !text.trim()) return res.status(400).json({ message: '업로드할 내용이 없습니다.' });
@@ -137,7 +141,7 @@ router.post('/bulk-import/preview', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/bulk-import/confirm', async (req, res, next) => {
+router.post('/bulk-import/confirm', requirePremium, async (req, res, next) => {
   try {
     const { groups } = req.body || {};
     if (!Array.isArray(groups) || !groups.length) {
@@ -168,7 +172,7 @@ router.post('/bulk-import/confirm', async (req, res, next) => {
   }
 });
 
-router.post('/refresh-jobs', async (req, res, next) => {
+router.post('/refresh-jobs', requirePremium, async (req, res, next) => {
   try {
     const { trackedIds } = req.body || {};
     const job = await createRefreshJob(req.userId, Array.isArray(trackedIds) ? trackedIds : null);
@@ -176,21 +180,21 @@ router.post('/refresh-jobs', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/refresh-jobs/:id/process-chunk', async (req, res, next) => {
+router.post('/refresh-jobs/:id/process-chunk', requirePremium, async (req, res, next) => {
   try {
     const job = await processNextChunk(req.userId, Number(req.params.id));
     res.json(job);
   } catch (e) { next(e); }
 });
 
-router.get('/refresh-jobs/:id', async (req, res, next) => {
+router.get('/refresh-jobs/:id', requirePremium, async (req, res, next) => {
   try {
     const job = await getJobStatus(req.userId, Number(req.params.id));
     res.json(job);
   } catch (e) { next(e); }
 });
 
-router.post('/refresh-jobs/:id/retry-failed', async (req, res, next) => {
+router.post('/refresh-jobs/:id/retry-failed', requirePremium, async (req, res, next) => {
   try {
     const job = await retryFailedItems(req.userId, Number(req.params.id));
     res.status(201).json(job);
