@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import {
   listTracked, createTracked, deleteTracked,
-  getSnapshots, refreshRanks,
+  getSnapshots, refreshRanks, mergeTrackedBlogUrls,
 } from '../services/rankTrackerService.js';
+import { parseBulkImportText, groupParsedRows } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
 import { getPool } from '../db/index.js';
 
@@ -111,6 +112,59 @@ router.get('/:id/snapshots', async (req, res, next) => {
     const data = await getSnapshots(req.userId, Number(req.params.id));
     res.json(data);
   } catch (e) { next(e); }
+});
+
+router.post('/bulk-import/preview', async (req, res, next) => {
+  try {
+    const { text } = req.body || {};
+    if (!text || !text.trim()) return res.status(400).json({ message: '업로드할 내용이 없습니다.' });
+
+    const { rows, errors } = parseBulkImportText(text);
+
+    let existingKeywords = new Set();
+    const pool = getPool();
+    if (pool) {
+      const { rows: existing } = await pool.query(
+        `SELECT keyword FROM tracked_keywords WHERE user_id = $1 AND mode = 'blog'`,
+        [req.userId]
+      );
+      existingKeywords = new Set(existing.map(r => r.keyword));
+    }
+
+    const groups = groupParsedRows(rows, existingKeywords);
+    res.json({ groups, errors, newKeywordCount: groups.filter(g => g.isNew).length });
+  } catch (e) { next(e); }
+});
+
+router.post('/bulk-import/confirm', async (req, res, next) => {
+  try {
+    const { groups } = req.body || {};
+    if (!Array.isArray(groups) || !groups.length) {
+      return res.status(400).json({ message: '등록할 항목이 없습니다.' });
+    }
+
+    const pool = getPool();
+    if (pool) {
+      const { rows: existing } = await pool.query(
+        `SELECT keyword FROM tracked_keywords WHERE user_id = $1 AND mode = 'blog'`,
+        [req.userId]
+      );
+      const existingSet = new Set(existing.map(r => r.keyword));
+      const newCount = groups.filter(g => !existingSet.has(g.keyword)).length;
+      await assertKeywordCapacity(req, newCount);
+    }
+
+    let created = 0;
+    for (const g of groups) {
+      if (!g.keyword?.trim() || !Array.isArray(g.urls) || !g.urls.length) continue;
+      await mergeTrackedBlogUrls(req.userId, g.keyword, 'blog', g.urls);
+      created++;
+    }
+    res.status(201).json({ created });
+  } catch (e) {
+    if (e.limitExceeded) return res.status(e.status).json({ message: e.message, limitExceeded: true });
+    next(e);
+  }
 });
 
 export default router;
