@@ -69,6 +69,36 @@ export async function initDb() {
   `);
   console.log('[DB] rank_tracker 테이블 준비 완료');
   await p.query(`
+    ALTER TABLE rank_snapshots ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'ranked';
+    ALTER TABLE rank_snapshots DROP CONSTRAINT IF EXISTS rank_snapshots_status_check;
+    ALTER TABLE rank_snapshots ADD CONSTRAINT rank_snapshots_status_check
+      CHECK (status IN ('ranked','not_in_top5','fetch_failed'));
+  `);
+  console.log('[DB] rank_snapshots.status 컬럼 준비 완료');
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS refresh_jobs (
+      id              SERIAL PRIMARY KEY,
+      user_id         UUID        NOT NULL,
+      status          TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','running','completed','failed')),
+      total_count     INTEGER     NOT NULL DEFAULT 0,
+      completed_count INTEGER     NOT NULL DEFAULT 0,
+      failed_count    INTEGER     NOT NULL DEFAULT 0,
+      created_at      TIMESTAMPTZ DEFAULT NOW(),
+      completed_at    TIMESTAMPTZ
+    );
+    CREATE TABLE IF NOT EXISTS refresh_job_items (
+      id            SERIAL PRIMARY KEY,
+      job_id        INTEGER NOT NULL REFERENCES refresh_jobs(id) ON DELETE CASCADE,
+      tracked_id    INTEGER NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,
+      status        TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','done','failed')),
+      error_message TEXT,
+      processed_at  TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS idx_rji_job_status ON refresh_job_items (job_id, status);
+    CREATE INDEX IF NOT EXISTS idx_rj_user ON refresh_jobs (user_id);
+  `);
+  console.log('[DB] refresh_jobs / refresh_job_items 테이블 준비 완료');
+  await p.query(`
     CREATE TABLE IF NOT EXISTS daily_usage (
       id         SERIAL PRIMARY KEY,
       user_id    UUID    NOT NULL,
