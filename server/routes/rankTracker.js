@@ -42,6 +42,28 @@ async function requireAuth(req, res, next) {
 
 router.use(requireAuth);
 
+async function assertKeywordCapacity(req, additionalCount) {
+  if (req.isAdmin) return;
+  const pool = getPool();
+  if (!pool) return;
+  const { rows } = await pool.query(
+    `SELECT COUNT(*) AS cnt FROM tracked_keywords WHERE user_id = $1`,
+    [req.userId]
+  );
+  const current = Number(rows[0]?.cnt || 0);
+  const maxKeywords = req.isSubscribed ? 30 : 0;
+  if (current + additionalCount > maxKeywords) {
+    const err = new Error(
+      req.isSubscribed
+        ? `프리미엄 플랜은 최대 ${maxKeywords}개의 키워드를 추적할 수 있습니다. (현재 ${current}개)`
+        : '순위 추적은 프리미엄 플랜 전용 기능입니다.'
+    );
+    err.status = 403;
+    err.limitExceeded = true;
+    throw err;
+  }
+}
+
 router.get('/', async (req, res, next) => {
   if (!req.isAdmin && !req.isSubscribed) {
     return res.status(403).json({ message: '순위 추적은 프리미엄 플랜 전용 기능입니다.', premiumOnly: true });
@@ -60,27 +82,14 @@ router.post('/', async (req, res, next) => {
     if (mode === 'blog' && (!Array.isArray(blogUrls) || !blogUrls.length))
       return res.status(400).json({ message: '블로그 URL을 1개 이상 입력해 주세요.' });
 
-    // 프리미엄: 최대 30개 키워드 제한
-    if (!req.isAdmin) {
-      const pool = getPool();
-      if (pool) {
-        const { rows } = await pool.query(
-          `SELECT COUNT(*) AS cnt FROM rank_tracked WHERE user_id = $1`,
-          [req.userId]
-        );
-        const maxKeywords = req.isSubscribed ? 30 : 0;
-        if (Number(rows[0]?.cnt) >= maxKeywords) {
-          const msg = req.isSubscribed
-            ? '프리미엄 플랜은 최대 30개의 키워드를 추적할 수 있습니다.'
-            : '순위 추적은 프리미엄 플랜 전용 기능입니다.';
-          return res.status(403).json({ message: msg, limitExceeded: true });
-        }
-      }
-    }
+    await assertKeywordCapacity(req, 1);
 
     const data = await createTracked(req.userId, keyword, mode, blogUrls || []);
     res.status(201).json(data);
-  } catch (e) { next(e); }
+  } catch (e) {
+    if (e.limitExceeded) return res.status(e.status).json({ message: e.message, limitExceeded: true });
+    next(e);
+  }
 });
 
 router.delete('/:id', async (req, res, next) => {
