@@ -38,6 +38,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [refreshing, setRefreshing] = useState(false);
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [refreshAllProgress, setRefreshAllProgress] = useState({ done: 0, total: 0 });
+  const [failedJobId, setFailedJobId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [editItem, setEditItem] = useState(null); // null = 신규, item = 수정
@@ -86,31 +87,52 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     finally { setRefreshing(false); }
   };
 
+  const runJobToCompletion = async (job) => {
+    let current = job;
+    setRefreshAllProgress({ done: current.completed_count + current.failed_count, total: current.total_count });
+    while (!current.done) {
+      current = await apiFetch(`/refresh-jobs/${current.id}/process-chunk`, { method: 'POST' }, token);
+      setRefreshAllProgress({ done: current.completed_count + current.failed_count, total: current.total_count });
+    }
+    return current;
+  };
+
   const handleRefreshAll = async () => {
     if (!token || filteredItems.length === 0) return;
     setRefreshingAll(true);
-    setRefreshAllProgress({ done: 0, total: filteredItems.length });
-    let done = 0;
-    for (const item of filteredItems) {
-      try {
-        await apiFetch(`/${item.id}/refresh`, { method: 'POST' }, token);
-      } catch { /* 개별 실패는 무시하고 계속 */ }
-      done++;
-      setRefreshAllProgress({ done, total: filteredItems.length });
-    }
-    const listData = await apiFetch('', {}, token).catch(() => null);
-    if (listData) {
-      setItems(listData);
-      if (selected) {
-        const refreshed = listData.find(i => i.id === selected.id);
-        if (refreshed) {
-          setSelected(refreshed);
-          const snapshotData = await apiFetch(`/${refreshed.id}/snapshots`, {}, token).catch(() => null);
-          if (snapshotData) setSnapshots(snapshotData.snapshots || []);
+    setFailedJobId(null);
+    try {
+      const job = await apiFetch('/refresh-jobs', { method: 'POST' }, token);
+      const finished = await runJobToCompletion(job);
+      if (finished.failed_count > 0) setFailedJobId(finished.id);
+
+      const listData = await apiFetch('', {}, token).catch(() => null);
+      if (listData) {
+        setItems(listData);
+        if (selected) {
+          const refreshed = listData.find(i => i.id === selected.id);
+          if (refreshed) {
+            setSelected(refreshed);
+            const snapshotData = await apiFetch(`/${refreshed.id}/snapshots`, {}, token).catch(() => null);
+            if (snapshotData) setSnapshots(snapshotData.snapshots || []);
+          }
         }
       }
-    }
-    setRefreshingAll(false);
+    } catch (e) { setError(e.message); }
+    finally { setRefreshingAll(false); }
+  };
+
+  const handleRetryFailed = async () => {
+    if (!token || !failedJobId) return;
+    setRefreshingAll(true);
+    try {
+      const job = await apiFetch(`/refresh-jobs/${failedJobId}/retry-failed`, { method: 'POST' }, token);
+      const finished = await runJobToCompletion(job);
+      setFailedJobId(finished.failed_count > 0 ? finished.id : null);
+      const listData = await apiFetch('', {}, token).catch(() => null);
+      if (listData) setItems(listData);
+    } catch (e) { setError(e.message); }
+    finally { setRefreshingAll(false); }
   };
 
   const handleDelete = async (id) => {
@@ -234,6 +256,20 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                 >
                   <RefreshCw size={12} style={{ animation: refreshingAll ? 'spin 1s linear infinite' : 'none' }} />
                   {refreshingAll ? `${refreshAllProgress.done}/${refreshAllProgress.total}` : '전체 갱신'}
+                </button>
+              )}
+              {failedJobId && !refreshingAll && (
+                <button
+                  onClick={handleRetryFailed}
+                  title="실패한 항목만 다시 시도"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5,
+                    padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(255,69,58,0.3)',
+                    background: 'rgba(255,69,58,0.08)', color: '#FF453A',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  실패 항목 재시도
                 </button>
               )}
               <button
