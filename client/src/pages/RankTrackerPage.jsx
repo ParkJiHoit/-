@@ -26,6 +26,15 @@ async function apiFetch(path, options, token) {
   return body;
 }
 
+// status는 이미 상위 5위 판정을 반영한다(백엔드 refreshRanks) — 'ranked'일 때만 숫자를 보여준다.
+function formatRankStatus(rank, status) {
+  if (status === 'fetch_failed') return { label: '⚠ 조회 실패', color: '#FF9F0A' };
+  if (status === 'ranked' && rank != null) {
+    return { label: `${rank}위`, color: rank <= 3 ? '#30D158' : '#FF9F0A' };
+  }
+  return { label: '미노출', color: 'var(--text-tertiary)' };
+}
+
 export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const { user, session } = useAuth();
   const token = session?.access_token;
@@ -377,11 +386,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                     const entry = item.latestRanks?.[blogId] ?? null;
                     const rank = entry?.rank ?? null;
                     const status = entry?.status ?? null;
-                    // status는 이미 상위 5위 판정을 반영한다(백엔드 refreshRanks) — 'ranked'일 때만 숫자를 보여준다.
-                    const label = status === 'fetch_failed' ? '⚠ 조회 실패' : (status === 'ranked' && rank != null ? `${rank}위` : '미노출');
-                    const color = status === 'fetch_failed'
-                      ? '#FF9F0A'
-                      : status !== 'ranked' || rank == null ? 'var(--text-tertiary)' : rank <= 3 ? '#30D158' : '#FF9F0A';
+                    const { label, color } = formatRankStatus(rank, status);
                     return (
                       <div key={blogId} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -455,13 +460,14 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                 const trackDays = selected.created_at
                   ? Math.max(1, Math.round((Date.now() - new Date(selected.created_at)) / 86400000))
                   : 0;
+                const curFormatted = formatRankStatus(curRank, curStatus);
                 return (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '14px 0' }}>
                     {[
                       {
                         label: '현재 순위',
-                        value: curStatus === 'fetch_failed' ? '⚠ 조회 실패' : (curStatus === 'ranked' && curRank != null ? `${curRank}위` : '미노출'),
-                        color: curStatus === 'fetch_failed' ? '#FF9F0A' : (curStatus === 'ranked' && curRank != null && curRank <= 3 ? '#30D158' : curStatus === 'ranked' ? '#FF9F0A' : 'var(--text-tertiary)'),
+                        value: curFormatted.label,
+                        color: curFormatted.color,
                       },
                       { label: '최고 순위', value: bestRank != null ? `${bestRank}위` : '—', color: '#30D158' },
                       { label: '추적 기간', value: `${trackDays}일`, color: 'var(--text-primary)' },
