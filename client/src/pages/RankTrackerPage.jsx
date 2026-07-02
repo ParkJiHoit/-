@@ -374,7 +374,14 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                     </div>
                   </div>
                   {mode === 'blog' && item.blog_ids?.map(blogId => {
-                    const rank = item.latestRanks?.[blogId] ?? null;
+                    const entry = item.latestRanks?.[blogId] ?? null;
+                    const rank = entry?.rank ?? null;
+                    const status = entry?.status ?? null;
+                    // status는 이미 상위 5위 판정을 반영한다(백엔드 refreshRanks) — 'ranked'일 때만 숫자를 보여준다.
+                    const label = status === 'fetch_failed' ? '⚠ 조회 실패' : (status === 'ranked' && rank != null ? `${rank}위` : '미노출');
+                    const color = status === 'fetch_failed'
+                      ? '#FF9F0A'
+                      : status !== 'ranked' || rank == null ? 'var(--text-tertiary)' : rank <= 3 ? '#30D158' : '#FF9F0A';
                     return (
                       <div key={blogId} style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -384,9 +391,9 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                         <span style={{
                           fontSize: 14, fontWeight: 800,
                           fontFamily: "'Space Grotesk', sans-serif",
-                          color: rank == null ? 'var(--text-tertiary)' : rank <= 3 ? '#30D158' : rank <= 6 ? '#FF9F0A' : 'var(--text-secondary)',
+                          color,
                         }}>
-                          {rank != null ? `${rank}위` : '미노출'}
+                          {label}
                         </span>
                       </div>
                     );
@@ -440,7 +447,9 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
 
               {mode === 'blog' && blogIds.length > 0 && (() => {
                 const firstBlog = blogIds[0];
-                const curRank = latestRanks[firstBlog] ?? null;
+                const firstEntry = latestRanks[firstBlog] ?? null;
+                const curRank = firstEntry?.rank ?? null;
+                const curStatus = firstEntry?.status ?? null;
                 const allRanks = snapshots.filter(s => s.blog_id === firstBlog && s.rank != null).map(s => s.rank);
                 const bestRank = allRanks.length ? Math.min(...allRanks) : null;
                 const trackDays = selected.created_at
@@ -449,7 +458,11 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                 return (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '14px 0' }}>
                     {[
-                      { label: '현재 순위', value: curRank != null ? `${curRank}위` : '미노출', color: curRank != null && curRank <= 3 ? '#30D158' : curRank != null && curRank <= 6 ? '#FF9F0A' : 'var(--text-tertiary)' },
+                      {
+                        label: '현재 순위',
+                        value: curStatus === 'fetch_failed' ? '⚠ 조회 실패' : (curStatus === 'ranked' && curRank != null ? `${curRank}위` : '미노출'),
+                        color: curStatus === 'fetch_failed' ? '#FF9F0A' : (curStatus === 'ranked' && curRank != null && curRank <= 3 ? '#30D158' : curStatus === 'ranked' ? '#FF9F0A' : 'var(--text-tertiary)'),
+                      },
                       { label: '최고 순위', value: bestRank != null ? `${bestRank}위` : '—', color: '#30D158' },
                       { label: '추적 기간', value: `${trackDays}일`, color: 'var(--text-primary)' },
                       { label: '총 기록', value: `${snapshots.filter(s => s.blog_id === firstBlog).length}회`, color: 'var(--text-primary)' },
