@@ -7,6 +7,7 @@ import {
 import { parseBulkImportText, groupParsedRows } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
 import { getPool } from '../db/index.js';
+import { createRefreshJob, processNextChunk, getJobStatus, retryFailedItems } from '../services/refreshJobService.js';
 
 const router = Router();
 
@@ -165,6 +166,35 @@ router.post('/bulk-import/confirm', async (req, res, next) => {
     if (e.limitExceeded) return res.status(e.status).json({ message: e.message, limitExceeded: true });
     next(e);
   }
+});
+
+router.post('/refresh-jobs', async (req, res, next) => {
+  try {
+    const { trackedIds } = req.body || {};
+    const job = await createRefreshJob(req.userId, Array.isArray(trackedIds) ? trackedIds : null);
+    res.status(201).json(job);
+  } catch (e) { next(e); }
+});
+
+router.post('/refresh-jobs/:id/process-chunk', async (req, res, next) => {
+  try {
+    const job = await processNextChunk(req.userId, Number(req.params.id));
+    res.json(job);
+  } catch (e) { next(e); }
+});
+
+router.get('/refresh-jobs/:id', async (req, res, next) => {
+  try {
+    const job = await getJobStatus(req.userId, Number(req.params.id));
+    res.json(job);
+  } catch (e) { next(e); }
+});
+
+router.post('/refresh-jobs/:id/retry-failed', async (req, res, next) => {
+  try {
+    const job = await retryFailedItems(req.userId, Number(req.params.id));
+    res.status(201).json(job);
+  } catch (e) { next(e); }
 });
 
 export default router;
