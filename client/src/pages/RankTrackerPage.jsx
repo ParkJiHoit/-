@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
 import RankCalendar from '../components/RankCalendar';
 import RankChart from '../components/RankChart';
+import BulkImportModal from '../components/BulkImportModal';
 import { RefreshCw, Plus, Trash2, X, ExternalLink } from 'lucide-react';
 
 const API = (path) => `/api/rank-tracker${path}`;
@@ -38,6 +39,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [refreshAllProgress, setRefreshAllProgress] = useState({ done: 0, total: 0 });
   const [showModal, setShowModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const [editItem, setEditItem] = useState(null); // null = 신규, item = 수정
   const [error, setError] = useState('');
   const [premiumOnly, setPremiumOnly] = useState(false);
@@ -234,6 +236,17 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                   {refreshingAll ? `${refreshAllProgress.done}/${refreshAllProgress.total}` : '전체 갱신'}
                 </button>
               )}
+              <button
+                onClick={() => setShowBulkModal(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-strong)',
+                  background: 'var(--bg-overlay)', color: 'var(--text-secondary)',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                대량 등록
+              </button>
               <button
                 onClick={() => { setEditItem(null); setShowModal(true); }}
                 style={{
@@ -491,6 +504,14 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
           editItem={editItem}
           onClose={() => { setShowModal(false); setEditItem(null); }}
           onAdded={async () => { setShowModal(false); setEditItem(null); await loadItems(); }}
+        />
+      )}
+
+      {showBulkModal && (
+        <BulkImportModal
+          token={token}
+          onClose={() => setShowBulkModal(false)}
+          onImported={async () => { setShowBulkModal(false); await loadItems(); }}
         />
       )}
 
