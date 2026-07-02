@@ -59,7 +59,7 @@ function detectType(url) {
 
 // 블로그/카페 URL인지 검증 (리다이렉트 후 결과 필터)
 function isValidNaverUrl(url, domains) {
-  const isBlog = /blog\.naver\.com\/[^/?#\s]+(?:\/\d{5,})?/.test(url);
+  const isBlog = /blog\.naver\.com\/[^/?#\s]+\/\d{5,}/.test(url);
   // 카페: /cafeName/articleId 형식 OR 구형 articleid 쿼리 파라미터
   const isCafe = /cafe\.naver\.com\/[^/?#\s]+\/\d+/.test(url) ||
                  (/cafe\.naver\.com/.test(url) && /[?&]articleid=\d+/i.test(url));
