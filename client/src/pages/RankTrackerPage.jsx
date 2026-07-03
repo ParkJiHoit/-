@@ -1,9 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
+import * as XLSX from 'xlsx';
 import { useAuth } from '../AuthContext';
 import RankCalendar from '../components/RankCalendar';
 import RankChart from '../components/RankChart';
 import BulkImportModal from '../components/BulkImportModal';
-import { RefreshCw, Plus, Trash2, X, ExternalLink, Pencil } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, X, ExternalLink, Pencil, Download } from 'lucide-react';
+
+const STATUS_LABEL = { ranked: '노출', not_in_top5: '미노출', fetch_failed: '조회실패' };
+
+function getKSTToday() {
+  return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 const API = (path) => `/api/rank-tracker${path}`;
 
@@ -238,6 +245,37 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     (!selectedGroupId || String(i.group_id ?? '') === selectedGroupId) &&
     (!searchQuery.trim() || i.keyword.toLowerCase().includes(searchQuery.trim().toLowerCase()))
   );
+
+  const handleExport = async () => {
+    if (!token || filteredItems.length === 0) return;
+    try {
+      const rows = await apiFetch(
+        '/export',
+        { method: 'POST', body: JSON.stringify({ ids: filteredItems.map(i => i.id) }) },
+        token
+      );
+      if (!rows.length) { setError('내보낼 순위 기록이 없습니다.'); return; }
+
+      const sheetRows = rows.map(r => ({
+        그룹: r.group || '없음',
+        키워드: r.keyword,
+        블로그: r.blogId,
+        날짜: r.date,
+        순위: r.rank ?? '',
+        상태: STATUS_LABEL[r.status] || r.status,
+        포스트제목: r.postTitle || '',
+        포스트링크: r.postLink || '',
+      }));
+      const ws = XLSX.utils.json_to_sheet(sheetRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '순위기록');
+      const groupLabel = selectedGroupId
+        ? (groups.find(g => String(g.id) === selectedGroupId)?.name || '그룹')
+        : '전체';
+      XLSX.writeFile(wb, `순위기록_${groupLabel}_${getKSTToday()}.xlsx`);
+    } catch (e) { setError(e.message); }
+  };
+
   const latestRanks = selected?.latestRanks || {};
   const blogIds = selected?.blog_ids || [];
   const latestDate = snapshots.length ? snapshots[0].snapshotted_at : null;
@@ -444,6 +482,20 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                   }}
                 >
                   <Trash2 size={12} /> 전체 삭제
+                </button>
+              )}
+              {filteredItems.length > 0 && (
+                <button
+                  onClick={handleExport}
+                  title="현재 목록의 순위 기록을 엑셀로 내보내기"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
+                    padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-strong)',
+                    background: 'var(--bg-overlay)', color: 'var(--text-secondary)',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <Download size={12} /> 내보내기
                 </button>
               )}
               <button

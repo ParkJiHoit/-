@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   listTracked, createTracked, deleteTracked, deleteTrackedBulk,
   getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup,
-  listGroups, createGroup, renameGroup, deleteGroup,
+  listGroups, createGroup, renameGroup, deleteGroup, exportSnapshots,
 } from '../services/rankTrackerService.js';
 import { parseBulkImportText, groupParsedRows } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
@@ -114,6 +114,17 @@ router.post('/bulk-delete', async (req, res, next) => {
     }
     const deleted = await deleteTrackedBulk(req.userId, ids.map(Number));
     res.json({ deleted });
+  } catch (e) { next(e); }
+});
+
+router.post('/export', requirePremium, async (req, res, next) => {
+  try {
+    const { ids } = req.body || {};
+    if (!Array.isArray(ids) || !ids.length) {
+      return res.status(400).json({ message: '내보낼 항목을 선택해 주세요.' });
+    }
+    const rows = await exportSnapshots(req.userId, ids.map(Number));
+    res.json(rows);
   } catch (e) { next(e); }
 });
 

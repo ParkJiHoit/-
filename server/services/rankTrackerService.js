@@ -107,6 +107,42 @@ export async function updateTrackedGroup(userId, trackedId, groupId) {
   return rows[0];
 }
 
+export async function exportSnapshots(userId, trackedIds) {
+  const pool = getPool();
+  const { rows: tracked } = await pool.query(
+    `SELECT tk.id, tk.keyword, tk.mode, tg.name AS group_name
+     FROM tracked_keywords tk
+     LEFT JOIN tracker_groups tg ON tg.id = tk.group_id
+     WHERE tk.id = ANY($1) AND tk.user_id = $2`,
+    [trackedIds, userId]
+  );
+  if (!tracked.length) return [];
+
+  const idToInfo = new Map(tracked.map(t => [t.id, t]));
+  const { rows: snaps } = await pool.query(
+    `SELECT tracked_id, blog_id, rank, status, post_title, post_link,
+            TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
+     FROM rank_snapshots WHERE tracked_id = ANY($1)
+     ORDER BY snapshotted_at ASC, tracked_id ASC, rank ASC NULLS LAST`,
+    [tracked.map(t => t.id)]
+  );
+
+  return snaps.map(s => {
+    const info = idToInfo.get(s.tracked_id);
+    return {
+      group: info?.group_name || '',
+      keyword: info?.keyword || '',
+      mode: info?.mode || '',
+      blogId: s.blog_id,
+      date: s.snapshotted_at,
+      rank: s.rank,
+      status: s.status,
+      postTitle: s.post_title,
+      postLink: s.post_link,
+    };
+  });
+}
+
 export async function listGroups(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
