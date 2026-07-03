@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import {
-  listTracked, createTracked, deleteTracked,
+  listTracked, createTracked, deleteTracked, deleteTrackedBulk,
   getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup,
   listGroups, createGroup, renameGroup, deleteGroup,
 } from '../services/rankTrackerService.js';
@@ -103,6 +103,17 @@ router.delete('/:id', async (req, res, next) => {
   try {
     await deleteTracked(req.userId, Number(req.params.id));
     res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.post('/bulk-delete', async (req, res, next) => {
+  try {
+    const { ids } = req.body || {};
+    if (!Array.isArray(ids) || !ids.length) {
+      return res.status(400).json({ message: '삭제할 항목을 선택해 주세요.' });
+    }
+    const deleted = await deleteTrackedBulk(req.userId, ids.map(Number));
+    res.json({ deleted });
   } catch (e) { next(e); }
 });
 

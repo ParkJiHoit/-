@@ -55,6 +55,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [editItem, setEditItem] = useState(null); // null = 신규, item = 수정
   const [error, setError] = useState('');
   const [premiumOnly, setPremiumOnly] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   const loadItems = useCallback(async () => {
     if (!token) return;
@@ -70,6 +71,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   }, [token]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
+  useEffect(() => { setSelectedIds(new Set()); }, [mode, selectedGroupId]);
 
   const loadGroups = useCallback(async () => {
     if (!token) return;
@@ -206,6 +208,26 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     try {
       await apiFetch(`/${id}`, { method: 'DELETE' }, token);
       if (selected?.id === id) { setSelected(null); setSnapshots([]); }
+      setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+      await loadItems();
+    } catch (e) { setError(e.message); }
+  };
+
+  const toggleSelectId = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async (ids) => {
+    if (!token || !ids.length) return;
+    if (!confirm(`선택한 ${ids.length}개 항목을 삭제할까요? 모든 순위 기록이 사라집니다.`)) return;
+    try {
+      await apiFetch('/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) }, token);
+      if (selected && ids.includes(selected.id)) { setSelected(null); setSnapshots([]); }
+      setSelectedIds(prev => { const next = new Set(prev); ids.forEach(id => next.delete(id)); return next; });
       await loadItems();
     } catch (e) { setError(e.message); }
   };
@@ -383,6 +405,34 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                   실패 항목 재시도
                 </button>
               )}
+              {selectedIds.size > 0 && (
+                <button
+                  onClick={() => handleBulkDelete([...selectedIds])}
+                  title="선택한 항목 삭제"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
+                    padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(255,69,58,0.3)',
+                    background: 'rgba(255,69,58,0.08)', color: '#FF453A',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <Trash2 size={12} /> 선택 삭제 ({selectedIds.size})
+                </button>
+              )}
+              {filteredItems.length > 0 && (
+                <button
+                  onClick={() => handleBulkDelete(filteredItems.map(i => i.id))}
+                  title="현재 목록 전체 삭제"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
+                    padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-strong)',
+                    background: 'var(--bg-overlay)', color: 'var(--text-secondary)',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <Trash2 size={12} /> 전체 삭제
+                </button>
+              )}
               <button
                 onClick={() => setShowBulkModal(true)}
                 style={{
@@ -428,6 +478,13 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onClick={e => e.stopPropagation()}
+                      onChange={() => toggleSelectId(item.id)}
+                      style={{ flexShrink: 0, cursor: 'pointer' }}
+                    />
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
                       padding: '3px 10px', borderRadius: 999,

@@ -160,6 +160,15 @@ export async function deleteTracked(userId, trackedId) {
   if (rowCount === 0) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
 }
 
+export async function deleteTrackedBulk(userId, trackedIds) {
+  const pool = getPool();
+  const { rowCount } = await pool.query(
+    `DELETE FROM tracked_keywords WHERE id = ANY($1) AND user_id = $2`,
+    [trackedIds, userId]
+  );
+  return rowCount;
+}
+
 export async function getSnapshots(userId, trackedId) {
   const pool = getPool();
   const { rows: own } = await pool.query(
