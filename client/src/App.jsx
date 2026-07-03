@@ -1,6 +1,6 @@
 ﻿import { Download, Loader2, Moon, Sun, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabase';
 import BlogStructurePanel from './components/BlogStructurePanel';
