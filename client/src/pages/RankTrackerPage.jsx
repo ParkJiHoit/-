@@ -245,18 +245,18 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
       <div style={{ display: 'grid', gridTemplateColumns: '300px minmax(0, 1fr)', gap: 16, alignItems: 'start' }}>
 
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
             <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
               {mode === 'blog' ? '블로그 추적' : '전체 순위'} <span style={{ color: 'var(--accent)' }}>{filteredItems.length}</span>
             </span>
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {filteredItems.length > 0 && (
                 <button
                   onClick={handleRefreshAll}
                   disabled={refreshingAll}
                   title="전체 순위 갱신"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
+                    display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
                     padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-strong)',
                     background: 'var(--bg-overlay)', color: 'var(--text-secondary)',
                     fontSize: 12, fontWeight: 600, cursor: refreshingAll ? 'not-allowed' : 'pointer',
@@ -272,7 +272,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                   onClick={handleRetryFailed}
                   title="실패한 항목만 다시 시도"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
+                    display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
                     padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(255,69,58,0.3)',
                     background: 'rgba(255,69,58,0.08)', color: '#FF453A',
                     fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
@@ -284,7 +284,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
               <button
                 onClick={() => setShowBulkModal(true)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
+                  display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
                   padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-strong)',
                   background: 'var(--bg-overlay)', color: 'var(--text-secondary)',
                   fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
@@ -295,7 +295,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
               <button
                 onClick={() => { setEditItem(null); setShowModal(true); }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
+                  display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
                   padding: '6px 12px', borderRadius: 8, border: 'none',
                   background: 'var(--accent)', color: '#fff',
                   fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
