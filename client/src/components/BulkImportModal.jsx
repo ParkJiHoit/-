@@ -2,9 +2,10 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { X, Upload } from 'lucide-react';
 
-export default function BulkImportModal({ token, onClose, onImported }) {
+export default function BulkImportModal({ token, groups: trackerGroups, defaultGroupId, onClose, onImported }) {
   const [text, setText] = useState('');
   const [preview, setPreview] = useState(null); // { groups, errors, newKeywordCount }
+  const [groupId, setGroupId] = useState(defaultGroupId || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -49,7 +50,7 @@ export default function BulkImportModal({ token, onClose, onImported }) {
       const res = await fetch('/api/rank-tracker/bulk-import/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ groups: preview.groups }),
+        body: JSON.stringify({ groups: preview.groups, groupId: groupId ? Number(groupId) : null }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.message || '등록에 실패했습니다.');
@@ -98,6 +99,20 @@ export default function BulkImportModal({ token, onClose, onImported }) {
                 onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }}
               />
             </label>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 5 }}>등록할 그룹 (선택)</label>
+              <select
+                value={groupId} onChange={e => setGroupId(e.target.value)}
+                style={{
+                  width: '100%', padding: '9px 12px', borderRadius: 9, boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none', cursor: 'pointer',
+                }}
+              >
+                <option value="">그룹 없음</option>
+                {(trackerGroups || []).map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
+              </select>
+            </div>
             <textarea
               value={text} onChange={e => setText(e.target.value)}
               placeholder={'키워드\tURL\n강남맛집\thttps://blog.naver.com/abc/111'}

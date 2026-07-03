@@ -41,7 +41,7 @@ export function findMatchingRank(rankings, storedKey) {
 export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids, created_at, last_refreshed_at FROM tracked_keywords
+    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at FROM tracked_keywords
      WHERE user_id = $1 ORDER BY created_at DESC`,
     [userId]
   );
@@ -60,37 +60,95 @@ export async function listTracked(userId) {
   return result;
 }
 
-export async function createTracked(userId, keyword, mode, blogUrls = []) {
+export async function createTracked(userId, keyword, mode, blogUrls = [], groupId = null) {
   const pool = getPool();
   const blogIds = blogUrls
     .map(u => { const k = extractPostKey(u); return k ? postKeyToString(k) : null; })
     .filter(Boolean);
   const { rows } = await pool.query(
-    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (user_id, keyword, mode) DO UPDATE SET blog_ids = EXCLUDED.blog_ids
-     RETURNING id, keyword, mode, blog_ids, created_at`,
-    [userId, keyword.trim(), mode, blogIds]
+    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (user_id, keyword, mode) DO UPDATE
+       SET blog_ids = EXCLUDED.blog_ids,
+           group_id = COALESCE(EXCLUDED.group_id, tracked_keywords.group_id)
+     RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
+    [userId, keyword.trim(), mode, blogIds, groupId]
   );
   return rows[0];
 }
 
-export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = []) {
+export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], groupId = null) {
   const pool = getPool();
   const newIds = newUrls
     .map(u => { const k = extractPostKey(u); return k ? postKeyToString(k) : null; })
     .filter(Boolean);
   const { rows } = await pool.query(
-    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id)
+     VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (user_id, keyword, mode) DO UPDATE
        SET blog_ids = ARRAY(
          SELECT DISTINCT unnest(tracked_keywords.blog_ids || EXCLUDED.blog_ids)
-       )
-     RETURNING id, keyword, mode, blog_ids, created_at`,
-    [userId, keyword.trim(), mode, newIds]
+       ),
+       group_id = COALESCE(EXCLUDED.group_id, tracked_keywords.group_id)
+     RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
+    [userId, keyword.trim(), mode, newIds, groupId]
   );
   return rows[0];
+}
+
+export async function updateTrackedGroup(userId, trackedId, groupId) {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `UPDATE tracked_keywords SET group_id = $1 WHERE id = $2 AND user_id = $3
+     RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
+    [groupId, trackedId, userId]
+  );
+  if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
+  return rows[0];
+}
+
+export async function listGroups(userId) {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `SELECT id, name, created_at FROM tracker_groups WHERE user_id = $1 ORDER BY created_at ASC`,
+    [userId]
+  );
+  return rows;
+}
+
+export async function createGroup(userId, name) {
+  const pool = getPool();
+  const trimmed = String(name || '').trim();
+  if (!trimmed) throw Object.assign(new Error('그룹 이름을 입력해 주세요.'), { status: 400 });
+  const { rows } = await pool.query(
+    `INSERT INTO tracker_groups (user_id, name) VALUES ($1, $2)
+     ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
+     RETURNING id, name, created_at`,
+    [userId, trimmed]
+  );
+  return rows[0];
+}
+
+export async function renameGroup(userId, groupId, name) {
+  const pool = getPool();
+  const trimmed = String(name || '').trim();
+  if (!trimmed) throw Object.assign(new Error('그룹 이름을 입력해 주세요.'), { status: 400 });
+  const { rows } = await pool.query(
+    `UPDATE tracker_groups SET name = $1 WHERE id = $2 AND user_id = $3
+     RETURNING id, name, created_at`,
+    [trimmed, groupId, userId]
+  );
+  if (!rows.length) throw Object.assign(new Error('그룹을 찾을 수 없습니다.'), { status: 404 });
+  return rows[0];
+}
+
+export async function deleteGroup(userId, groupId) {
+  const pool = getPool();
+  const { rowCount } = await pool.query(
+    `DELETE FROM tracker_groups WHERE id = $1 AND user_id = $2`,
+    [groupId, userId]
+  );
+  if (rowCount === 0) throw Object.assign(new Error('그룹을 찾을 수 없습니다.'), { status: 404 });
 }
 
 export async function deleteTracked(userId, trackedId) {

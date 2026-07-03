@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import {
   listTracked, createTracked, deleteTracked,
-  getSnapshots, refreshRanks, mergeTrackedBlogUrls,
+  getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup,
+  listGroups, createGroup, renameGroup, deleteGroup,
 } from '../services/rankTrackerService.js';
 import { parseBulkImportText, groupParsedRows } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
@@ -82,7 +83,7 @@ router.get('/', requirePremium, async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { keyword, mode, blogUrls } = req.body || {};
+    const { keyword, mode, blogUrls, groupId } = req.body || {};
     if (!keyword?.trim()) return res.status(400).json({ message: '키워드를 입력해 주세요.' });
     if (!['blog', 'all'].includes(mode)) return res.status(400).json({ message: 'mode는 blog 또는 all이어야 합니다.' });
     if (mode === 'blog' && (!Array.isArray(blogUrls) || !blogUrls.length))
@@ -90,7 +91,7 @@ router.post('/', async (req, res, next) => {
 
     await assertKeywordCapacity(req, 1);
 
-    const data = await createTracked(req.userId, keyword, mode, blogUrls || []);
+    const data = await createTracked(req.userId, keyword, mode, blogUrls || [], groupId || null);
     res.status(201).json(data);
   } catch (e) {
     if (e.limitExceeded) return res.status(e.status).json({ message: e.message, limitExceeded: true });
@@ -101,6 +102,42 @@ router.post('/', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     await deleteTracked(req.userId, Number(req.params.id));
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.patch('/:id/group', requirePremium, async (req, res, next) => {
+  try {
+    const { groupId } = req.body || {};
+    const data = await updateTrackedGroup(req.userId, Number(req.params.id), groupId || null);
+    res.json(data);
+  } catch (e) { next(e); }
+});
+
+router.get('/groups', requirePremium, async (req, res, next) => {
+  try {
+    const data = await listGroups(req.userId);
+    res.json(data);
+  } catch (e) { next(e); }
+});
+
+router.post('/groups', requirePremium, async (req, res, next) => {
+  try {
+    const data = await createGroup(req.userId, req.body?.name);
+    res.status(201).json(data);
+  } catch (e) { next(e); }
+});
+
+router.patch('/groups/:id', requirePremium, async (req, res, next) => {
+  try {
+    const data = await renameGroup(req.userId, Number(req.params.id), req.body?.name);
+    res.json(data);
+  } catch (e) { next(e); }
+});
+
+router.delete('/groups/:id', requirePremium, async (req, res, next) => {
+  try {
+    await deleteGroup(req.userId, Number(req.params.id));
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -143,7 +180,7 @@ router.post('/bulk-import/preview', requirePremium, async (req, res, next) => {
 
 router.post('/bulk-import/confirm', requirePremium, async (req, res, next) => {
   try {
-    const { groups } = req.body || {};
+    const { groups, groupId } = req.body || {};
     if (!Array.isArray(groups) || !groups.length) {
       return res.status(400).json({ message: '등록할 항목이 없습니다.' });
     }
@@ -162,7 +199,7 @@ router.post('/bulk-import/confirm', requirePremium, async (req, res, next) => {
     let created = 0;
     for (const g of groups) {
       if (!g.keyword?.trim() || !Array.isArray(g.urls) || !g.urls.length) continue;
-      await mergeTrackedBlogUrls(req.userId, g.keyword, 'blog', g.urls);
+      await mergeTrackedBlogUrls(req.userId, g.keyword, 'blog', g.urls, groupId || null);
       created++;
     }
     res.status(201).json({ created });
