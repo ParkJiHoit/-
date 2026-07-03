@@ -44,6 +44,17 @@ export async function initDb() {
   `);
   console.log('[DB] keyword_history 테이블 준비 완료');
   await p.query(`
+    CREATE TABLE IF NOT EXISTS tracker_groups (
+      id         SERIAL PRIMARY KEY,
+      user_id    UUID        NOT NULL,
+      name       TEXT        NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE (user_id, name)
+    );
+    CREATE INDEX IF NOT EXISTS idx_tg_user ON tracker_groups (user_id);
+  `);
+  console.log('[DB] tracker_groups 테이블 준비 완료');
+  await p.query(`
     CREATE TABLE IF NOT EXISTS tracked_keywords (
       id                SERIAL PRIMARY KEY,
       user_id           UUID        NOT NULL,
@@ -55,6 +66,8 @@ export async function initDb() {
       UNIQUE (user_id, keyword, mode)
     );
     ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS last_refreshed_at TIMESTAMPTZ;
+    ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS group_id INTEGER REFERENCES tracker_groups(id) ON DELETE SET NULL;
+    CREATE INDEX IF NOT EXISTS idx_tk_group ON tracked_keywords (group_id);
     CREATE TABLE IF NOT EXISTS rank_snapshots (
       id             SERIAL PRIMARY KEY,
       tracked_id     INTEGER     NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,

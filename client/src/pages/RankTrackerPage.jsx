@@ -3,7 +3,7 @@ import { useAuth } from '../AuthContext';
 import RankCalendar from '../components/RankCalendar';
 import RankChart from '../components/RankChart';
 import BulkImportModal from '../components/BulkImportModal';
-import { RefreshCw, Plus, Trash2, X, ExternalLink } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, X, ExternalLink, Pencil } from 'lucide-react';
 
 const API = (path) => `/api/rank-tracker${path}`;
 
@@ -41,6 +41,8 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
 
   const [mode, setMode] = useState('blog');
   const [items, setItems] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState(''); // '' = 전체 그룹
   const [selected, setSelected] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -68,6 +70,56 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   }, [token]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
+
+  const loadGroups = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await apiFetch('/groups', {}, token);
+      setGroups(data);
+    } catch (e) {
+      if (e.premiumOnly) setPremiumOnly(true);
+    }
+  }, [token]);
+
+  useEffect(() => { loadGroups(); }, [loadGroups]);
+
+  const handleCreateGroup = async () => {
+    const name = prompt('새 그룹 이름을 입력하세요');
+    if (!name || !name.trim()) return;
+    try {
+      const g = await apiFetch('/groups', { method: 'POST', body: JSON.stringify({ name }) }, token);
+      await loadGroups();
+      setSelectedGroupId(String(g.id));
+    } catch (e) { setError(e.message); }
+  };
+
+  const handleRenameGroup = async () => {
+    if (!selectedGroupId) return;
+    const current = groups.find(g => String(g.id) === selectedGroupId);
+    const name = prompt('그룹 이름 변경', current?.name || '');
+    if (!name || !name.trim()) return;
+    try {
+      await apiFetch(`/groups/${selectedGroupId}`, { method: 'PATCH', body: JSON.stringify({ name }) }, token);
+      await loadGroups();
+    } catch (e) { setError(e.message); }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!selectedGroupId) return;
+    if (!confirm('그룹을 삭제할까요? 그룹에 속한 항목은 삭제되지 않고 "전체"로 이동합니다.')) return;
+    try {
+      await apiFetch(`/groups/${selectedGroupId}`, { method: 'DELETE' }, token);
+      setSelectedGroupId('');
+      await Promise.all([loadGroups(), loadItems()]);
+    } catch (e) { setError(e.message); }
+  };
+
+  const handleMoveItemGroup = async (itemId, groupId) => {
+    try {
+      await apiFetch(`/${itemId}/group`, { method: 'PATCH', body: JSON.stringify({ groupId: groupId || null }) }, token);
+      await loadItems();
+    } catch (e) { setError(e.message); }
+  };
 
   const selectItem = useCallback(async (item) => {
     setSelected(item);
@@ -111,7 +163,11 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     setRefreshingAll(true);
     setFailedJobId(null);
     try {
-      const job = await apiFetch('/refresh-jobs', { method: 'POST' }, token);
+      const job = await apiFetch(
+        '/refresh-jobs',
+        { method: 'POST', body: JSON.stringify({ trackedIds: filteredItems.map(i => i.id) }) },
+        token
+      );
       const finished = await runJobToCompletion(job);
       if (finished.failed_count > 0) setFailedJobId(finished.id);
 
@@ -154,7 +210,9 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     } catch (e) { setError(e.message); }
   };
 
-  const filteredItems = items.filter(i => i.mode === mode);
+  const filteredItems = items.filter(i =>
+    i.mode === mode && (!selectedGroupId || String(i.group_id ?? '') === selectedGroupId)
+  );
   const latestRanks = selected?.latestRanks || {};
   const blogIds = selected?.blog_ids || [];
   const latestDate = snapshots.length ? snapshots[0].snapshotted_at : null;
@@ -246,6 +304,50 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
 
         <div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <select
+                value={selectedGroupId}
+                onChange={e => {
+                  if (e.target.value === '__new__') { handleCreateGroup(); return; }
+                  setSelectedGroupId(e.target.value);
+                  setSelected(null); setSnapshots([]);
+                }}
+                style={{
+                  flex: 1, minWidth: 0, height: 30, padding: '0 8px', borderRadius: 8,
+                  background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)', fontSize: 12, fontWeight: 600,
+                  outline: 'none', fontFamily: 'inherit', cursor: 'pointer',
+                }}
+              >
+                <option value="">전체 그룹</option>
+                {groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
+                <option value="__new__">+ 새 그룹 만들기</option>
+              </select>
+              {selectedGroupId && (
+                <>
+                  <button
+                    onClick={handleRenameGroup}
+                    title="그룹 이름 변경"
+                    style={{
+                      display: 'flex', flexShrink: 0, background: 'none', border: '1px solid var(--border-strong)',
+                      borderRadius: 7, padding: 6, cursor: 'pointer', color: 'var(--text-tertiary)',
+                    }}
+                  >
+                    <Pencil size={12} />
+                  </button>
+                  <button
+                    onClick={handleDeleteGroup}
+                    title="그룹 삭제"
+                    style={{
+                      display: 'flex', flexShrink: 0, background: 'none', border: '1px solid var(--border-strong)',
+                      borderRadius: 7, padding: 6, cursor: 'pointer', color: '#FF453A',
+                    }}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </>
+              )}
+            </div>
             <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
               {mode === 'blog' ? '블로그 추적' : '전체 순위'} <span style={{ color: 'var(--accent)' }}>{filteredItems.length}</span>
             </span>
@@ -325,16 +427,30 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                     transition: 'all 0.15s',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
                       padding: '3px 10px', borderRadius: 999,
                       background: 'rgba(10,132,255,0.15)', border: '1px solid rgba(10,132,255,0.3)',
                       fontSize: 13, fontWeight: 700, color: 'var(--accent)',
                     }}>
                       {item.keyword}
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <select
+                      value={String(item.group_id ?? '')}
+                      onClick={e => e.stopPropagation()}
+                      onChange={e => handleMoveItemGroup(item.id, e.target.value)}
+                      title="그룹 이동"
+                      style={{
+                        flex: 1, minWidth: 0, fontSize: 10, fontWeight: 600, padding: '2px 4px',
+                        borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)',
+                        color: 'var(--text-tertiary)', outline: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      <option value="">그룹 없음</option>
+                      {groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
+                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                       {item.mode === 'blog' && (
                         <button
                           onClick={e => { e.stopPropagation(); setEditItem(item); setShowModal(true); }}
@@ -557,6 +673,8 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
           mode={mode}
           token={token}
           editItem={editItem}
+          groups={groups}
+          defaultGroupId={selectedGroupId}
           onClose={() => { setShowModal(false); setEditItem(null); }}
           onAdded={async () => { setShowModal(false); setEditItem(null); await loadItems(); }}
         />
@@ -565,6 +683,8 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
       {showBulkModal && (
         <BulkImportModal
           token={token}
+          groups={groups}
+          defaultGroupId={selectedGroupId}
           onClose={() => setShowBulkModal(false)}
           onImported={async () => { setShowBulkModal(false); await loadItems(); }}
         />
@@ -577,12 +697,13 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   );
 }
 
-function AddTrackerModal({ mode: defaultMode, token, editItem, onClose, onAdded }) {
+function AddTrackerModal({ mode: defaultMode, token, editItem, groups, defaultGroupId, onClose, onAdded }) {
   const isEdit = !!editItem;
   const [modalMode, setModalMode] = useState(editItem?.mode || defaultMode);
   const [keyword, setKeyword] = useState(editItem?.keyword || '');
   const [urlInput, setUrlInput] = useState('');
   const [blogUrls, setBlogUrls] = useState(editItem?.blog_ids || []);
+  const [groupId, setGroupId] = useState(String(editItem?.group_id ?? defaultGroupId ?? ''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -608,7 +729,7 @@ function AddTrackerModal({ mode: defaultMode, token, editItem, onClose, onAdded 
       const res = await fetch('/api/rank-tracker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ keyword: keyword.trim(), mode: modalMode, blogUrls }),
+        body: JSON.stringify({ keyword: keyword.trim(), mode: modalMode, blogUrls, groupId: groupId ? Number(groupId) : null }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.message || '등록에 실패했습니다.');
@@ -667,6 +788,23 @@ function AddTrackerModal({ mode: defaultMode, token, editItem, onClose, onAdded 
                   color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none',
                 }}
               />
+            </div>
+          )}
+
+          {!isEdit && (
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 5 }}>그룹 (선택)</label>
+              <select
+                value={groupId} onChange={e => setGroupId(e.target.value)}
+                style={{
+                  width: '100%', padding: '9px 12px', borderRadius: 9, boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none', cursor: 'pointer',
+                }}
+              >
+                <option value="">그룹 없음</option>
+                {(groups || []).map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
+              </select>
             </div>
           )}
 
