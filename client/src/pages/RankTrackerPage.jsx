@@ -56,6 +56,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [error, setError] = useState('');
   const [premiumOnly, setPremiumOnly] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadItems = useCallback(async () => {
     if (!token) return;
@@ -233,7 +234,9 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   };
 
   const filteredItems = items.filter(i =>
-    i.mode === mode && (!selectedGroupId || String(i.group_id ?? '') === selectedGroupId)
+    i.mode === mode &&
+    (!selectedGroupId || String(i.group_id ?? '') === selectedGroupId) &&
+    (!searchQuery.trim() || i.keyword.toLowerCase().includes(searchQuery.trim().toLowerCase()))
   );
   const latestRanks = selected?.latestRanks || {};
   const blogIds = selected?.blog_ids || [];
@@ -370,6 +373,16 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                 </>
               )}
             </div>
+            <input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="키워드 검색"
+              style={{
+                width: '100%', height: 30, padding: '0 10px', borderRadius: 8, boxSizing: 'border-box',
+                background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+                color: 'var(--text-primary)', fontSize: 12, fontFamily: 'inherit', outline: 'none',
+              }}
+            />
             <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
               {mode === 'blog' ? '블로그 추적' : '전체 순위'} <span style={{ color: 'var(--accent)' }}>{filteredItems.length}</span>
             </span>
@@ -462,10 +475,12 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
             <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-tertiary)', fontSize: 13 }}>불러오는 중…</div>
           ) : filteredItems.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-tertiary)', fontSize: 13, lineHeight: 1.7 }}>
-              등록된 추적 항목이 없습니다.<br/>위 등록 버튼으로 추가해보세요.
+              {items.some(i => i.mode === mode)
+                ? <>조건에 맞는 항목이 없습니다.<br/>검색어나 그룹 필터를 확인해 보세요.</>
+                : <>등록된 추적 항목이 없습니다.<br/>위 등록 버튼으로 추가해보세요.</>}
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 'calc(100vh - 320px)', minHeight: 200, overflowY: 'auto', paddingRight: 4 }}>
               {filteredItems.map(item => (
                 <div
                   key={item.id}
