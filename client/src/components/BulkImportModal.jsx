@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 import { X, Upload } from 'lucide-react';
 
 export default function BulkImportModal({ token, groups: trackerGroups, defaultGroupId, onClose, onImported }) {
