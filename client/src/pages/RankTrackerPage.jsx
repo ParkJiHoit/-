@@ -682,7 +682,6 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
               <RankCalendar
                 snapshots={snapshots}
                 blogIds={mode === 'blog' ? blogIds : [...new Set(snapshots.map(s => s.blog_id))]}
-                days={30}
               />
             </div>
 

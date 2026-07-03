@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 function rankClass(rank) {
   if (rank == null) return 'out';
   if (rank === 1) return 'r1';
@@ -13,16 +16,38 @@ function getKSTDateString(offsetDays = 0) {
   return d.toISOString().slice(0, 10);
 }
 
-function getDates(days) {
+function getMonthDates(year, month) {
+  const todayStr = getKSTDateString(0);
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const dates = [];
-  for (let i = days - 1; i >= 0; i--) {
-    dates.push(getKSTDateString(i));
+  for (let day = 1; day <= lastDay; day++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (dateStr > todayStr) break;
+    dates.push(dateStr);
   }
   return dates;
 }
 
-export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }) {
-  const dates = getDates(days);
+export default function RankCalendar({ snapshots = [], blogIds = [] }) {
+  const todayStr = getKSTDateString(0);
+  const [todayYear, todayMonth] = todayStr.split('-').map(Number);
+
+  const [viewYear, setViewYear] = useState(todayYear);
+  const [viewMonth, setViewMonth] = useState(todayMonth);
+
+  const isCurrentMonth = viewYear === todayYear && viewMonth === todayMonth;
+
+  const goPrevMonth = () => {
+    if (viewMonth === 1) { setViewYear(y => y - 1); setViewMonth(12); }
+    else setViewMonth(m => m - 1);
+  };
+  const goNextMonth = () => {
+    if (isCurrentMonth) return;
+    if (viewMonth === 12) { setViewYear(y => y + 1); setViewMonth(1); }
+    else setViewMonth(m => m + 1);
+  };
+
+  const dates = getMonthDates(viewYear, viewMonth);
   const isDark = document.documentElement.dataset.theme !== 'light';
 
   const byBlogDate = {};
@@ -66,7 +91,35 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
   const LABEL_W = 60;
 
   return (
-    <div style={{ overflowX: 'auto', overflowY: 'visible', width: '100%' }}>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <button
+          onClick={goPrevMonth}
+          title="이전 달"
+          style={{
+            display: 'flex', background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+            borderRadius: 7, padding: 5, cursor: 'pointer', color: 'var(--text-secondary)',
+          }}
+        >
+          <ChevronLeft size={14} />
+        </button>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', minWidth: 90, textAlign: 'center' }}>
+          {viewYear}년 {viewMonth}월
+        </span>
+        <button
+          onClick={goNextMonth}
+          disabled={isCurrentMonth}
+          title="다음 달"
+          style={{
+            display: 'flex', background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+            borderRadius: 7, padding: 5, cursor: isCurrentMonth ? 'not-allowed' : 'pointer',
+            color: 'var(--text-secondary)', opacity: isCurrentMonth ? 0.4 : 1,
+          }}
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
+      <div style={{ overflowX: 'auto', overflowY: 'visible', width: '100%' }}>
       <div style={{
         display: 'grid',
         gridTemplateColumns: `${LABEL_W}px repeat(${dates.length}, ${CELL}px)`,
@@ -131,6 +184,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [], days = 30 }
           })}
         </div>
       ))}
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>순위:</span>
