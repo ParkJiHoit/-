@@ -141,6 +141,7 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
               키워드 <b style={{ color: 'var(--accent)' }}>{preview.groups.length}</b>개
               (신규 <b style={{ color: '#30D158' }}>{preview.newKeywordCount}</b>개,
               기존 갱신 {preview.groups.length - preview.newKeywordCount}개)
+              · 링크 <b style={{ color: 'var(--accent)' }}>{preview.groups.reduce((sum, g) => sum + g.urls.length, 0)}</b>개
               {preview.errors.length > 0 && <> · 오류 <b style={{ color: '#FF453A' }}>{preview.errors.length}</b>건</>}
             </div>
             <div style={{ maxHeight: 280, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 10 }}>
