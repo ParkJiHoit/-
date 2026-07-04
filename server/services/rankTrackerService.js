@@ -232,7 +232,7 @@ export async function refreshRanks(userId, trackedId) {
   if (!own.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
 
   const { keyword, mode, blog_ids } = own[0];
-  const rankings = await fetchBlogRankings(keyword, 'blog');
+  const rankings = await fetchBlogRankings(keyword, 'blog', { skipVisitors: true });
   const fetchFailed = rankings.length === 0;
 
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);

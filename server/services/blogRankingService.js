@@ -226,8 +226,11 @@ async function fetchDailyVisitors(blogId) {
   }
 }
 
-export async function fetchBlogRankings(keyword, tab = 'blog') {
-  const key = `${tab}:${keyword.toLowerCase().trim()}`;
+export async function fetchBlogRankings(keyword, tab = 'blog', { skipVisitors = false } = {}) {
+  // skipVisitors 여부에 따라 캐시를 분리한다 — 순위 추적처럼 방문자 수가 필요 없는 호출이
+  // 먼저 캐시를 채우면, 방문자 수가 필요한 다른 화면(블로그 구조 분석 등)이 그 캐시를 재사용해
+  // "비공개"로 잘못 표시되는 것을 막기 위함.
+  const key = `${tab}:${keyword.toLowerCase().trim()}:${skipVisitors ? 'nv' : 'v'}`;
 
   const cached = cache.get(key);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.data;
@@ -248,11 +251,11 @@ export async function fetchBlogRankings(keyword, tab = 'blog') {
     }
     if (!scraped.length) return [];
 
-    // 블로그 타입만 방문자 수 조회
+    // 블로그 타입만 방문자 수 조회 (skipVisitors면 건너뛰어 순위 조회 속도를 높인다)
     const result = await Promise.all(
       scraped.map(async item => ({
         ...item,
-        dailyVisitors: item.type === 'blog' ? await fetchDailyVisitors(item.blogId) : null,
+        dailyVisitors: (!skipVisitors && item.type === 'blog') ? await fetchDailyVisitors(item.blogId) : null,
       }))
     );
 
