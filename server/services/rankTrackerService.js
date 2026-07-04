@@ -86,9 +86,13 @@ export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], 
     `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id)
      VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (user_id, keyword, mode, (COALESCE(group_id, -1))) DO UPDATE
-       SET blog_ids = ARRAY(
-         SELECT DISTINCT unnest(tracked_keywords.blog_ids || EXCLUDED.blog_ids)
-       ),
+       SET blog_ids = CASE
+             -- 삭제됐던 항목을 재등록하는 경우는 완전히 새 등록으로 취급해 URL 목록을
+             -- 새로 넣은 것으로 교체한다(옛 목록과 합치지 않음). 순위 기록은
+             -- rank_snapshots가 tracked_id를 그대로 참조하므로 별도로 보존된다.
+             WHEN tracked_keywords.deleted_at IS NOT NULL THEN EXCLUDED.blog_ids
+             ELSE ARRAY(SELECT DISTINCT unnest(tracked_keywords.blog_ids || EXCLUDED.blog_ids))
+           END,
        deleted_at = NULL
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
     [userId, keyword.trim(), mode, newIds, groupId]

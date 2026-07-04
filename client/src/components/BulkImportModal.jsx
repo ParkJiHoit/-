@@ -155,7 +155,12 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
               ))}
               {preview.errors.map((e, i) => (
                 <div key={i} style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontSize: 12, color: '#FF453A' }}>
-                  {e.rowNumber}행: {e.reason}
+                  <div>{e.rowNumber}행: {e.reason}</div>
+                  {e.raw && (
+                    <div style={{ marginTop: 2, color: 'var(--text-tertiary)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      {e.raw}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
