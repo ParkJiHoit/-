@@ -114,7 +114,7 @@ export async function updateTrackedGroup(userId, trackedId, groupId) {
 export async function exportSnapshots(userId, trackedIds) {
   const pool = getPool();
   const { rows: tracked } = await pool.query(
-    `SELECT tk.id, tk.keyword, tk.mode, tg.name AS group_name
+    `SELECT tk.id, tk.keyword, tk.mode, tk.blog_ids, tg.name AS group_name
      FROM tracked_keywords tk
      LEFT JOIN tracker_groups tg ON tg.id = tk.group_id
      WHERE tk.id = ANY($1) AND tk.user_id = $2`,
@@ -131,7 +131,16 @@ export async function exportSnapshots(userId, trackedIds) {
     [tracked.map(t => t.id)]
   );
 
-  return snaps.map(s => {
+  // blog 모드는 지금 등록돼 있는 URL만 내보낸다 — 등록을 바꾸면서 더 이상 추적하지
+  // 않게 된 blogId의 과거 기록(rank_snapshots에는 계속 남아 있음)까지 딸려 나오지 않게 한다.
+  // all 모드는 특정 URL 목록에 매이지 않는 상위 10위 스냅샷이라 그대로 둔다.
+  const filtered = snaps.filter(s => {
+    const info = idToInfo.get(s.tracked_id);
+    if (!info || info.mode !== 'blog') return true;
+    return (info.blog_ids || []).includes(s.blog_id);
+  });
+
+  return filtered.map(s => {
     const info = idToInfo.get(s.tracked_id);
     return {
       group: info?.group_name || '',
