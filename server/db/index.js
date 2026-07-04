@@ -68,6 +68,16 @@ export async function initDb() {
     ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS last_refreshed_at TIMESTAMPTZ;
     ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS group_id INTEGER REFERENCES tracker_groups(id) ON DELETE SET NULL;
     CREATE INDEX IF NOT EXISTS idx_tk_group ON tracked_keywords (group_id);
+    -- 삭제는 소프트 삭제로 처리해 rank_snapshots 이력을 보존한다. 같은 키워드/URL을
+    -- 다시 등록하면 이 행이 upsert로 재활성화되어 과거 순위 기록이 그대로 이어진다.
+    ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+    -- 그룹별로 완전히 독립적으로 키워드를 추적할 수 있도록, 키워드 중복 판정 범위를
+    -- "사용자 전체"에서 "사용자+그룹"으로 좁힌다. group_id가 NULL(그룹 없음)인 경우도
+    -- COALESCE로 하나의 고정된 값으로 취급해 그 안에서만 중복을 막는다.
+    ALTER TABLE tracked_keywords DROP CONSTRAINT IF EXISTS tracked_keywords_user_id_keyword_mode_key;
+    DROP INDEX IF EXISTS idx_tk_unique_per_group;
+    CREATE UNIQUE INDEX idx_tk_unique_per_group
+      ON tracked_keywords (user_id, keyword, mode, (COALESCE(group_id, -1)));
     CREATE TABLE IF NOT EXISTS rank_snapshots (
       id             SERIAL PRIMARY KEY,
       tracked_id     INTEGER     NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,

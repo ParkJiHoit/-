@@ -20,13 +20,13 @@ export async function createRefreshJob(userId, trackedIds = null) {
   let ids;
   if (!trackedIds || !trackedIds.length) {
     const { rows } = await pool.query(
-      `SELECT id FROM tracked_keywords WHERE user_id = $1`,
+      `SELECT id FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL`,
       [userId]
     );
     ids = rows.map(r => r.id);
   } else {
     const { rows } = await pool.query(
-      `SELECT id FROM tracked_keywords WHERE id = ANY($1) AND user_id = $2`,
+      `SELECT id FROM tracked_keywords WHERE id = ANY($1) AND user_id = $2 AND deleted_at IS NULL`,
       [trackedIds, userId]
     );
     ids = rows.map(r => r.id);

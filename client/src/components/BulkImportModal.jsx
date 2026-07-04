@@ -33,7 +33,7 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
       const res = await fetch('/api/rank-tracker/bulk-import/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, groupId: groupId ? Number(groupId) : null }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.message || '미리보기에 실패했습니다.');

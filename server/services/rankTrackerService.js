@@ -42,7 +42,7 @@ export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
     `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at FROM tracked_keywords
-     WHERE user_id = $1 ORDER BY created_at DESC`,
+     WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC`,
     [userId]
   );
   const result = await Promise.all(rows.map(async (row) => {
@@ -68,9 +68,9 @@ export async function createTracked(userId, keyword, mode, blogUrls = [], groupI
   const { rows } = await pool.query(
     `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id)
      VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (user_id, keyword, mode) DO UPDATE
+     ON CONFLICT (user_id, keyword, mode, (COALESCE(group_id, -1))) DO UPDATE
        SET blog_ids = EXCLUDED.blog_ids,
-           group_id = COALESCE(EXCLUDED.group_id, tracked_keywords.group_id)
+           deleted_at = NULL
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
     [userId, keyword.trim(), mode, blogIds, groupId]
   );
@@ -85,11 +85,11 @@ export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], 
   const { rows } = await pool.query(
     `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id)
      VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (user_id, keyword, mode) DO UPDATE
+     ON CONFLICT (user_id, keyword, mode, (COALESCE(group_id, -1))) DO UPDATE
        SET blog_ids = ARRAY(
          SELECT DISTINCT unnest(tracked_keywords.blog_ids || EXCLUDED.blog_ids)
        ),
-       group_id = COALESCE(EXCLUDED.group_id, tracked_keywords.group_id)
+       deleted_at = NULL
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
     [userId, keyword.trim(), mode, newIds, groupId]
   );
@@ -187,10 +187,13 @@ export async function deleteGroup(userId, groupId) {
   if (rowCount === 0) throw Object.assign(new Error('그룹을 찾을 수 없습니다.'), { status: 404 });
 }
 
+// 소프트 삭제 — rank_snapshots는 tracked_id를 그대로 참조하므로 순위 기록이 보존되고,
+// 같은 키워드/URL을 다시 등록하면 upsert(ON CONFLICT)가 이 행을 재활성화해 이어진다.
 export async function deleteTracked(userId, trackedId) {
   const pool = getPool();
   const { rowCount } = await pool.query(
-    `DELETE FROM tracked_keywords WHERE id = $1 AND user_id = $2`,
+    `UPDATE tracked_keywords SET deleted_at = NOW()
+     WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
     [trackedId, userId]
   );
   if (rowCount === 0) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
@@ -199,7 +202,8 @@ export async function deleteTracked(userId, trackedId) {
 export async function deleteTrackedBulk(userId, trackedIds) {
   const pool = getPool();
   const { rowCount } = await pool.query(
-    `DELETE FROM tracked_keywords WHERE id = ANY($1) AND user_id = $2`,
+    `UPDATE tracked_keywords SET deleted_at = NOW()
+     WHERE id = ANY($1) AND user_id = $2 AND deleted_at IS NULL`,
     [trackedIds, userId]
   );
   return rowCount;
@@ -208,7 +212,7 @@ export async function deleteTrackedBulk(userId, trackedIds) {
 export async function getSnapshots(userId, trackedId) {
   const pool = getPool();
   const { rows: own } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids FROM tracked_keywords WHERE id = $1 AND user_id = $2`,
+    `SELECT id, keyword, mode, blog_ids FROM tracked_keywords WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
     [trackedId, userId]
   );
   if (!own.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
@@ -226,7 +230,7 @@ export async function getSnapshots(userId, trackedId) {
 export async function refreshRanks(userId, trackedId) {
   const pool = getPool();
   const { rows: own } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids FROM tracked_keywords WHERE id = $1 AND user_id = $2`,
+    `SELECT id, keyword, mode, blog_ids FROM tracked_keywords WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
     [trackedId, userId]
   );
   if (!own.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });

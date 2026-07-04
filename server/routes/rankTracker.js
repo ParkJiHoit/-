@@ -57,7 +57,7 @@ async function assertKeywordCapacity(req, additionalCount) {
   const pool = getPool();
   if (!pool) return;
   const { rows } = await pool.query(
-    `SELECT COUNT(*) AS cnt FROM tracked_keywords WHERE user_id = $1`,
+    `SELECT COUNT(*) AS cnt FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL`,
     [req.userId]
   );
   const current = Number(rows[0]?.cnt || 0);
@@ -180,17 +180,20 @@ router.get('/:id/snapshots', async (req, res, next) => {
 
 router.post('/bulk-import/preview', requirePremium, async (req, res, next) => {
   try {
-    const { text } = req.body || {};
+    const { text, groupId } = req.body || {};
     if (!text || !text.trim()) return res.status(400).json({ message: '업로드할 내용이 없습니다.' });
 
     const { rows, errors } = parseBulkImportText(text);
 
+    // 그룹은 서로 독립적으로 추적되므로, "이미 있는 키워드" 판정도 등록 대상 그룹
+    // 안에서만 확인한다 — 다른 그룹에 같은 이름의 키워드가 있어도 신규로 취급한다.
     let existingKeywords = new Set();
     const pool = getPool();
     if (pool) {
       const { rows: existing } = await pool.query(
-        `SELECT keyword FROM tracked_keywords WHERE user_id = $1 AND mode = 'blog'`,
-        [req.userId]
+        `SELECT keyword FROM tracked_keywords
+         WHERE user_id = $1 AND mode = 'blog' AND group_id IS NOT DISTINCT FROM $2 AND deleted_at IS NULL`,
+        [req.userId, groupId || null]
       );
       existingKeywords = new Set(existing.map(r => r.keyword));
     }
@@ -210,8 +213,9 @@ router.post('/bulk-import/confirm', requirePremium, async (req, res, next) => {
     const pool = getPool();
     if (pool) {
       const { rows: existing } = await pool.query(
-        `SELECT keyword FROM tracked_keywords WHERE user_id = $1 AND mode = 'blog'`,
-        [req.userId]
+        `SELECT keyword FROM tracked_keywords
+         WHERE user_id = $1 AND mode = 'blog' AND group_id IS NOT DISTINCT FROM $2 AND deleted_at IS NULL`,
+        [req.userId, groupId || null]
       );
       const existingSet = new Set(existing.map(r => r.keyword));
       const newCount = groups.filter(g => !existingSet.has(g.keyword)).length;
