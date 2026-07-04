@@ -99,3 +99,37 @@ test('헤더 중 하나만 인식돼도 나머지 컬럼 위치를 올바르게 
   assert.equal(rows[0].keyword, '강릉여행');
   assert.equal(rows[0].url, 'https://blog.naver.com/foo/1');
 });
+
+test('키워드와 URL이 줄바꿈으로 나뉘고 사이에 발행일시 줄이 끼어 있어도 파싱한다', () => {
+  const text = [
+    '핸드폰가게창업',
+    'https://m.blog.naver.com/hot2337233/224335607600',
+    '',
+    '핸드폰매장창업',
+    '7/4 오전 12:20',
+    'https://m.blog.naver.com/dmsql1490',
+    '',
+    '휴대폰판매점창업',
+    '7/4 오전 2:40',
+    'https://m.blog.naver.com/dmsql1490',
+    '',
+    '핸드폰판매점창업  https://blog.naver.com/yelimmam/224335612334',
+  ].join('\n');
+  const { rows, errors } = parseBulkImportText(text);
+  assert.equal(errors.length, 0);
+  assert.equal(rows.length, 4);
+  assert.deepEqual(rows.map(r => r.keyword), ['핸드폰가게창업', '핸드폰매장창업', '휴대폰판매점창업', '핸드폰판매점창업']);
+  assert.equal(rows[0].url, 'https://m.blog.naver.com/hot2337233/224335607600');
+  assert.equal(rows[1].url, 'https://m.blog.naver.com/dmsql1490');
+  assert.equal(rows[3].url, 'https://blog.naver.com/yelimmam/224335612334');
+});
+
+test('짝을 찾지 못한 키워드 줄은 오류로 남는다', () => {
+  const text = '핸드폰가게창업\n핸드폰매장창업\nhttps://m.blog.naver.com/dmsql1490';
+  const { rows, errors } = parseBulkImportText(text);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].keyword, '핸드폰매장창업');
+  assert.equal(errors.length, 1);
+  assert.match(errors[0].reason, /URL/);
+  assert.equal(errors[0].raw, '핸드폰가게창업');
+});
