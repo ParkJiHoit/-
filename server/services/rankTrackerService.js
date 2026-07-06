@@ -342,14 +342,17 @@ export async function refreshRanks(userId, trackedId) {
   if (!own.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
 
   const { keyword, mode, blog_ids } = own[0];
-  const rankings = await fetchBlogRankings(keyword, 'blog', { skipVisitors: true });
-  const fetchFailed = rankings.length === 0;
 
-  // 통합검색 블로그 collection 노출 여부(O/X) — blog 모드에서만 체크한다.
-  // 블로그 탭 조회 자체가 실패했으면(fetchFailed) 통합검색도 건너뛰고 null(미확인)로 둔다.
-  const integratedList = (mode === 'blog' && !fetchFailed)
-    ? await fetchBlogRankings(keyword, 'integrated', { skipVisitors: true })
-    : [];
+  // 블로그탭 스크래핑과 통합검색 스크래핑은 서로 독립적인 네이버 검색 호출이라
+  // 순차로 기다리지 않고 동시에 요청해 왕복 시간을 겹친다. 통합검색은 blog 모드에서만
+  // 필요하므로 다른 모드에서는 아예 요청하지 않는다. 블로그탭 조회가 실패하면
+  // 통합검색 결과는 그냥 버린다(기존과 동일하게 fetchFailed면 null 처리).
+  const [rankings, integratedListRaw] = await Promise.all([
+    fetchBlogRankings(keyword, 'blog', { skipVisitors: true }),
+    mode === 'blog' ? fetchBlogRankings(keyword, 'integrated', { skipVisitors: true }) : Promise.resolve([]),
+  ]);
+  const fetchFailed = rankings.length === 0;
+  const integratedList = fetchFailed ? [] : integratedListRaw;
   if (mode === 'blog' && !fetchFailed) {
     console.log(`[integrated-exposure] "${keyword}" 스캔 결과 ${integratedList.length}건: ${integratedList.map(r => r.blogId).join(', ')}`);
   }
@@ -358,26 +361,33 @@ export async function refreshRanks(userId, trackedId) {
   const upserts = [];
 
   if (mode === 'blog') {
-    for (const storedKey of blog_ids) {
+    // 순위/통합노출은 이미 받아온 결과에서 바로 계산되므로 먼저 동기적으로 채워두고,
+    // 발행일 RSS 보강만(느린 부분) 블로그별로 순차 대기하지 않고 한꺼번에 병렬 조회한다.
+    const prelim = blog_ids.map(storedKey => {
       const hit = fetchFailed ? null : findMatchingRank(rankings, storedKey);
       // 상위 5위까지만 "노출 성공"으로 판정 (스펙 2-C) — 6~10위도 매칭은 되지만
       // UI/집계상 순위권 밖으로 취급한다. 실제 순위 값은 rank 컬럼에 그대로 남긴다.
       const isRankedWithinTop5 = !!hit && hit.rank <= 5;
-      // 검색결과에서 발행일을 못 얻었으면(상위 10위 밖) 블로그 RSS로 보강한다 —
-      // RSS에도 없으면(오래된 글) null로 남고 내보내기 쪽에서 등록일로 대체된다.
-      let postDate = hit?.publishedDate || null;
-      if (!postDate) {
-        const { blogId, logNo } = parsePostKeyString(storedKey);
-        postDate = await fetchPostPublishedDate(blogId, logNo);
-      }
+      return { storedKey, hit, isRankedWithinTop5, postDate: hit?.publishedDate || null };
+    });
+
+    // 검색결과에서 발행일을 못 얻었으면(상위 10위 밖) 블로그 RSS로 보강한다 —
+    // RSS에도 없으면(오래된 글) null로 남고 내보내기 쪽에서 등록일로 대체된다.
+    await Promise.all(prelim.map(async (p) => {
+      if (p.postDate) return;
+      const { blogId, logNo } = parsePostKeyString(p.storedKey);
+      p.postDate = await fetchPostPublishedDate(blogId, logNo);
+    }));
+
+    for (const p of prelim) {
       upserts.push({
-        blog_id: storedKey,
-        rank: hit ? hit.rank : null,
-        post_title: hit?.title || null,
-        post_link: hit?.postLink || null,
-        post_date: postDate,
-        status: fetchFailed ? 'fetch_failed' : (isRankedWithinTop5 ? 'ranked' : 'not_in_top5'),
-        integrated_exposed: fetchFailed ? null : !!findMatchingRank(integratedList, storedKey),
+        blog_id: p.storedKey,
+        rank: p.hit ? p.hit.rank : null,
+        post_title: p.hit?.title || null,
+        post_link: p.hit?.postLink || null,
+        post_date: p.postDate,
+        status: fetchFailed ? 'fetch_failed' : (p.isRankedWithinTop5 ? 'ranked' : 'not_in_top5'),
+        integrated_exposed: fetchFailed ? null : !!findMatchingRank(integratedList, p.storedKey),
       });
     }
   } else if (fetchFailed) {
