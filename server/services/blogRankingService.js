@@ -144,7 +144,7 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
   const seenUrl = new Set();
   const seenAder = new Set();
 
-  if (tab === 'blog' || tab === 'integrated') {
+  if (tab === 'blog') {
     // 블로그 탭: ugcItem 기반 (기존 방식)
     $(SEL.resultItem).each((_, el) => {
       if (raw.length >= limit) return false;
@@ -171,8 +171,11 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
       }
     });
   } else {
-    // VIEW / 카페 탭: ugcItem에 의존하지 않고 전체 링크 스캔
-    // Naver VIEW/카페 탭은 ugcItem 외 다른 템플릿 ID를 사용하므로 브로드 스캔이 필요
+    // VIEW / 카페 탭 / 통합검색: ugcItem에 의존하지 않고 전체 링크 스캔
+    // 이 페이지들은 블로그 탭과 달리 ugcItem 외 다른 템플릿(또는 collection 전용 마크업)을
+    // 쓰므로, 특정 컨테이너 셀렉터를 추측하는 대신 blog.naver.com 포스트 URL 패턴만으로
+    // 넓게 스캔한다 — 통합검색 블로그 collection의 정확한 구조를 라이브로 검증하지 못했기
+    // 때문에 가장 깨지기 어려운 방식을 택함.
     const $scope = $('#main_pack').length ? $('#main_pack') : $('body');
 
     $scope.find('a[href]').each((_, el) => {
@@ -273,11 +276,15 @@ export async function fetchBlogRankings(keyword, tab = 'blog', { skipVisitors = 
 
   if (pending.has(key)) return pending.get(key);
 
+  // 통합검색은 순위가 아니라 노출 여부(존재 확인)만 보면 되므로, 브로드 스캔이 앞부분에서
+  // 놓치지 않도록 스캔 한도를 넉넉히 잡는다.
+  const scanLimit = tab === 'integrated' ? 40 : 10;
+
   const promise = (async () => {
     let scraped = [];
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        scraped = await scrapeNaverTab(keyword, tab, 10);
+        scraped = await scrapeNaverTab(keyword, tab, scanLimit);
         if (scraped.length) break;
         console.warn(`[${tab}-rankings] attempt ${attempt}: 0 results for "${keyword}"`);
       } catch (err) {
