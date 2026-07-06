@@ -27,7 +27,7 @@ export default function HeroScene({ className, dark = true }) {
     // 바깥쪽 + 안쪽 와이어프레임 정이십면체를 하나의 그룹으로 겹쳐 배치
     const group = new THREE.Group();
 
-    const outerGeometry = new THREE.IcosahedronGeometry(2.4, 1);
+    const outerGeometry = new THREE.IcosahedronGeometry(3.3, 1);
     const outerWireframe = new THREE.WireframeGeometry(outerGeometry);
     const outerLine = new THREE.LineSegments(
       outerWireframe,
@@ -35,7 +35,7 @@ export default function HeroScene({ className, dark = true }) {
     );
     group.add(outerLine);
 
-    const innerGeometry = new THREE.IcosahedronGeometry(1.2, 0);
+    const innerGeometry = new THREE.IcosahedronGeometry(1.7, 0);
     const innerWireframe = new THREE.WireframeGeometry(innerGeometry);
     const innerLine = new THREE.LineSegments(
       innerWireframe,

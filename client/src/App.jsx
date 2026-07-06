@@ -859,7 +859,7 @@ export default function App() {
         {activeTab === 'analysis' && (
           <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
             suggestions={analysis?.searchSuggestions || []}
-            isMain={!hasResults} />
+            isMain={!hasResults} dark={theme === 'dark'} />
         )}
         {activeTab === 'blog' && (
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -898,7 +898,7 @@ export default function App() {
             </div>
             {/* 구조 분석 폼 */}
             {blogSubTab === 'structure' && (
-              <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} historyKey="keywordlab.blogHistory" />
+              <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} historyKey="keywordlab.blogHistory" dark={theme === 'dark'} />
             )}
             {/* 감사 폼 */}
             {blogSubTab === 'audit' && (

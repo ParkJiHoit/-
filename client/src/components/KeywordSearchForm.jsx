@@ -54,7 +54,7 @@ function getHistory(key) {
   catch { return []; }
 }
 
-export default function KeywordSearchForm({ onSubmit, loading, suggestions = [], isMain = false, historyKey = 'keywordlab.searchHistory' }) {
+export default function KeywordSearchForm({ onSubmit, loading, suggestions = [], isMain = false, historyKey = 'keywordlab.searchHistory', dark = true }) {
   const [keyword, setKeyword] = useState('');
   const [focused, setFocused] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
@@ -99,7 +99,9 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
           border: focused
             ? '1.5px solid rgba(10,180,255,0.85)'
             : '1.5px solid rgba(255,255,255,0.14)',
-          background: 'rgba(255,255,255,0.4)',
+          // 라이트 배경에서는 흰색 유리 패널이 자연스럽지만, 다크 배경에서 같은 흰색을
+          // 쓰면 톤이 붕 떠 보여서 짙은 색 유리로 바꾼다.
+          background: dark ? 'rgba(28,28,30,0.55)' : 'rgba(255,255,255,0.4)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           boxShadow: focused
