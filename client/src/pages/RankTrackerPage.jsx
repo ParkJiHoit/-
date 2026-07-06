@@ -82,7 +82,7 @@ function buildHeatmapSheet(rows) {
   const rowMap = new Map();
   for (const r of rows) {
     const key = `${r.keyword} ${r.blogId}`;
-    if (!rowMap.has(key)) rowMap.set(key, { group: r.group || '없음', keyword: r.keyword, blogId: r.blogId, mode: r.mode, registeredAt: r.registeredAt, cells: {} });
+    if (!rowMap.has(key)) rowMap.set(key, { group: r.group || '없음', keyword: r.keyword, searchVolume: r.searchVolume, blogId: r.blogId, mode: r.mode, registeredAt: r.registeredAt, cells: {} });
     rowMap.get(key).cells[r.date] = { rank: r.rank, status: r.status, integratedExposed: r.integratedExposed, postDate: r.postDate };
   }
   const dataRows = [...rowMap.values()].sort((a, b) =>
@@ -109,12 +109,12 @@ function buildHeatmapSheet(rows) {
     if (dr.postDateIsFallback) hasFallbackDate = true;
   }
 
-  const header = ['등록일', '그룹', '키워드', '블로그', '통검 노출', ...dateLabels];
+  const header = ['등록일', '그룹', '키워드', '월간 검색량', '블로그', '통검 노출', ...dateLabels];
   const aoa = [
     header,
     ...dataRows.map(dr => [
       dr.postDate ? (dr.postDateIsFallback ? `${dr.postDate}*` : dr.postDate) : '',
-      dr.group, dr.keyword, dr.blogId,
+      dr.group, dr.keyword, dr.searchVolume ?? '', dr.blogId,
       dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'),
       ...dates.map(d => {
         const c = dr.cells[d];
@@ -152,7 +152,7 @@ function buildHeatmapSheet(rows) {
   });
 
   dataRows.forEach((dr, rIdx) => {
-    const integratedRef = XLSX.utils.encode_cell({ r: rIdx + 1, c: 4 });
+    const integratedRef = XLSX.utils.encode_cell({ r: rIdx + 1, c: 5 });
     if (ws[integratedRef]) {
       const { bg, font } = integratedCellColor(dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'));
       ws[integratedRef].s = {
@@ -163,7 +163,7 @@ function buildHeatmapSheet(rows) {
     }
 
     dates.forEach((d, cIdx) => {
-      const ref = XLSX.utils.encode_cell({ r: rIdx + 1, c: cIdx + 5 });
+      const ref = XLSX.utils.encode_cell({ r: rIdx + 1, c: cIdx + 6 });
       if (!ws[ref]) return;
       const { bg, font } = heatmapCellColor(dr.cells[d]);
       ws[ref].s = {
@@ -187,6 +187,7 @@ function buildHeatmapSheet(rows) {
     { wch: 12 },
     { wch: 14 },
     { wch: autoColWidth([header[2], ...dataRows.map(dr => dr.keyword)], 16) },
+    { wch: 12 },
     { wch: 18 },
     { wch: 12 },
     ...dateLabels.map(d => ({ wch: autoColWidth([d], 8) })),

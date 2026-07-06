@@ -1,5 +1,24 @@
 import { getPool } from '../db/index.js';
 import { fetchBlogRankings, fetchPostPublishedDate } from './blogRankingService.js';
+import { fetchKeywordVolume } from './naverKeywordService.js';
+
+// 키워드 등록 시 딱 한 번만 월간 검색량을 조회한다 — 이미 저장된 값이 있으면(재등록/URL
+// 추가 포함) 다시 조회하지 않는다. 조회 실패는 등록 자체를 막지 않도록 null로 흡수한다.
+async function getOrFetchSearchVolume(pool, userId, keyword, mode, groupId) {
+  if (!pool) return null;
+  const { rows } = await pool.query(
+    `SELECT pc_search, mobile_search FROM tracked_keywords
+     WHERE user_id = $1 AND keyword = $2 AND mode = $3 AND group_id IS NOT DISTINCT FROM $4`,
+    [userId, keyword, mode, groupId]
+  );
+  if (rows.length && (rows[0].pc_search != null || rows[0].mobile_search != null)) return null;
+  try {
+    return await fetchKeywordVolume(keyword);
+  } catch (err) {
+    console.warn(`[rank-tracker] 검색량 조회 실패 "${keyword}": ${err.message}`);
+    return null;
+  }
+}
 
 export function extractPostKey(url) {
   const str = String(url || '').trim();
@@ -62,29 +81,35 @@ export async function listTracked(userId) {
 
 export async function createTracked(userId, keyword, mode, blogUrls = [], groupId = null) {
   const pool = getPool();
+  const trimmedKeyword = keyword.trim();
   const blogIds = blogUrls
     .map(u => { const k = extractPostKey(u); return k ? postKeyToString(k) : null; })
     .filter(Boolean);
+  const searchVolume = await getOrFetchSearchVolume(pool, userId, trimmedKeyword, mode, groupId);
   const { rows } = await pool.query(
-    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id, pc_search, mobile_search)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (user_id, keyword, mode, (COALESCE(group_id, -1))) DO UPDATE
        SET blog_ids = EXCLUDED.blog_ids,
-           deleted_at = NULL
+           deleted_at = NULL,
+           pc_search = COALESCE(tracked_keywords.pc_search, EXCLUDED.pc_search),
+           mobile_search = COALESCE(tracked_keywords.mobile_search, EXCLUDED.mobile_search)
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
-    [userId, keyword.trim(), mode, blogIds, groupId]
+    [userId, trimmedKeyword, mode, blogIds, groupId, searchVolume?.pcSearch ?? null, searchVolume?.mobileSearch ?? null]
   );
   return rows[0];
 }
 
 export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], groupId = null) {
   const pool = getPool();
+  const trimmedKeyword = keyword.trim();
   const newIds = newUrls
     .map(u => { const k = extractPostKey(u); return k ? postKeyToString(k) : null; })
     .filter(Boolean);
+  const searchVolume = await getOrFetchSearchVolume(pool, userId, trimmedKeyword, mode, groupId);
   const { rows } = await pool.query(
-    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id, pc_search, mobile_search)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (user_id, keyword, mode, (COALESCE(group_id, -1))) DO UPDATE
        SET blog_ids = CASE
              -- 삭제됐던 항목을 재등록하는 경우는 완전히 새 등록으로 취급해 URL 목록을
@@ -93,9 +118,11 @@ export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], 
              WHEN tracked_keywords.deleted_at IS NOT NULL THEN EXCLUDED.blog_ids
              ELSE ARRAY(SELECT DISTINCT unnest(tracked_keywords.blog_ids || EXCLUDED.blog_ids))
            END,
-       deleted_at = NULL
+       deleted_at = NULL,
+       pc_search = COALESCE(tracked_keywords.pc_search, EXCLUDED.pc_search),
+       mobile_search = COALESCE(tracked_keywords.mobile_search, EXCLUDED.mobile_search)
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
-    [userId, keyword.trim(), mode, newIds, groupId]
+    [userId, trimmedKeyword, mode, newIds, groupId, searchVolume?.pcSearch ?? null, searchVolume?.mobileSearch ?? null]
   );
   return rows[0];
 }
@@ -128,7 +155,7 @@ export async function removeTrackedBlogUrl(userId, trackedId, blogId) {
 export async function exportSnapshots(userId, trackedIds) {
   const pool = getPool();
   const { rows: tracked } = await pool.query(
-    `SELECT tk.id, tk.keyword, tk.mode, tk.blog_ids, tg.name AS group_name,
+    `SELECT tk.id, tk.keyword, tk.mode, tk.blog_ids, tk.pc_search, tk.mobile_search, tg.name AS group_name,
             TO_CHAR(tk.created_at, 'YYYY-MM-DD') AS registered_at
      FROM tracked_keywords tk
      LEFT JOIN tracker_groups tg ON tg.id = tk.group_id
@@ -171,6 +198,9 @@ export async function exportSnapshots(userId, trackedIds) {
       postDate: s.post_date,
       registeredAt: info?.registered_at || null,
       integratedExposed: s.integrated_exposed,
+      searchVolume: (info?.pc_search != null || info?.mobile_search != null)
+        ? (info.pc_search || 0) + (info.mobile_search || 0)
+        : null,
     };
   });
 }
