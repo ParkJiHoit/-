@@ -145,14 +145,21 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
               {preview.errors.length > 0 && <> · 오류 <b style={{ color: '#FF453A' }}>{preview.errors.length}</b>건</>}
             </div>
             <div style={{ maxHeight: 280, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 10 }}>
-              {preview.groups.map(g => (
-                <div key={g.keyword} style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
-                  <span style={{ fontWeight: 700, color: g.isNew ? '#30D158' : 'var(--text-secondary)' }}>
-                    {g.isNew ? '[신규] ' : '[기존] '}{g.keyword}
-                  </span>
-                  <span style={{ color: 'var(--text-tertiary)', marginLeft: 8 }}>URL {g.urls.length}개</span>
-                </div>
-              ))}
+              {preview.groups.map(g => {
+                const label = g.isNew ? '[신규] ' : g.allDuplicate ? '[중복] ' : '[기존] ';
+                const color = g.isNew ? '#30D158' : g.allDuplicate ? '#FF9F0A' : 'var(--text-secondary)';
+                return (
+                  <div key={g.keyword} style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
+                    <span style={{ fontWeight: 700, color }}>
+                      {label}{g.keyword}
+                    </span>
+                    <span style={{ color: 'var(--text-tertiary)', marginLeft: 8 }}>URL {g.urls.length}개</span>
+                    {g.allDuplicate && (
+                      <span style={{ color: '#FF9F0A', marginLeft: 8 }}>· 추가되는 URL 없음</span>
+                    )}
+                  </div>
+                );
+              })}
               {preview.errors.map((e, i) => (
                 <div key={i} style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontSize: 12, color: '#FF453A' }}>
                   <div>{e.rowNumber}행: {e.reason}</div>

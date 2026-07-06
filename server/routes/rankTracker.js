@@ -4,6 +4,7 @@ import {
   listTracked, createTracked, deleteTracked, deleteTrackedBulk,
   getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup,
   listGroups, createGroup, renameGroup, deleteGroup, exportSnapshots,
+  extractPostKey, postKeyToString,
 } from '../services/rankTrackerService.js';
 import { parseBulkImportText, groupParsedRows } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
@@ -188,17 +189,29 @@ router.post('/bulk-import/preview', requirePremium, async (req, res, next) => {
     // 그룹은 서로 독립적으로 추적되므로, "이미 있는 키워드" 판정도 등록 대상 그룹
     // 안에서만 확인한다 — 다른 그룹에 같은 이름의 키워드가 있어도 신규로 취급한다.
     let existingKeywords = new Set();
+    let existingBlogIdsByKeyword = new Map();
     const pool = getPool();
     if (pool) {
       const { rows: existing } = await pool.query(
-        `SELECT keyword FROM tracked_keywords
+        `SELECT keyword, blog_ids FROM tracked_keywords
          WHERE user_id = $1 AND mode = 'blog' AND group_id IS NOT DISTINCT FROM $2 AND deleted_at IS NULL`,
         [req.userId, groupId || null]
       );
       existingKeywords = new Set(existing.map(r => r.keyword));
+      existingBlogIdsByKeyword = new Map(existing.map(r => [r.keyword, new Set(r.blog_ids || [])]));
     }
 
-    const groups = groupParsedRows(rows, existingKeywords);
+    const groups = groupParsedRows(rows, existingKeywords).map(g => {
+      if (g.isNew) return { ...g, allDuplicate: false };
+      // 기존 키워드라면, 이번에 붙여넣은 URL이 이미 등록된 것과 완전히 겹치는지(추가되는
+      // 게 하나도 없는지) 확인해 [중복]으로 표시할 수 있게 한다.
+      const existingKeys = existingBlogIdsByKeyword.get(g.keyword) || new Set();
+      const allDuplicate = g.urls.every(url => {
+        const key = extractPostKey(url);
+        return key && existingKeys.has(postKeyToString(key));
+      });
+      return { ...g, allDuplicate };
+    });
     res.json({ groups, errors, newKeywordCount: groups.filter(g => g.isNew).length });
   } catch (e) { next(e); }
 });
