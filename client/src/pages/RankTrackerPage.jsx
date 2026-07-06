@@ -404,6 +404,20 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     } catch (e) { setError(e.message); }
   };
 
+  const handleRemoveBlog = async (trackedId, blogId) => {
+    if (!token) return;
+    if (!confirm(`"${blogId}" 블로그를 이 키워드 추적에서 뺄까요?`)) return;
+    try {
+      await apiFetch(`/${trackedId}/remove-blog`, { method: 'POST', body: JSON.stringify({ blogId }) }, token);
+      const listData = await apiFetch('', {}, token);
+      setItems(listData);
+      if (selected?.id === trackedId) {
+        const refreshed = listData.find(i => i.id === trackedId);
+        if (refreshed) setSelected(refreshed);
+      }
+    } catch (e) { setError(e.message); }
+  };
+
   const toggleSelectId = (id) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -840,13 +854,25 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                         padding: '4px 6px', borderRadius: 6, background: 'rgba(255,255,255,0.03)', marginBottom: 3,
                       }}>
                         <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{blogId}</span>
-                        <span style={{
-                          fontSize: 14, fontWeight: 800,
-                          fontFamily: "'Space Grotesk', sans-serif",
-                          color,
-                        }}>
-                          {label}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{
+                            fontSize: 14, fontWeight: 800,
+                            fontFamily: "'Space Grotesk', sans-serif",
+                            color,
+                          }}>
+                            {label}
+                          </span>
+                          <button
+                            onClick={e => { e.stopPropagation(); handleRemoveBlog(item.id, blogId); }}
+                            title="이 블로그만 추적에서 빼기"
+                            style={{
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              color: 'var(--text-tertiary)', padding: 2, display: 'flex', lineHeight: 1,
+                            }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}

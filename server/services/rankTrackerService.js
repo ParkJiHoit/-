@@ -111,6 +111,20 @@ export async function updateTrackedGroup(userId, trackedId, groupId) {
   return rows[0];
 }
 
+// 키워드 전체가 아니라 등록된 블로그 하나만 추적 목록에서 뺀다. 순위 기록은
+// rank_snapshots에 그대로 남아 있고 blog_ids 배열에서만 제거된다.
+export async function removeTrackedBlogUrl(userId, trackedId, blogId) {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `UPDATE tracked_keywords SET blog_ids = array_remove(blog_ids, $1)
+     WHERE id = $2 AND user_id = $3 AND deleted_at IS NULL
+     RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
+    [blogId, trackedId, userId]
+  );
+  if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
+  return rows[0];
+}
+
 export async function exportSnapshots(userId, trackedIds) {
   const pool = getPool();
   const { rows: tracked } = await pool.query(
