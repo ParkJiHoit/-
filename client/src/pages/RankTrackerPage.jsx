@@ -103,12 +103,12 @@ function buildHeatmapSheet(rows) {
     dr.postDate = postDate;
   }
 
-  const header = ['그룹', '키워드', '블로그', '등록일', '통합검색노출', ...dateLabels];
+  const header = ['등록일', '그룹', '키워드', '블로그', '통검 노출', ...dateLabels];
   const aoa = [
     header,
     ...dataRows.map(dr => [
-      dr.group, dr.keyword, dr.blogId,
       dr.postDate || '',
+      dr.group, dr.keyword, dr.blogId,
       dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'),
       ...dates.map(d => {
         const c = dr.cells[d];
@@ -126,7 +126,7 @@ function buildHeatmapSheet(rows) {
   HEATMAP_LEGEND.forEach(l => aoa.push(['', l.label]));
   aoa.push([]);
   const integratedLegendStartRow = aoa.length;
-  aoa.push(['통합검색노출 컬러']);
+  aoa.push(['통검 노출 컬러']);
   INTEGRATED_LEGEND.forEach(l => aoa.push(['', l.label]));
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -174,11 +174,11 @@ function buildHeatmapSheet(rows) {
   });
 
   ws['!cols'] = [
-    { wch: 14 },
-    { wch: autoColWidth([header[1], ...dataRows.map(dr => dr.keyword)], 16) },
-    { wch: 18 },
     { wch: 12 },
     { wch: 14 },
+    { wch: autoColWidth([header[2], ...dataRows.map(dr => dr.keyword)], 16) },
+    { wch: 18 },
+    { wch: 12 },
     ...dateLabels.map(d => ({ wch: autoColWidth([d], 8) })),
   ];
 

@@ -261,6 +261,9 @@ export async function refreshRanks(userId, trackedId) {
   const integratedList = (mode === 'blog' && !fetchFailed)
     ? await fetchBlogRankings(keyword, 'integrated', { skipVisitors: true })
     : [];
+  if (mode === 'blog' && !fetchFailed) {
+    console.log(`[integrated-exposure] "${keyword}" 스캔 결과 ${integratedList.length}건: ${integratedList.map(r => r.blogId).join(', ')}`);
+  }
 
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const upserts = [];
