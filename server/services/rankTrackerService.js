@@ -124,7 +124,7 @@ export async function exportSnapshots(userId, trackedIds) {
 
   const idToInfo = new Map(tracked.map(t => [t.id, t]));
   const { rows: snaps } = await pool.query(
-    `SELECT tracked_id, blog_id, rank, status, post_title, post_link,
+    `SELECT tracked_id, blog_id, rank, status, post_title, post_link, integrated_exposed,
             TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
      FROM rank_snapshots WHERE tracked_id = ANY($1)
      ORDER BY snapshotted_at ASC, tracked_id ASC, rank ASC NULLS LAST`,
@@ -152,6 +152,7 @@ export async function exportSnapshots(userId, trackedIds) {
       status: s.status,
       postTitle: s.post_title,
       postLink: s.post_link,
+      integratedExposed: s.integrated_exposed,
     };
   });
 }
@@ -231,7 +232,7 @@ export async function getSnapshots(userId, trackedId) {
   if (!own.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
 
   const { rows: snaps } = await pool.query(
-    `SELECT blog_id, rank, status, post_title, post_link,
+    `SELECT blog_id, rank, status, post_title, post_link, integrated_exposed,
             TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
      FROM rank_snapshots WHERE tracked_id = $1
      ORDER BY snapshotted_at DESC, rank ASC NULLS LAST`,
@@ -252,6 +253,12 @@ export async function refreshRanks(userId, trackedId) {
   const rankings = await fetchBlogRankings(keyword, 'blog', { skipVisitors: true });
   const fetchFailed = rankings.length === 0;
 
+  // 통합검색 블로그 collection 노출 여부(O/X) — blog 모드에서만 체크한다.
+  // 블로그 탭 조회 자체가 실패했으면(fetchFailed) 통합검색도 건너뛰고 null(미확인)로 둔다.
+  const integratedList = (mode === 'blog' && !fetchFailed)
+    ? await fetchBlogRankings(keyword, 'integrated', { skipVisitors: true })
+    : [];
+
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const upserts = [];
 
@@ -267,10 +274,11 @@ export async function refreshRanks(userId, trackedId) {
         post_title: hit?.title || null,
         post_link: hit?.postLink || null,
         status: fetchFailed ? 'fetch_failed' : (isRankedWithinTop5 ? 'ranked' : 'not_in_top5'),
+        integrated_exposed: fetchFailed ? null : !!findMatchingRank(integratedList, storedKey),
       });
     }
   } else if (fetchFailed) {
-    upserts.push({ blog_id: '__fetch_failed__', rank: null, post_title: null, post_link: null, status: 'fetch_failed' });
+    upserts.push({ blog_id: '__fetch_failed__', rank: null, post_title: null, post_link: null, status: 'fetch_failed', integrated_exposed: null });
   } else {
     for (const r of rankings) {
       if (!r.blogId) continue;
@@ -280,18 +288,20 @@ export async function refreshRanks(userId, trackedId) {
         post_title: r.title || null,
         post_link: r.postLink || null,
         status: 'ranked',
+        integrated_exposed: null,
       });
     }
   }
 
   for (const u of upserts) {
     await pool.query(
-      `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, status, snapshotted_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, status, integrated_exposed, snapshotted_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (tracked_id, blog_id, snapshotted_at)
        DO UPDATE SET rank = EXCLUDED.rank, post_title = EXCLUDED.post_title,
-                     post_link = EXCLUDED.post_link, status = EXCLUDED.status`,
-      [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, u.status, today]
+                     post_link = EXCLUDED.post_link, status = EXCLUDED.status,
+                     integrated_exposed = EXCLUDED.integrated_exposed`,
+      [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, u.status, u.integrated_exposed, today]
     );
   }
 

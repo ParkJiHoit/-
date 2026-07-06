@@ -13,6 +13,10 @@ const TAB_CONFIG = {
   blog: { ssc: 'tab.blog.all', domains: ['blog.naver.com'] },
   view: { ssc: 'tab.view.all', domains: ['blog.naver.com', 'cafe.naver.com'] },
   cafe: { ssc: 'tab.cafe.all', domains: ['cafe.naver.com'] },
+  // 통합검색(ssc 없이 기본 검색결과) — 노출 여부 O/X 체크 전용, 순위 개념 없음.
+  // 블로그 collection 영역도 블로그 탭과 같은 ugcItem 템플릿을 재사용한다고 가정하고
+  // 파싱한다. 실제 라이브 페이지에서 구조가 다르면 셀렉터를 다시 맞춰야 한다.
+  integrated: { ssc: null, domains: ['blog.naver.com'] },
 };
 
 // 공통 cheerio 셀렉터
@@ -92,7 +96,9 @@ function followRedirect(url, domains, maxRedirects = 6) {
 
 async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
   const config = TAB_CONFIG[tab] || TAB_CONFIG.blog;
-  const url = `https://search.naver.com/search.naver?ssc=${config.ssc}&sm=tab_jum&query=${encodeURIComponent(keyword)}`;
+  const url = config.ssc
+    ? `https://search.naver.com/search.naver?ssc=${config.ssc}&sm=tab_jum&query=${encodeURIComponent(keyword)}`
+    : `https://search.naver.com/search.naver?query=${encodeURIComponent(keyword)}`;
 
   const res = await axios.get(url, {
     headers: {
@@ -109,7 +115,7 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
   const seenUrl = new Set();
   const seenAder = new Set();
 
-  if (tab === 'blog') {
+  if (tab === 'blog' || tab === 'integrated') {
     // 블로그 탭: ugcItem 기반 (기존 방식)
     $(SEL.resultItem).each((_, el) => {
       if (raw.length >= limit) return false;
