@@ -246,6 +246,66 @@ export function buildRankingList(raw, domains) {
     });
 }
 
+// 블로그 RSS 피드에서 최근 포스트의 정확한 발행일을 가져온다(검색결과 상위 10위 안에
+// 든 적 없어 날짜를 못 얻은 포스트를 위한 보강 수단). RSS는 최근 포스트 일부만 담고
+// 있어서 오래된 글은 여기서도 못 찾을 수 있다 — 그 경우엔 호출한 쪽에서 다른 값으로
+// 대체해야 한다.
+async function fetchBlogRssPosts(blogId) {
+  if (!blogId) return [];
+  const key = `rss:${blogId.toLowerCase()}`;
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.data;
+  if (pending.has(key)) return pending.get(key);
+
+  const promise = (async () => {
+    try {
+      const res = await axios.get(`https://rss.blog.naver.com/${blogId}.xml`, {
+        headers: {
+          'User-Agent': UA,
+          'Accept': 'application/xml,text/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'ko-KR,ko;q=0.9',
+        },
+        timeout: 8000,
+      });
+      const $ = cheerio.load(res.data, { xmlMode: true });
+      const posts = [];
+      $('item').each((_, el) => {
+        const $el = $(el);
+        const link = $el.find('link').text().trim() || $el.find('guid').text().trim();
+        const pubDate = $el.find('pubDate').text().trim();
+        const m = link.match(/logNo=(\d+)/) || link.match(/blog\.naver\.com\/[^/?#\s]+\/(\d+)/);
+        if (m?.[1] && pubDate) posts.push({ logNo: m[1], pubDate });
+      });
+      cache.set(key, { data: posts, at: Date.now() });
+      return posts;
+    } catch (err) {
+      console.error(`[rss] "${blogId}" 조회 실패: ${err.message}`);
+      return [];
+    }
+  })();
+
+  pending.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    pending.delete(key);
+  }
+}
+
+function rssPubDateToKstDate(pubDate) {
+  const d = new Date(pubDate);
+  if (isNaN(d.getTime())) return null;
+  return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+// 검색결과 스크래핑으로 발행일을 못 얻었을 때 블로그 RSS로 보강한다.
+export async function fetchPostPublishedDate(blogId, logNo) {
+  if (!blogId || !logNo) return null;
+  const posts = await fetchBlogRssPosts(blogId);
+  const hit = posts.find(p => p.logNo === logNo);
+  return hit ? rssPubDateToKstDate(hit.pubDate) : null;
+}
+
 async function fetchDailyVisitors(blogId) {
   if (!blogId) return null;
   try {
