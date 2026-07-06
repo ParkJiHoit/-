@@ -114,7 +114,8 @@ export async function updateTrackedGroup(userId, trackedId, groupId) {
 export async function exportSnapshots(userId, trackedIds) {
   const pool = getPool();
   const { rows: tracked } = await pool.query(
-    `SELECT tk.id, tk.keyword, tk.mode, tk.blog_ids, tg.name AS group_name
+    `SELECT tk.id, tk.keyword, tk.mode, tk.blog_ids, tg.name AS group_name,
+            TO_CHAR(tk.created_at, 'YYYY-MM-DD') AS registered_at
      FROM tracked_keywords tk
      LEFT JOIN tracker_groups tg ON tg.id = tk.group_id
      WHERE tk.id = ANY($1) AND tk.user_id = $2`,
@@ -154,6 +155,7 @@ export async function exportSnapshots(userId, trackedIds) {
       postTitle: s.post_title,
       postLink: s.post_link,
       postDate: s.post_date,
+      registeredAt: info?.registered_at || null,
       integratedExposed: s.integrated_exposed,
     };
   });
