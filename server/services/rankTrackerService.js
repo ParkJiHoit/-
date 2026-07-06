@@ -1,5 +1,5 @@
 import { getPool } from '../db/index.js';
-import { fetchBlogRankings } from './blogRankingService.js';
+import { fetchBlogRankings, fetchPostPublishedDate } from './blogRankingService.js';
 
 export function extractPostKey(url) {
   const str = String(url || '').trim();
@@ -111,10 +111,25 @@ export async function updateTrackedGroup(userId, trackedId, groupId) {
   return rows[0];
 }
 
+// 키워드 전체가 아니라 등록된 블로그 하나만 추적 목록에서 뺀다. 순위 기록은
+// rank_snapshots에 그대로 남아 있고 blog_ids 배열에서만 제거된다.
+export async function removeTrackedBlogUrl(userId, trackedId, blogId) {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `UPDATE tracked_keywords SET blog_ids = array_remove(blog_ids, $1)
+     WHERE id = $2 AND user_id = $3 AND deleted_at IS NULL
+     RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
+    [blogId, trackedId, userId]
+  );
+  if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
+  return rows[0];
+}
+
 export async function exportSnapshots(userId, trackedIds) {
   const pool = getPool();
   const { rows: tracked } = await pool.query(
-    `SELECT tk.id, tk.keyword, tk.mode, tk.blog_ids, tg.name AS group_name
+    `SELECT tk.id, tk.keyword, tk.mode, tk.blog_ids, tg.name AS group_name,
+            TO_CHAR(tk.created_at, 'YYYY-MM-DD') AS registered_at
      FROM tracked_keywords tk
      LEFT JOIN tracker_groups tg ON tg.id = tk.group_id
      WHERE tk.id = ANY($1) AND tk.user_id = $2`,
@@ -124,7 +139,8 @@ export async function exportSnapshots(userId, trackedIds) {
 
   const idToInfo = new Map(tracked.map(t => [t.id, t]));
   const { rows: snaps } = await pool.query(
-    `SELECT tracked_id, blog_id, rank, status, post_title, post_link,
+    `SELECT tracked_id, blog_id, rank, status, post_title, post_link, integrated_exposed,
+            TO_CHAR(post_date, 'YYYY-MM-DD') AS post_date,
             TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
      FROM rank_snapshots WHERE tracked_id = ANY($1)
      ORDER BY snapshotted_at ASC, tracked_id ASC, rank ASC NULLS LAST`,
@@ -152,6 +168,9 @@ export async function exportSnapshots(userId, trackedIds) {
       status: s.status,
       postTitle: s.post_title,
       postLink: s.post_link,
+      postDate: s.post_date,
+      registeredAt: info?.registered_at || null,
+      integratedExposed: s.integrated_exposed,
     };
   });
 }
@@ -231,7 +250,8 @@ export async function getSnapshots(userId, trackedId) {
   if (!own.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
 
   const { rows: snaps } = await pool.query(
-    `SELECT blog_id, rank, status, post_title, post_link,
+    `SELECT blog_id, rank, status, post_title, post_link, integrated_exposed,
+            TO_CHAR(post_date, 'YYYY-MM-DD') AS post_date,
             TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
      FROM rank_snapshots WHERE tracked_id = $1
      ORDER BY snapshotted_at DESC, rank ASC NULLS LAST`,
@@ -252,6 +272,15 @@ export async function refreshRanks(userId, trackedId) {
   const rankings = await fetchBlogRankings(keyword, 'blog', { skipVisitors: true });
   const fetchFailed = rankings.length === 0;
 
+  // 통합검색 블로그 collection 노출 여부(O/X) — blog 모드에서만 체크한다.
+  // 블로그 탭 조회 자체가 실패했으면(fetchFailed) 통합검색도 건너뛰고 null(미확인)로 둔다.
+  const integratedList = (mode === 'blog' && !fetchFailed)
+    ? await fetchBlogRankings(keyword, 'integrated', { skipVisitors: true })
+    : [];
+  if (mode === 'blog' && !fetchFailed) {
+    console.log(`[integrated-exposure] "${keyword}" 스캔 결과 ${integratedList.length}건: ${integratedList.map(r => r.blogId).join(', ')}`);
+  }
+
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const upserts = [];
 
@@ -261,16 +290,25 @@ export async function refreshRanks(userId, trackedId) {
       // 상위 5위까지만 "노출 성공"으로 판정 (스펙 2-C) — 6~10위도 매칭은 되지만
       // UI/집계상 순위권 밖으로 취급한다. 실제 순위 값은 rank 컬럼에 그대로 남긴다.
       const isRankedWithinTop5 = !!hit && hit.rank <= 5;
+      // 검색결과에서 발행일을 못 얻었으면(상위 10위 밖) 블로그 RSS로 보강한다 —
+      // RSS에도 없으면(오래된 글) null로 남고 내보내기 쪽에서 등록일로 대체된다.
+      let postDate = hit?.publishedDate || null;
+      if (!postDate) {
+        const { blogId, logNo } = parsePostKeyString(storedKey);
+        postDate = await fetchPostPublishedDate(blogId, logNo);
+      }
       upserts.push({
         blog_id: storedKey,
         rank: hit ? hit.rank : null,
         post_title: hit?.title || null,
         post_link: hit?.postLink || null,
+        post_date: postDate,
         status: fetchFailed ? 'fetch_failed' : (isRankedWithinTop5 ? 'ranked' : 'not_in_top5'),
+        integrated_exposed: fetchFailed ? null : !!findMatchingRank(integratedList, storedKey),
       });
     }
   } else if (fetchFailed) {
-    upserts.push({ blog_id: '__fetch_failed__', rank: null, post_title: null, post_link: null, status: 'fetch_failed' });
+    upserts.push({ blog_id: '__fetch_failed__', rank: null, post_title: null, post_link: null, post_date: null, status: 'fetch_failed', integrated_exposed: null });
   } else {
     for (const r of rankings) {
       if (!r.blogId) continue;
@@ -279,19 +317,23 @@ export async function refreshRanks(userId, trackedId) {
         rank: r.rank,
         post_title: r.title || null,
         post_link: r.postLink || null,
+        post_date: r.publishedDate || null,
         status: 'ranked',
+        integrated_exposed: null,
       });
     }
   }
 
   for (const u of upserts) {
     await pool.query(
-      `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, status, snapshotted_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, post_date, status, integrated_exposed, snapshotted_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT (tracked_id, blog_id, snapshotted_at)
        DO UPDATE SET rank = EXCLUDED.rank, post_title = EXCLUDED.post_title,
-                     post_link = EXCLUDED.post_link, status = EXCLUDED.status`,
-      [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, u.status, today]
+                     post_link = EXCLUDED.post_link, post_date = EXCLUDED.post_date,
+                     status = EXCLUDED.status,
+                     integrated_exposed = EXCLUDED.integrated_exposed`,
+      [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, u.post_date, u.status, u.integrated_exposed, today]
     );
   }
 

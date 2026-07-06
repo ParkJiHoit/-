@@ -13,6 +13,10 @@ const TAB_CONFIG = {
   blog: { ssc: 'tab.blog.all', domains: ['blog.naver.com'] },
   view: { ssc: 'tab.view.all', domains: ['blog.naver.com', 'cafe.naver.com'] },
   cafe: { ssc: 'tab.cafe.all', domains: ['cafe.naver.com'] },
+  // 통합검색(ssc 없이 기본 검색결과) — 노출 여부 O/X 체크 전용, 순위 개념 없음.
+  // 블로그 collection 영역도 블로그 탭과 같은 ugcItem 템플릿을 재사용한다고 가정하고
+  // 파싱한다. 실제 라이브 페이지에서 구조가 다르면 셀렉터를 다시 맞춰야 한다.
+  integrated: { ssc: null, domains: ['blog.naver.com'] },
 };
 
 // 공통 cheerio 셀렉터
@@ -49,6 +53,35 @@ function formatDate(dateStr) {
   if (d === 0) return '오늘';
   if (d === 1) return '어제';
   return `${d}일 전`;
+}
+
+// 검색 결과에 표시된 날짜(절대 날짜 또는 "N일 전"/"어제"/"오늘"/"N시간 전" 등 상대 표현)를
+// 실제 포스팅 발행일(YYYY-MM-DD, KST 기준)로 환산한다. 해석 불가능하면 null.
+function computePublishedDate(dateStr) {
+  if (!dateStr) return null;
+  const raw = dateStr.trim();
+
+  const abs = raw.match(/^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?$/);
+  if (abs) {
+    const y = parseInt(abs[1], 10), m = parseInt(abs[2], 10) - 1, d = parseInt(abs[3], 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      return new Date(Date.UTC(y, m, d)).toISOString().slice(0, 10);
+    }
+  }
+
+  const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  if (/방금|분\s*전|시간\s*전|오늘/.test(raw)) {
+    return nowKST.toISOString().slice(0, 10);
+  }
+  if (/어제/.test(raw)) {
+    return new Date(nowKST.getTime() - 86400000).toISOString().slice(0, 10);
+  }
+  const daysAgoMatch = raw.match(/(\d+)\s*일\s*전/);
+  if (daysAgoMatch) {
+    const n = parseInt(daysAgoMatch[1], 10);
+    return new Date(nowKST.getTime() - n * 86400000).toISOString().slice(0, 10);
+  }
+  return null;
 }
 
 function detectType(url) {
@@ -92,7 +125,9 @@ function followRedirect(url, domains, maxRedirects = 6) {
 
 async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
   const config = TAB_CONFIG[tab] || TAB_CONFIG.blog;
-  const url = `https://search.naver.com/search.naver?ssc=${config.ssc}&sm=tab_jum&query=${encodeURIComponent(keyword)}`;
+  const url = config.ssc
+    ? `https://search.naver.com/search.naver?ssc=${config.ssc}&sm=tab_jum&query=${encodeURIComponent(keyword)}`
+    : `https://search.naver.com/search.naver?query=${encodeURIComponent(keyword)}`;
 
   const res = await axios.get(url, {
     headers: {
@@ -136,8 +171,11 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
       }
     });
   } else {
-    // VIEW / 카페 탭: ugcItem에 의존하지 않고 전체 링크 스캔
-    // Naver VIEW/카페 탭은 ugcItem 외 다른 템플릿 ID를 사용하므로 브로드 스캔이 필요
+    // VIEW / 카페 탭 / 통합검색: ugcItem에 의존하지 않고 전체 링크 스캔
+    // 이 페이지들은 블로그 탭과 달리 ugcItem 외 다른 템플릿(또는 collection 전용 마크업)을
+    // 쓰므로, 특정 컨테이너 셀렉터를 추측하는 대신 blog.naver.com 포스트 URL 패턴만으로
+    // 넓게 스캔한다 — 통합검색 블로그 collection의 정확한 구조를 라이브로 검증하지 못했기
+    // 때문에 가장 깨지기 어려운 방식을 택함.
     const $scope = $('#main_pack').length ? $('#main_pack') : $('body');
 
     $scope.find('a[href]').each((_, el) => {
@@ -199,12 +237,73 @@ export function buildRankingList(raw, domains) {
         author: r.author,
         date: formatDate(r.dateRaw),
         daysAgo: parseDaysAgo(r.dateRaw),
+        publishedDate: computePublishedDate(r.dateRaw),
         postLink: r.postLink,
         type: r.type || detectType(r.postLink),
         blogId: m?.[1]?.toLowerCase() || '',
         logNo: m?.[2] || null,
       };
     });
+}
+
+// 블로그 RSS 피드에서 최근 포스트의 정확한 발행일을 가져온다(검색결과 상위 10위 안에
+// 든 적 없어 날짜를 못 얻은 포스트를 위한 보강 수단). RSS는 최근 포스트 일부만 담고
+// 있어서 오래된 글은 여기서도 못 찾을 수 있다 — 그 경우엔 호출한 쪽에서 다른 값으로
+// 대체해야 한다.
+async function fetchBlogRssPosts(blogId) {
+  if (!blogId) return [];
+  const key = `rss:${blogId.toLowerCase()}`;
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.data;
+  if (pending.has(key)) return pending.get(key);
+
+  const promise = (async () => {
+    try {
+      const res = await axios.get(`https://rss.blog.naver.com/${blogId}.xml`, {
+        headers: {
+          'User-Agent': UA,
+          'Accept': 'application/xml,text/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'ko-KR,ko;q=0.9',
+        },
+        timeout: 8000,
+      });
+      const $ = cheerio.load(res.data, { xmlMode: true });
+      const posts = [];
+      $('item').each((_, el) => {
+        const $el = $(el);
+        const link = $el.find('link').text().trim() || $el.find('guid').text().trim();
+        const pubDate = $el.find('pubDate').text().trim();
+        const m = link.match(/logNo=(\d+)/) || link.match(/blog\.naver\.com\/[^/?#\s]+\/(\d+)/);
+        if (m?.[1] && pubDate) posts.push({ logNo: m[1], pubDate });
+      });
+      cache.set(key, { data: posts, at: Date.now() });
+      return posts;
+    } catch (err) {
+      console.error(`[rss] "${blogId}" 조회 실패: ${err.message}`);
+      return [];
+    }
+  })();
+
+  pending.set(key, promise);
+  try {
+    return await promise;
+  } finally {
+    pending.delete(key);
+  }
+}
+
+function rssPubDateToKstDate(pubDate) {
+  const d = new Date(pubDate);
+  if (isNaN(d.getTime())) return null;
+  return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+// 검색결과 스크래핑으로 발행일을 못 얻었을 때 블로그 RSS로 보강한다.
+export async function fetchPostPublishedDate(blogId, logNo) {
+  if (!blogId || !logNo) return null;
+  const posts = await fetchBlogRssPosts(blogId);
+  const hit = posts.find(p => p.logNo === logNo);
+  return hit ? rssPubDateToKstDate(hit.pubDate) : null;
 }
 
 async function fetchDailyVisitors(blogId) {
@@ -237,11 +336,15 @@ export async function fetchBlogRankings(keyword, tab = 'blog', { skipVisitors = 
 
   if (pending.has(key)) return pending.get(key);
 
+  // 통합검색은 순위가 아니라 노출 여부(존재 확인)만 보면 되므로, 브로드 스캔이 앞부분에서
+  // 놓치지 않도록 스캔 한도를 넉넉히 잡는다.
+  const scanLimit = tab === 'integrated' ? 40 : 10;
+
   const promise = (async () => {
     let scraped = [];
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        scraped = await scrapeNaverTab(keyword, tab, 10);
+        scraped = await scrapeNaverTab(keyword, tab, scanLimit);
         if (scraped.length) break;
         console.warn(`[${tab}-rankings] attempt ${attempt}: 0 results for "${keyword}"`);
       } catch (err) {
