@@ -55,6 +55,35 @@ function formatDate(dateStr) {
   return `${d}일 전`;
 }
 
+// 검색 결과에 표시된 날짜(절대 날짜 또는 "N일 전"/"어제"/"오늘"/"N시간 전" 등 상대 표현)를
+// 실제 포스팅 발행일(YYYY-MM-DD, KST 기준)로 환산한다. 해석 불가능하면 null.
+function computePublishedDate(dateStr) {
+  if (!dateStr) return null;
+  const raw = dateStr.trim();
+
+  const abs = raw.match(/^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?$/);
+  if (abs) {
+    const y = parseInt(abs[1], 10), m = parseInt(abs[2], 10) - 1, d = parseInt(abs[3], 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      return new Date(Date.UTC(y, m, d)).toISOString().slice(0, 10);
+    }
+  }
+
+  const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  if (/방금|분\s*전|시간\s*전|오늘/.test(raw)) {
+    return nowKST.toISOString().slice(0, 10);
+  }
+  if (/어제/.test(raw)) {
+    return new Date(nowKST.getTime() - 86400000).toISOString().slice(0, 10);
+  }
+  const daysAgoMatch = raw.match(/(\d+)\s*일\s*전/);
+  if (daysAgoMatch) {
+    const n = parseInt(daysAgoMatch[1], 10);
+    return new Date(nowKST.getTime() - n * 86400000).toISOString().slice(0, 10);
+  }
+  return null;
+}
+
 function detectType(url) {
   if (url.includes('blog.naver.com')) return 'blog';
   if (url.includes('cafe.naver.com')) return 'cafe';
@@ -205,6 +234,7 @@ export function buildRankingList(raw, domains) {
         author: r.author,
         date: formatDate(r.dateRaw),
         daysAgo: parseDaysAgo(r.dateRaw),
+        publishedDate: computePublishedDate(r.dateRaw),
         postLink: r.postLink,
         type: r.type || detectType(r.postLink),
         blogId: m?.[1]?.toLowerCase() || '',
