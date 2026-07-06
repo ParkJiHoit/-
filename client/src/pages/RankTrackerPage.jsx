@@ -82,7 +82,7 @@ function buildHeatmapSheet(rows) {
   const rowMap = new Map();
   for (const r of rows) {
     const key = `${r.keyword} ${r.blogId}`;
-    if (!rowMap.has(key)) rowMap.set(key, { group: r.group || '없음', keyword: r.keyword, blogId: r.blogId, mode: r.mode, cells: {} });
+    if (!rowMap.has(key)) rowMap.set(key, { group: r.group || '없음', keyword: r.keyword, blogId: r.blogId, mode: r.mode, registeredAt: r.registeredAt, cells: {} });
     rowMap.get(key).cells[r.date] = { rank: r.rank, status: r.status, integratedExposed: r.integratedExposed, postDate: r.postDate };
   }
   const dataRows = [...rowMap.values()].sort((a, b) =>
@@ -91,6 +91,9 @@ function buildHeatmapSheet(rows) {
 
   // 통합검색노출/등록일은 날짜별 이력이 아니라 가장 최근에 확인된 값 하나만 보여준다
   // (통합검색노출은 blog 모드만 해당 — all 모드는 특정 블로그에 매이지 않아 체크 대상이 아니다).
+  // 포스팅 자체의 발행일을 한 번도 확인 못했으면(블로그탭 10위 안에 든 적 없음) 트래커에
+  // 등록한 날짜로 대체하고 '*'를 붙여 실제 발행일과 구분한다.
+  let hasFallbackDate = false;
   for (const dr of dataRows) {
     let integratedLatest = null;
     let postDate = null;
@@ -101,14 +104,16 @@ function buildHeatmapSheet(rows) {
       if (postDate == null && c.postDate) postDate = c.postDate;
     }
     dr.integratedLatest = integratedLatest;
-    dr.postDate = postDate;
+    dr.postDateIsFallback = !postDate && !!dr.registeredAt;
+    dr.postDate = postDate || dr.registeredAt || null;
+    if (dr.postDateIsFallback) hasFallbackDate = true;
   }
 
   const header = ['등록일', '그룹', '키워드', '블로그', '통검 노출', ...dateLabels];
   const aoa = [
     header,
     ...dataRows.map(dr => [
-      dr.postDate || '',
+      dr.postDate ? (dr.postDateIsFallback ? `${dr.postDate}*` : dr.postDate) : '',
       dr.group, dr.keyword, dr.blogId,
       dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'),
       ...dates.map(d => {
@@ -129,6 +134,10 @@ function buildHeatmapSheet(rows) {
   const integratedLegendStartRow = aoa.length;
   aoa.push(['통검 노출 컬러']);
   INTEGRATED_LEGEND.forEach(l => aoa.push(['', l.label]));
+  if (hasFallbackDate) {
+    aoa.push([]);
+    aoa.push(['* 포스팅 발행일 미확인 — 트래커 등록일로 대체 표시']);
+  }
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
