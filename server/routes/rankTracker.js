@@ -4,7 +4,7 @@ import {
   listTracked, createTracked, deleteTracked, deleteTrackedBulk, removeTrackedBlogUrl,
   getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup,
   listGroups, createGroup, renameGroup, deleteGroup, exportSnapshots,
-  extractPostKey, postKeyToString,
+  extractPostKey, postKeyToString, backfillSearchVolumeChunk,
 } from '../services/rankTrackerService.js';
 import { parseBulkImportText, groupParsedRows } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
@@ -135,6 +135,13 @@ router.post('/export', requirePremium, async (req, res, next) => {
     }
     const rows = await exportSnapshots(req.userId, ids.map(Number));
     res.json(rows);
+  } catch (e) { next(e); }
+});
+
+router.post('/backfill-search-volume', requirePremium, async (req, res, next) => {
+  try {
+    const result = await backfillSearchVolumeChunk(req.userId);
+    res.json(result);
   } catch (e) { next(e); }
 });
 

@@ -57,6 +57,49 @@ export function findMatchingRank(rankings, storedKey) {
   return rankings.find(r => r.blogId?.toLowerCase() === blogId) || null;
 }
 
+const BACKFILL_CHUNK_SIZE = 8;
+
+// 검색량이 비어 있는(이 기능 추가 이전에 등록된) 키워드를 한 번 호출에 몇 개씩만 처리한다
+// (Vercel 서버리스 30초 제한 안에서 끝나도록). 프론트가 done:false인 동안 반복 호출한다.
+// 조회에 실패해도 0으로 채워 다음 호출에서 같은 키워드를 무한정 다시 시도하지 않게 한다.
+export async function backfillSearchVolumeChunk(userId) {
+  const pool = getPool();
+  if (!pool) throw Object.assign(new Error('DB가 설정되지 않았습니다.'), { status: 503 });
+
+  const { rows } = await pool.query(
+    `SELECT DISTINCT keyword FROM tracked_keywords
+     WHERE user_id = $1 AND deleted_at IS NULL AND pc_search IS NULL AND mobile_search IS NULL
+     ORDER BY keyword LIMIT $2`,
+    [userId, BACKFILL_CHUNK_SIZE]
+  );
+
+  for (const { keyword } of rows) {
+    let pcSearch = 0;
+    let mobileSearch = 0;
+    try {
+      const vol = await fetchKeywordVolume(keyword);
+      pcSearch = vol?.pcSearch ?? 0;
+      mobileSearch = vol?.mobileSearch ?? 0;
+    } catch (err) {
+      console.warn(`[backfill] "${keyword}" 검색량 조회 실패: ${err.message}`);
+    }
+    await pool.query(
+      `UPDATE tracked_keywords SET pc_search = $1, mobile_search = $2
+       WHERE user_id = $3 AND keyword = $4 AND pc_search IS NULL AND mobile_search IS NULL`,
+      [pcSearch, mobileSearch, userId, keyword]
+    );
+  }
+
+  const { rows: remainingRows } = await pool.query(
+    `SELECT COUNT(DISTINCT keyword) AS cnt FROM tracked_keywords
+     WHERE user_id = $1 AND deleted_at IS NULL AND pc_search IS NULL AND mobile_search IS NULL`,
+    [userId]
+  );
+  const remaining = Number(remainingRows[0]?.cnt || 0);
+
+  return { processed: rows.length, remaining, done: remaining === 0 };
+}
+
 export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(

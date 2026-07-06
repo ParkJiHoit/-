@@ -248,6 +248,8 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [premiumOnly, setPremiumOnly] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillMsg, setBackfillMsg] = useState('');
 
   const loadItems = useCallback(async () => {
     if (!token) return;
@@ -444,6 +446,26 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     (!searchQuery.trim() || i.keyword.toLowerCase().includes(searchQuery.trim().toLowerCase()))
   );
 
+  const handleBackfillSearchVolume = async () => {
+    if (!token || backfilling) return;
+    setBackfilling(true);
+    setBackfillMsg('');
+    try {
+      let totalProcessed = 0;
+      let current = { done: false };
+      while (!current.done) {
+        current = await apiFetch('/backfill-search-volume', { method: 'POST' }, token);
+        totalProcessed += current.processed;
+        setBackfillMsg(totalProcessed > 0 || current.remaining > 0
+          ? `검색량 채우는 중… ${totalProcessed}개 완료 (남음 ${current.remaining}개)`
+          : '검색량이 비어 있는 키워드가 없습니다.');
+      }
+      if (totalProcessed > 0) setBackfillMsg(`검색량 채우기 완료 — ${totalProcessed}개 키워드`);
+      await loadItems();
+    } catch (e) { setError(e.message); }
+    finally { setBackfilling(false); }
+  };
+
   const handleExport = async () => {
     if (!token || filteredItems.length === 0) return;
     try {
@@ -550,6 +572,17 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         }}>
           {error}
           <button onClick={() => setError('')} style={{ background: 'none', border: 'none', color: '#FF453A', cursor: 'pointer' }}>✕</button>
+        </div>
+      )}
+
+      {backfillMsg && (
+        <div style={{
+          padding: '10px 16px', borderRadius: 10,
+          background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.2)',
+          fontSize: 13, color: 'var(--accent)', display: 'flex', justifyContent: 'space-between',
+        }}>
+          {backfillMsg}
+          <button onClick={() => setBackfillMsg('')} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer' }}>✕</button>
         </div>
       )}
 
@@ -714,6 +747,21 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                   <Download size={12} /> 내보내기
                 </button>
               )}
+              <button
+                onClick={handleBackfillSearchVolume}
+                disabled={backfilling}
+                title="검색량이 비어 있는 기존 키워드에 월간 검색량을 채워 넣습니다"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
+                  padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-strong)',
+                  background: 'var(--bg-overlay)', color: 'var(--text-secondary)',
+                  fontSize: 12, fontWeight: 600, cursor: backfilling ? 'not-allowed' : 'pointer',
+                  fontFamily: 'inherit', opacity: backfilling ? 0.6 : 1,
+                }}
+              >
+                <RefreshCw size={12} style={{ animation: backfilling ? 'spin 1s linear infinite' : 'none' }} />
+                검색량 채우기
+              </button>
               <button
                 onClick={() => setShowBulkModal(true)}
                 style={{
