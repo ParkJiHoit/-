@@ -82,30 +82,33 @@ function buildHeatmapSheet(rows) {
   for (const r of rows) {
     const key = `${r.keyword} ${r.blogId}`;
     if (!rowMap.has(key)) rowMap.set(key, { group: r.group || '없음', keyword: r.keyword, blogId: r.blogId, mode: r.mode, cells: {} });
-    rowMap.get(key).cells[r.date] = { rank: r.rank, status: r.status, integratedExposed: r.integratedExposed };
+    rowMap.get(key).cells[r.date] = { rank: r.rank, status: r.status, integratedExposed: r.integratedExposed, postDate: r.postDate };
   }
   const dataRows = [...rowMap.values()].sort((a, b) =>
     a.keyword.localeCompare(b.keyword) || a.blogId.localeCompare(b.blogId)
   );
 
-  // 통합검색노출은 날짜별 이력이 아니라 가장 최근 갱신 기준 단일 O/X만 보여준다
-  // (blog 모드만 해당 — all 모드는 특정 블로그에 매이지 않아 체크 대상이 아니다).
+  // 통합검색노출/등록일은 날짜별 이력이 아니라 가장 최근에 확인된 값 하나만 보여준다
+  // (통합검색노출은 blog 모드만 해당 — all 모드는 특정 블로그에 매이지 않아 체크 대상이 아니다).
   for (const dr of dataRows) {
-    let latest = null;
-    if (dr.mode === 'blog') {
-      for (let i = dates.length - 1; i >= 0; i--) {
-        const c = dr.cells[dates[i]];
-        if (c && c.integratedExposed != null) { latest = c.integratedExposed; break; }
-      }
+    let integratedLatest = null;
+    let postDate = null;
+    for (let i = dates.length - 1; i >= 0; i--) {
+      const c = dr.cells[dates[i]];
+      if (!c) continue;
+      if (dr.mode === 'blog' && integratedLatest == null && c.integratedExposed != null) integratedLatest = c.integratedExposed;
+      if (postDate == null && c.postDate) postDate = c.postDate;
     }
-    dr.integratedLatest = latest;
+    dr.integratedLatest = integratedLatest;
+    dr.postDate = postDate;
   }
 
-  const header = ['그룹', '키워드', '블로그', '통합검색노출', ...dateLabels];
+  const header = ['그룹', '키워드', '블로그', '등록일', '통합검색노출', ...dateLabels];
   const aoa = [
     header,
     ...dataRows.map(dr => [
       dr.group, dr.keyword, dr.blogId,
+      dr.postDate || '',
       dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'),
       ...dates.map(d => {
         const c = dr.cells[d];
@@ -139,7 +142,7 @@ function buildHeatmapSheet(rows) {
   });
 
   dataRows.forEach((dr, rIdx) => {
-    const integratedRef = XLSX.utils.encode_cell({ r: rIdx + 1, c: 3 });
+    const integratedRef = XLSX.utils.encode_cell({ r: rIdx + 1, c: 4 });
     if (ws[integratedRef]) {
       const { bg, font } = integratedCellColor(dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'));
       ws[integratedRef].s = {
@@ -150,7 +153,7 @@ function buildHeatmapSheet(rows) {
     }
 
     dates.forEach((d, cIdx) => {
-      const ref = XLSX.utils.encode_cell({ r: rIdx + 1, c: cIdx + 4 });
+      const ref = XLSX.utils.encode_cell({ r: rIdx + 1, c: cIdx + 5 });
       if (!ws[ref]) return;
       const { bg, font } = heatmapCellColor(dr.cells[d]);
       ws[ref].s = {
@@ -174,6 +177,7 @@ function buildHeatmapSheet(rows) {
     { wch: 14 },
     { wch: autoColWidth([header[1], ...dataRows.map(dr => dr.keyword)], 16) },
     { wch: 18 },
+    { wch: 12 },
     { wch: 14 },
     ...dateLabels.map(d => ({ wch: autoColWidth([d], 8) })),
   ];

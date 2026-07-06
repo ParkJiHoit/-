@@ -125,6 +125,7 @@ export async function exportSnapshots(userId, trackedIds) {
   const idToInfo = new Map(tracked.map(t => [t.id, t]));
   const { rows: snaps } = await pool.query(
     `SELECT tracked_id, blog_id, rank, status, post_title, post_link, integrated_exposed,
+            TO_CHAR(post_date, 'YYYY-MM-DD') AS post_date,
             TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
      FROM rank_snapshots WHERE tracked_id = ANY($1)
      ORDER BY snapshotted_at ASC, tracked_id ASC, rank ASC NULLS LAST`,
@@ -152,6 +153,7 @@ export async function exportSnapshots(userId, trackedIds) {
       status: s.status,
       postTitle: s.post_title,
       postLink: s.post_link,
+      postDate: s.post_date,
       integratedExposed: s.integrated_exposed,
     };
   });
@@ -233,6 +235,7 @@ export async function getSnapshots(userId, trackedId) {
 
   const { rows: snaps } = await pool.query(
     `SELECT blog_id, rank, status, post_title, post_link, integrated_exposed,
+            TO_CHAR(post_date, 'YYYY-MM-DD') AS post_date,
             TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
      FROM rank_snapshots WHERE tracked_id = $1
      ORDER BY snapshotted_at DESC, rank ASC NULLS LAST`,
@@ -273,12 +276,13 @@ export async function refreshRanks(userId, trackedId) {
         rank: hit ? hit.rank : null,
         post_title: hit?.title || null,
         post_link: hit?.postLink || null,
+        post_date: hit?.publishedDate || null,
         status: fetchFailed ? 'fetch_failed' : (isRankedWithinTop5 ? 'ranked' : 'not_in_top5'),
         integrated_exposed: fetchFailed ? null : !!findMatchingRank(integratedList, storedKey),
       });
     }
   } else if (fetchFailed) {
-    upserts.push({ blog_id: '__fetch_failed__', rank: null, post_title: null, post_link: null, status: 'fetch_failed', integrated_exposed: null });
+    upserts.push({ blog_id: '__fetch_failed__', rank: null, post_title: null, post_link: null, post_date: null, status: 'fetch_failed', integrated_exposed: null });
   } else {
     for (const r of rankings) {
       if (!r.blogId) continue;
@@ -287,6 +291,7 @@ export async function refreshRanks(userId, trackedId) {
         rank: r.rank,
         post_title: r.title || null,
         post_link: r.postLink || null,
+        post_date: r.publishedDate || null,
         status: 'ranked',
         integrated_exposed: null,
       });
@@ -295,13 +300,14 @@ export async function refreshRanks(userId, trackedId) {
 
   for (const u of upserts) {
     await pool.query(
-      `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, status, integrated_exposed, snapshotted_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, post_date, status, integrated_exposed, snapshotted_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT (tracked_id, blog_id, snapshotted_at)
        DO UPDATE SET rank = EXCLUDED.rank, post_title = EXCLUDED.post_title,
-                     post_link = EXCLUDED.post_link, status = EXCLUDED.status,
+                     post_link = EXCLUDED.post_link, post_date = EXCLUDED.post_date,
+                     status = EXCLUDED.status,
                      integrated_exposed = EXCLUDED.integrated_exposed`,
-      [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, u.status, u.integrated_exposed, today]
+      [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, u.post_date, u.status, u.integrated_exposed, today]
     );
   }
 

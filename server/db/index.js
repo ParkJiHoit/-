@@ -98,6 +98,8 @@ export async function initDb() {
       CHECK (status IN ('ranked','not_in_top5','fetch_failed'));
     -- 통합검색 블로그 collection 노출 여부(O/X). NULL은 미확인(all 모드 또는 조회 실패).
     ALTER TABLE rank_snapshots ADD COLUMN IF NOT EXISTS integrated_exposed BOOLEAN;
+    -- 포스팅 발행일(검색결과에 표시된 날짜를 환산). 해석 불가/미노출이면 NULL.
+    ALTER TABLE rank_snapshots ADD COLUMN IF NOT EXISTS post_date DATE;
   `);
   console.log('[DB] rank_snapshots.status 컬럼 준비 완료');
   await p.query(`
