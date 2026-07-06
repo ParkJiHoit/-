@@ -1,12 +1,19 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-export default function HeroScene({ className }) {
+export default function HeroScene({ className, dark = true }) {
   const mountRef = useRef(null);
 
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
+
+    // 라이트 배경에서는 옅은 하늘색 파티클이 거의 안 보여서, 테마에 따라
+    // 파티클 색/크기/불투명도를 다르게 준다(와이어프레임 색은 두 배경 모두에서
+    // 잘 보여 그대로 둔다).
+    const particleColor = dark ? 0x93c5fd : 0x2563eb;
+    const particleSize = dark ? 0.035 : 0.05;
+    const particleOpacity = dark ? 0.7 : 0.85;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(50, mount.clientWidth / mount.clientHeight, 0.1, 100);
@@ -47,7 +54,7 @@ export default function HeroScene({ className }) {
     const particleGeometry = new THREE.BufferGeometry();
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const particleMaterial = new THREE.PointsMaterial({
-      color: 0x93c5fd, size: 0.035, transparent: true, opacity: 0.7,
+      color: particleColor, size: particleSize, transparent: true, opacity: particleOpacity,
     });
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     scene.add(particles);
@@ -86,7 +93,7 @@ export default function HeroScene({ className }) {
       particleMaterial.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [dark]);
 
   return <div ref={mountRef} className={className} />;
 }

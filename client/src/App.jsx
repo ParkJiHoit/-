@@ -800,8 +800,15 @@ export default function App() {
         position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
         opacity: hasResults ? 0 : 1, transition: 'opacity 0.6s ease',
       }}>
-        <HeroScene className="absolute inset-0" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-neutral-950/20 via-transparent to-neutral-950" />
+        <HeroScene className="absolute inset-0" dark={theme === 'dark'} />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: theme === 'dark'
+              ? 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)'
+              : 'linear-gradient(to bottom, rgba(0,0,0,0.04) 0%, transparent 30%, transparent 70%, rgba(20,20,25,0.28) 100%)',
+          }}
+        />
       </div>
       {/* 결과 페이지 배경 */}
       {hasResults && (
