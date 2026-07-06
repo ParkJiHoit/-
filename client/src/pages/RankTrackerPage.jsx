@@ -35,16 +35,17 @@ const HEATMAP_LEGEND = [
   { label: '조회 실패', bg: 'FFCC80', font: '7A4B00' },
 ];
 
-// 통합검색 블로그 collection 노출 O/X 셀 색 — 순위 없이 노출 여부만 표시.
+// 통합검색 노출 O/X 셀 색 — 순위 팔레트(초록~빨강)와 겹치면 구분이 안 가서
+// 아예 다른 색 계열(파란색)을 쓴다.
 function integratedCellColor(value) {
-  if (value === 'O') return { bg: '34A853', font: 'FFFFFF' };
-  if (value === 'X') return { bg: 'F28B82', font: '7A1E14' };
+  if (value === 'O') return { bg: '1A73E8', font: 'FFFFFF' };
+  if (value === 'X') return { bg: 'B3C6E8', font: '1A3C6E' };
   return { bg: 'F2F2F2', font: '9E9E9E' };
 }
 
 const INTEGRATED_LEGEND = [
-  { label: 'O (통합검색 노출)', bg: '34A853', font: 'FFFFFF' },
-  { label: 'X (통합검색 미노출)', bg: 'F28B82', font: '7A1E14' },
+  { label: 'O (통검 노출)', bg: '1A73E8', font: 'FFFFFF' },
+  { label: 'X (통검 미노출)', bg: 'B3C6E8', font: '1A3C6E' },
 ];
 
 // 한글 등 전각 문자는 2칸, 그 외는 1칸으로 계산해 열 너비를 값 길이에 맞춰 자동 산출한다.
