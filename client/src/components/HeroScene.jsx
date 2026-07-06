@@ -1,0 +1,92 @@
+import { useEffect, useRef } from 'react';
+import * as THREE from 'three';
+
+export default function HeroScene({ className }) {
+  const mountRef = useRef(null);
+
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, mount.clientWidth / mount.clientHeight, 0.1, 100);
+    camera.position.z = 8;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    mount.appendChild(renderer.domElement);
+
+    // 바깥쪽 + 안쪽 와이어프레임 정이십면체를 하나의 그룹으로 겹쳐 배치
+    const group = new THREE.Group();
+
+    const outerGeometry = new THREE.IcosahedronGeometry(2.4, 1);
+    const outerWireframe = new THREE.WireframeGeometry(outerGeometry);
+    const outerLine = new THREE.LineSegments(
+      outerWireframe,
+      new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.55 })
+    );
+    group.add(outerLine);
+
+    const innerGeometry = new THREE.IcosahedronGeometry(1.2, 0);
+    const innerWireframe = new THREE.WireframeGeometry(innerGeometry);
+    const innerLine = new THREE.LineSegments(
+      innerWireframe,
+      new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.4 })
+    );
+    group.add(innerLine);
+
+    scene.add(group);
+
+    // 별처럼 흩뿌려진 파티클 — 그룹을 감싸는 -12~12 큐브 범위
+    const particleCount = 500;
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i++) {
+      positions[i] = (Math.random() - 0.5) * 24;
+    }
+    const particleGeometry = new THREE.BufferGeometry();
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const particleMaterial = new THREE.PointsMaterial({
+      color: 0x93c5fd, size: 0.035, transparent: true, opacity: 0.7,
+    });
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particles);
+
+    const clock = new THREE.Clock();
+    let frameId;
+    const animate = () => {
+      const t = clock.getElapsedTime();
+      group.rotation.y = t * 0.15;
+      group.rotation.x = Math.sin(t * 0.1) * 0.3;
+      innerLine.rotation.y = -t * 0.25;
+      particles.rotation.y = t * 0.02;
+      renderer.render(scene, camera);
+      frameId = requestAnimationFrame(animate);
+    };
+    frameId = requestAnimationFrame(animate);
+
+    const handleResize = () => {
+      camera.aspect = mount.clientWidth / mount.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(mount.clientWidth, mount.clientHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', handleResize);
+      renderer.dispose();
+      outerGeometry.dispose();
+      outerWireframe.dispose();
+      outerLine.material.dispose();
+      innerGeometry.dispose();
+      innerWireframe.dispose();
+      innerLine.material.dispose();
+      particleGeometry.dispose();
+      particleMaterial.dispose();
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  return <div ref={mountRef} className={className} />;
+}

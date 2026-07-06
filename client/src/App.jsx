@@ -13,7 +13,7 @@ import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordT
 import KeywordCardList from './components/KeywordCardList';
 import KeywordTableB from './components/KeywordTableB';
 import KeywordCardListAB from './components/KeywordCardListAB';
-import AuroraBackground from './components/AuroraBackground';
+import HeroScene from './components/HeroScene';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
 import LoginPromptModal from './components/LoginPromptModal';
@@ -796,7 +796,13 @@ export default function App() {
           </div>
         </div>
       )}
-      <AuroraBackground theme={theme} hidden={hasResults} loading={loading || blogAuditLoading} />
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+        opacity: hasResults ? 0 : 1, transition: 'opacity 0.6s ease',
+      }}>
+        <HeroScene className="absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-neutral-950/20 via-transparent to-neutral-950" />
+      </div>
       {/* 결과 페이지 배경 */}
       {hasResults && (
         <>
