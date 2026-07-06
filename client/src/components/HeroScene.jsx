@@ -63,9 +63,11 @@ export default function HeroScene({ className, dark = true }) {
     let frameId;
     const animate = () => {
       const t = clock.getElapsedTime();
-      group.rotation.y = t * 0.15;
+      // 좌우로 살짝 흔들리는 건 그룹 전체(바깥+안쪽)가 함께 공유하고, Y축 회전은
+      // 각자 따로 줘서 안쪽이 바깥과 명확히 반대 방향으로 돌게 한다.
       group.rotation.x = Math.sin(t * 0.1) * 0.3;
-      innerLine.rotation.y = -t * 0.25;
+      outerLine.rotation.y = t * 0.11;
+      innerLine.rotation.y = -t * 0.18;
       particles.rotation.y = t * 0.02;
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);

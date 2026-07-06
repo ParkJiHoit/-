@@ -184,7 +184,7 @@ function useTypingPlaceholder(items) {
   return placeholder;
 }
 
-function BlogAuditForm({ onSubmit, loading }) {
+function BlogAuditForm({ onSubmit, loading, dark = true }) {
   const [url, setUrl] = useState('');
   const [focused, setFocused] = useState(false);
   const [history, setHistory] = useState(() => getAuditHistory());
@@ -221,8 +221,12 @@ function BlogAuditForm({ onSubmit, loading }) {
           borderRadius: 999,
           border: focused
             ? '1.5px solid rgba(10,180,255,0.85)'
-            : '1.5px solid rgba(255,255,255,0.10)',
-          background: 'rgba(255,255,255,0.10)',
+            : '1.5px solid rgba(255,255,255,0.14)',
+          // 라이트 배경에서는 흰색 유리 패널이 자연스럽지만, 다크 배경에서 같은 흰색을
+          // 쓰면 톤이 붕 떠 보여서 짙은 색 유리로 바꾼다.
+          background: dark ? 'rgba(28,28,30,0.55)' : 'rgba(255,255,255,0.4)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           boxShadow: focused
             ? '0 0 0 3px rgba(10,180,255,0.18), 0 0 32px rgba(10,180,255,0.22), 0 0 80px rgba(10,180,255,0.08)'
             : '0 2px 20px rgba(0,0,0,0.4), 0 0 18px rgba(10,180,255,0.07), 0 0 48px rgba(10,180,255,0.04)',
@@ -902,7 +906,7 @@ export default function App() {
             )}
             {/* 감사 폼 */}
             {blogSubTab === 'audit' && (
-              <BlogAuditForm onSubmit={auditBlog} loading={blogAuditLoading} />
+              <BlogAuditForm onSubmit={auditBlog} loading={blogAuditLoading} dark={theme === 'dark'} />
             )}
           </div>
         )}
