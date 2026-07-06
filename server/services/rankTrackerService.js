@@ -1,5 +1,5 @@
 import { getPool } from '../db/index.js';
-import { fetchBlogRankings } from './blogRankingService.js';
+import { fetchBlogRankings, fetchPostPublishedDate } from './blogRankingService.js';
 
 export function extractPostKey(url) {
   const str = String(url || '').trim();
@@ -276,12 +276,19 @@ export async function refreshRanks(userId, trackedId) {
       // 상위 5위까지만 "노출 성공"으로 판정 (스펙 2-C) — 6~10위도 매칭은 되지만
       // UI/집계상 순위권 밖으로 취급한다. 실제 순위 값은 rank 컬럼에 그대로 남긴다.
       const isRankedWithinTop5 = !!hit && hit.rank <= 5;
+      // 검색결과에서 발행일을 못 얻었으면(상위 10위 밖) 블로그 RSS로 보강한다 —
+      // RSS에도 없으면(오래된 글) null로 남고 내보내기 쪽에서 등록일로 대체된다.
+      let postDate = hit?.publishedDate || null;
+      if (!postDate) {
+        const { blogId, logNo } = parsePostKeyString(storedKey);
+        postDate = await fetchPostPublishedDate(blogId, logNo);
+      }
       upserts.push({
         blog_id: storedKey,
         rank: hit ? hit.rank : null,
         post_title: hit?.title || null,
         post_link: hit?.postLink || null,
-        post_date: hit?.publishedDate || null,
+        post_date: postDate,
         status: fetchFailed ? 'fetch_failed' : (isRankedWithinTop5 ? 'ranked' : 'not_in_top5'),
         integrated_exposed: fetchFailed ? null : !!findMatchingRank(integratedList, storedKey),
       });
