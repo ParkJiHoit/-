@@ -96,6 +96,8 @@ export async function initDb() {
     ALTER TABLE rank_snapshots DROP CONSTRAINT IF EXISTS rank_snapshots_status_check;
     ALTER TABLE rank_snapshots ADD CONSTRAINT rank_snapshots_status_check
       CHECK (status IN ('ranked','not_in_top5','fetch_failed'));
+    -- 통합검색 블로그 collection 노출 여부(O/X). NULL은 미확인(all 모드 또는 조회 실패).
+    ALTER TABLE rank_snapshots ADD COLUMN IF NOT EXISTS integrated_exposed BOOLEAN;
   `);
   console.log('[DB] rank_snapshots.status 컬럼 준비 완료');
   await p.query(`
