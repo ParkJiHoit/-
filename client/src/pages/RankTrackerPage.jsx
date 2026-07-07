@@ -502,22 +502,32 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         if (!orderedNames.includes(name)) orderedNames.push(name);
       }
 
-      const wb = XLSX.utils.book_new();
+      // 내보내기를 누른 시점에만 exceljs를 불러와 초기 번들 크기에 영향을 주지 않는다.
+      const ExcelJS = await import('exceljs');
+      const workbook = new ExcelJS.Workbook();
       const usedSheetNames = new Set();
       for (const name of orderedNames) {
-        const sheet = buildHeatmapSheet(byGroupName.get(name));
         const base = String(name).replace(/[:\\/?*[\]]/g, ' ').trim().slice(0, 31) || '없음';
         let sheetName = base;
         let i = 2;
         while (usedSheetNames.has(sheetName)) sheetName = `${base.slice(0, 28)}(${i++})`;
         usedSheetNames.add(sheetName);
-        XLSX.utils.book_append_sheet(wb, sheet, sheetName);
+        buildHeatmapSheet(workbook, sheetName, name, byGroupName.get(name));
       }
 
       const groupLabel = selectedGroupId
         ? (groups.find(g => String(g.id) === selectedGroupId)?.name || '그룹')
         : '전체';
-      XLSX.writeFile(wb, `순위기록_${groupLabel}_${getKSTToday()}.xlsx`);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `순위기록_${groupLabel}_${getKSTToday()}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     } catch (e) { setError(e.message); }
   };
 
