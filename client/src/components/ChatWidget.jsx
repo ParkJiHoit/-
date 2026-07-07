@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { MessageCircle, X, Send, RotateCcw, Sparkles } from 'lucide-react';
 
 const GREETING = '안녕하세요! 궁금하신 점을 물어보세요.\n자주 묻는 질문에 답변해 드려요.';
@@ -69,10 +70,6 @@ export default function ChatWidget({ user, token }) {
   return (
     <>
       <style>{`
-        @keyframes chatPanelIn {
-          from { opacity: 0; transform: translateY(16px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
         @keyframes chatBubbleInUser {
           from { opacity: 0; transform: translateX(14px) scale(0.94); }
           to   { opacity: 1; transform: translateX(0) scale(1); }
@@ -120,14 +117,20 @@ export default function ChatWidget({ user, token }) {
         {open ? <X size={24} /> : <MessageCircle size={24} />}
       </button>
 
+      <AnimatePresence>
       {open && (
-        <div style={{
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.94 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.94 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          style={{
           position: 'fixed', bottom: 92, right: 24, zIndex: 1200,
           width: 420, maxWidth: 'calc(100vw - 32px)', height: 600, maxHeight: 'calc(100vh - 140px)',
           display: 'flex', flexDirection: 'column',
           background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
           borderRadius: 22, boxShadow: '0 32px 80px rgba(0,0,0,0.55)', overflow: 'hidden',
-          animation: 'chatPanelIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          transformOrigin: 'bottom right',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -233,8 +236,9 @@ export default function ChatWidget({ user, token }) {
               <Send size={18} />
             </button>
           </form>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </>
   );
 }
