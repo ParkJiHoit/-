@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { matchFaq } from '../services/chatFaqService.js';
+import { getLlmAnswer } from '../services/llmFallbackService.js';
 
 const router = Router();
 
@@ -38,7 +39,7 @@ function checkMessageRate(userId) {
   return true;
 }
 
-router.post('/message', (req, res) => {
+router.post('/message', async (req, res) => {
   const { message } = req.body || {};
   if (!message || !message.trim()) {
     return res.status(400).json({ message: '메시지를 입력해 주세요.' });
@@ -51,7 +52,16 @@ router.post('/message', (req, res) => {
   }
 
   const result = matchFaq(message);
-  res.json({ answer: result.answer, matched: result.matched, faqId: result.faqId });
+  if (result.matched) {
+    return res.json({ answer: result.answer, matched: true, faqId: result.faqId });
+  }
+
+  const llmAnswer = await getLlmAnswer(message);
+  if (llmAnswer) {
+    return res.json({ answer: llmAnswer, matched: false, faqId: null });
+  }
+
+  res.json({ answer: result.answer, matched: false, faqId: null });
 });
 
 export default router;

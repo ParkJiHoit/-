@@ -12,6 +12,7 @@
     "backfill-search-volume": "node jobs/backfillTrackedSearchVolume.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "axios": "^1.7.9",
     "cheerio": "^1.2.0",
     "cors": "^2.8.5",
