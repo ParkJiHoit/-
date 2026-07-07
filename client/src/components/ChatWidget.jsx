@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { MessageCircle, X, Send, RotateCcw, Sparkles } from 'lucide-react';
 
 const GREETING = '안녕하세요! 궁금하신 점을 물어보세요.\n자주 묻는 질문에 답변해 드려요.';
 
@@ -11,6 +11,10 @@ const SUGGESTED_QUESTIONS = [
   '대량 등록이랑 일괄 등록이 궁금해요',
 ];
 
+function initialMessages() {
+  return [{ role: 'bot', text: GREETING }];
+}
+
 export default function ChatWidget({ user, token }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]); // { role: 'user' | 'bot', text }
@@ -19,7 +23,7 @@ export default function ChatWidget({ user, token }) {
   const listRef = useRef(null);
 
   useEffect(() => {
-    if (open && messages.length === 0) setMessages([{ role: 'bot', text: GREETING }]);
+    if (open && messages.length === 0) setMessages(initialMessages());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -57,6 +61,11 @@ export default function ChatWidget({ user, token }) {
     sendMessage(text);
   }
 
+  function handleReset() {
+    setMessages(initialMessages());
+    setInput('');
+  }
+
   return (
     <>
       <button
@@ -64,44 +73,75 @@ export default function ChatWidget({ user, token }) {
         aria-label="고객센터 챗봇"
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 1200,
-          width: 52, height: 52, borderRadius: 999, border: 'none', cursor: 'pointer',
-          background: 'var(--accent)', color: '#fff',
+          width: 56, height: 56, borderRadius: 999, border: 'none', cursor: 'pointer',
+          background: 'linear-gradient(135deg, var(--accent), #34C1FF)', color: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+          boxShadow: '0 10px 28px rgba(10,132,255,0.45)',
         }}
       >
-        {open ? <X size={22} /> : <MessageCircle size={22} />}
+        {open ? <X size={24} /> : <MessageCircle size={24} />}
       </button>
 
       {open && (
         <div style={{
-          position: 'fixed', bottom: 88, right: 24, zIndex: 1200,
-          width: 360, maxWidth: 'calc(100vw - 32px)', maxHeight: 480,
+          position: 'fixed', bottom: 92, right: 24, zIndex: 1200,
+          width: 420, maxWidth: 'calc(100vw - 32px)', height: 600, maxHeight: 'calc(100vh - 140px)',
           display: 'flex', flexDirection: 'column',
           background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
-          borderRadius: 20, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', overflow: 'hidden',
+          borderRadius: 22, boxShadow: '0 32px 80px rgba(0,0,0,0.55)', overflow: 'hidden',
         }}>
-          <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-            고객센터
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '16px 18px', borderBottom: '1px solid var(--border)',
+            background: 'linear-gradient(135deg, rgba(10,132,255,0.14), rgba(52,193,255,0.05))',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: 12, flexShrink: 0,
+                background: 'linear-gradient(135deg, var(--accent), #34C1FF)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Sparkles size={17} color="#fff" />
+              </div>
+              <div>
+                <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>고객센터</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>이용 방법을 물어보세요</div>
+              </div>
+            </div>
+            <button
+              onClick={handleReset}
+              aria-label="처음으로"
+              title="처음으로"
+              style={{
+                width: 32, height: 32, borderRadius: 9, cursor: 'pointer',
+                border: '1px solid var(--border-strong)', background: 'transparent',
+                color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <RotateCcw size={15} />
+            </button>
           </div>
-          <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+          <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {messages.map((m, i) => (
               <div key={i} style={{
                 alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-                maxWidth: '85%', padding: '8px 12px', borderRadius: 14,
-                background: m.role === 'user' ? 'var(--accent)' : 'var(--bg-overlay)',
+                maxWidth: '85%', padding: '11px 14px', borderRadius: 16,
+                background: m.role === 'user' ? 'linear-gradient(135deg, var(--accent), #34C1FF)' : 'var(--bg-overlay)',
                 color: m.role === 'user' ? '#fff' : 'var(--text-primary)',
-                fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap',
+                fontSize: 14.5, lineHeight: 1.6, whiteSpace: 'pre-wrap',
+                boxShadow: m.role === 'user' ? '0 6px 16px rgba(10,132,255,0.3)' : 'none',
               }}>
                 {m.text}
               </div>
             ))}
             {sending && (
-              <div style={{ alignSelf: 'flex-start', fontSize: 12, color: 'var(--text-tertiary)' }}>답변 작성 중…</div>
+              <div style={{ alignSelf: 'flex-start', fontSize: 12.5, color: 'var(--text-tertiary)' }}>답변 작성 중…</div>
             )}
           </div>
+
           {messages.length <= 1 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 14px 12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 18px 16px' }}>
               {SUGGESTED_QUESTIONS.map(q => (
                 <button
                   key={q}
@@ -109,9 +149,9 @@ export default function ChatWidget({ user, token }) {
                   onClick={() => sendMessage(q)}
                   disabled={sending}
                   style={{
-                    padding: '6px 10px', borderRadius: 999, cursor: 'pointer',
+                    width: '100%', textAlign: 'left', padding: '11px 14px', borderRadius: 12, cursor: 'pointer',
                     border: '1px solid var(--border-strong)', background: 'var(--bg-overlay)',
-                    color: 'var(--text-secondary)', fontSize: 11.5, fontFamily: 'inherit',
+                    color: 'var(--text-secondary)', fontSize: 13.5, fontFamily: 'inherit',
                     opacity: sending ? 0.5 : 1,
                   }}
                 >
@@ -120,24 +160,25 @@ export default function ChatWidget({ user, token }) {
               ))}
             </div>
           )}
-          <form onSubmit={handleSend} style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border)' }}>
+
+          <form onSubmit={handleSend} style={{ display: 'flex', gap: 10, padding: 16, borderTop: '1px solid var(--border)' }}>
             <input
               value={input} onChange={e => setInput(e.target.value)}
               placeholder="궁금한 점을 입력하세요"
               disabled={sending}
               style={{
-                flex: 1, padding: '9px 12px', borderRadius: 9,
+                flex: 1, padding: '12px 14px', borderRadius: 12,
                 border: '1px solid var(--border-strong)', background: 'transparent',
-                color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none',
+                color: 'var(--text-primary)', fontSize: 14.5, fontFamily: 'inherit', outline: 'none',
               }}
             />
             <button type="submit" disabled={sending || !input.trim()} style={{
-              width: 38, height: 38, borderRadius: 9, border: 'none',
-              background: 'var(--accent)', color: '#fff', cursor: 'pointer',
+              width: 44, height: 44, borderRadius: 12, border: 'none', flexShrink: 0,
+              background: 'linear-gradient(135deg, var(--accent), #34C1FF)', color: '#fff', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               opacity: sending || !input.trim() ? 0.5 : 1,
             }}>
-              <Send size={16} />
+              <Send size={18} />
             </button>
           </form>
         </div>
