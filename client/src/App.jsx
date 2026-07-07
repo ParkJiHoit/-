@@ -13,6 +13,7 @@ import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordT
 import KeywordCardList from './components/KeywordCardList';
 import KeywordTableB from './components/KeywordTableB';
 import KeywordCardListAB from './components/KeywordCardListAB';
+import ChatWidget from './components/ChatWidget';
 import HeroScene from './components/HeroScene';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
@@ -842,6 +843,7 @@ export default function App() {
       <div style={{ position: 'relative', zIndex: 1 }}>
       <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} isSubscribed={isSubscribed} />
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
+      <ChatWidget user={user} token={session?.access_token} />
 
       {/* Auth 모달 오버레이 */}
       {activeTab === 'auth' && (
