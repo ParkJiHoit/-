@@ -88,19 +88,19 @@ function formatDateLabels(dates) {
   return dates;
 }
 
-function buildHeatmapSheet(rows) {
+function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
   const dates = [...new Set(rows.map(r => r.date))].sort();
   const dateLabels = formatDateLabels(dates);
 
   const rowMap = new Map();
   for (const r of rows) {
     const key = `${r.keyword} ${r.blogId}`;
-    if (!rowMap.has(key)) rowMap.set(key, { group: r.group || '없음', keyword: r.keyword, searchVolume: r.searchVolume, blogId: r.blogId, mode: r.mode, registeredAt: r.registeredAt, cells: {} });
+    if (!rowMap.has(key)) {
+      rowMap.set(key, { keyword: r.keyword, searchVolume: r.searchVolume, blogId: r.blogId, mode: r.mode, registeredAt: r.registeredAt, cells: {} });
+    }
     rowMap.get(key).cells[r.date] = { rank: r.rank, status: r.status, integratedExposed: r.integratedExposed, postDate: r.postDate };
   }
-  const dataRows = [...rowMap.values()].sort((a, b) =>
-    a.keyword.localeCompare(b.keyword) || a.blogId.localeCompare(b.blogId)
-  );
+  const dataRows = [...rowMap.values()];
 
   // 통합검색노출/등록일은 날짜별 이력이 아니라 가장 최근에 확인된 값 하나만 보여준다
   // (통합검색노출은 blog 모드만 해당 — all 모드는 특정 블로그에 매이지 않아 체크 대상이 아니다).
@@ -122,12 +122,45 @@ function buildHeatmapSheet(rows) {
     if (dr.postDateIsFallback) hasFallbackDate = true;
   }
 
-  const header = ['등록일', '그룹', '키워드', '월간 검색량', '블로그', '통검 노출', ...dateLabels];
-  const aoa = [
-    header,
-    ...dataRows.map(dr => [
+  // 1순위 월간 검색량 내림차순(미조회 키워드는 맨 뒤), 2순위 등록일(발행일) 오래된순
+  dataRows.sort((a, b) => {
+    const av = a.searchVolume ?? -1;
+    const bv = b.searchVolume ?? -1;
+    if (av !== bv) return bv - av;
+    const ad = a.postDate || '9999-99-99';
+    const bd = b.postDate || '9999-99-99';
+    if (ad !== bd) return ad < bd ? -1 : 1;
+    return a.keyword.localeCompare(b.keyword) || a.blogId.localeCompare(b.blogId);
+  });
+
+  const worksheet = workbook.addWorksheet(sheetName);
+  const infoColCount = 5;
+  const header = ['등록일', '키워드', '월간 검색량', '블로그', '통검 노출', ...dateLabels];
+  const totalCols = header.length;
+
+  // 시트가 이미 그룹 단위로 나뉘어 있어 "그룹" 열은 따로 두지 않고, 표 위에 제목 행으로 표시한다.
+  const titleRow = worksheet.addRow([`그룹: ${groupName}`]);
+  worksheet.mergeCells(titleRow.number, 1, titleRow.number, totalCols);
+  titleRow.height = 22;
+  const titleCell = titleRow.getCell(1);
+  titleCell.font = { name: EXPORT_FONT, size: 13, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2A3550' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  const headerRow = worksheet.addRow(header);
+  headerRow.eachCell((cell) => {
+    cell.font = { name: EXPORT_FONT, size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1C2333' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = HEADER_BORDER;
+  });
+
+  dataRows.forEach((dr) => {
+    const values = [
       dr.postDate ? (dr.postDateIsFallback ? `${dr.postDate}*` : dr.postDate) : '',
-      dr.group, dr.keyword, dr.searchVolume ?? '', dr.blogId,
+      dr.keyword,
+      dr.searchVolume ?? '',
+      dr.blogId,
       dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'),
       ...dates.map(d => {
         const c = dr.cells[d];
@@ -135,81 +168,66 @@ function buildHeatmapSheet(rows) {
         if (c.status === 'fetch_failed') return '실패';
         return c.rank != null ? c.rank : 'X';
       }),
-    ]),
-  ];
+    ];
+    const row = worksheet.addRow(values);
+    row.eachCell((cell, colNumber) => {
+      cell.font = { name: EXPORT_FONT, size: 10, color: { argb: 'FF1A1A1A' } };
+      cell.alignment = { horizontal: colNumber === 3 ? 'center' : 'left', vertical: 'middle' };
+      cell.border = CELL_BORDER;
+    });
 
-  const legendGap = 2;
-  const legendStartRow = aoa.length + legendGap;
-  aoa.push(...Array(legendGap).fill([]));
-  aoa.push(['순위 컬러']);
-  HEATMAP_LEGEND.forEach(l => aoa.push(['', l.label]));
-  aoa.push([]);
-  const integratedLegendStartRow = aoa.length;
-  aoa.push(['통검 노출 컬러']);
-  INTEGRATED_LEGEND.forEach(l => aoa.push(['', l.label]));
-  if (hasFallbackDate) {
-    aoa.push([]);
-    aoa.push(['* 포스팅 발행일 미확인 — 트래커 등록일로 대체 표시']);
-  }
+    const integratedCell = row.getCell(5);
+    const iColor = integratedCellColor(dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'));
+    integratedCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: iColor.bg } };
+    integratedCell.font = { name: EXPORT_FONT, size: 10, bold: true, color: { argb: iColor.font } };
+    integratedCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-
-  const headerStyle = {
-    fill: { fgColor: { rgb: '1C2333' } },
-    font: { color: { rgb: 'FFFFFF' }, bold: true },
-    alignment: { horizontal: 'center', vertical: 'center' },
-  };
-  header.forEach((_, col) => {
-    const ref = XLSX.utils.encode_cell({ r: 0, c: col });
-    if (ws[ref]) ws[ref].s = headerStyle;
-  });
-
-  dataRows.forEach((dr, rIdx) => {
-    const volumeRef = XLSX.utils.encode_cell({ r: rIdx + 1, c: 3 });
-    if (ws[volumeRef]) ws[volumeRef].s = { alignment: { horizontal: 'center' } };
-
-    const integratedRef = XLSX.utils.encode_cell({ r: rIdx + 1, c: 5 });
-    if (ws[integratedRef]) {
-      const { bg, font } = integratedCellColor(dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'));
-      ws[integratedRef].s = {
-        fill: { fgColor: { rgb: bg } },
-        font: { color: { rgb: font }, bold: true },
-        alignment: { horizontal: 'center' },
-      };
-    }
-
-    dates.forEach((d, cIdx) => {
-      const ref = XLSX.utils.encode_cell({ r: rIdx + 1, c: cIdx + 6 });
-      if (!ws[ref]) return;
-      const { bg, font } = heatmapCellColor(dr.cells[d]);
-      ws[ref].s = {
-        fill: { fgColor: { rgb: bg } },
-        font: { color: { rgb: font }, bold: true },
-        alignment: { horizontal: 'center' },
-      };
+    dates.forEach((d, i) => {
+      const cell = row.getCell(infoColCount + 1 + i);
+      const color = heatmapCellColor(dr.cells[d]);
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color.bg } };
+      cell.font = { name: EXPORT_FONT, size: 10, bold: true, color: { argb: color.font } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
     });
   });
 
-  HEATMAP_LEGEND.forEach((l, i) => {
-    const ref = XLSX.utils.encode_cell({ r: legendStartRow + 1 + i, c: 0 });
-    if (ws[ref]) ws[ref].s = { fill: { fgColor: { rgb: l.bg } }, font: { color: { rgb: l.font } } };
+  worksheet.addRow([]);
+  const legendHeaderRow = worksheet.addRow(['순위 컬러']);
+  legendHeaderRow.getCell(1).font = { name: EXPORT_FONT, bold: true };
+  HEATMAP_LEGEND.forEach((l) => {
+    const row = worksheet.addRow(['', l.label]);
+    row.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: l.bg } };
+    row.getCell(2).font = { name: EXPORT_FONT, color: { argb: l.font } };
   });
-  INTEGRATED_LEGEND.forEach((l, i) => {
-    const ref = XLSX.utils.encode_cell({ r: integratedLegendStartRow + 1 + i, c: 0 });
-    if (ws[ref]) ws[ref].s = { fill: { fgColor: { rgb: l.bg } }, font: { color: { rgb: l.font } } };
+  worksheet.addRow([]);
+  const integratedLegendHeaderRow = worksheet.addRow(['통검 노출 컬러']);
+  integratedLegendHeaderRow.getCell(1).font = { name: EXPORT_FONT, bold: true };
+  INTEGRATED_LEGEND.forEach((l) => {
+    const row = worksheet.addRow(['', l.label]);
+    row.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: l.bg } };
+    row.getCell(2).font = { name: EXPORT_FONT, color: { argb: l.font } };
   });
+  if (hasFallbackDate) {
+    worksheet.addRow([]);
+    worksheet.addRow(['* 포스팅 발행일 미확인 — 트래커 등록일로 대체 표시']);
+  }
 
-  ws['!cols'] = [
-    { wch: 12 },
-    { wch: 14 },
-    { wch: autoColWidth([header[2], ...dataRows.map(dr => dr.keyword)], 16) },
-    { wch: 12 },
-    { wch: 18 },
-    { wch: 12 },
-    ...dateLabels.map(d => ({ wch: autoColWidth([d], 8) })),
+  worksheet.columns = [
+    { width: 12 },
+    { width: autoColWidth([header[1], ...dataRows.map(dr => dr.keyword)], 16) },
+    { width: 12 },
+    { width: 18 },
+    { width: 12 },
+    ...dateLabels.map(d => ({ width: autoColWidth([d], 8) })),
   ];
 
-  return ws;
+  worksheet.views = [{ state: 'frozen', xSplit: infoColCount, ySplit: 2 }];
+  worksheet.autoFilter = {
+    from: { row: headerRow.number, column: 1 },
+    to: { row: headerRow.number, column: totalCols },
+  };
+
+  return worksheet;
 }
 
 const API = (path) => `/api/rank-tracker${path}`;
