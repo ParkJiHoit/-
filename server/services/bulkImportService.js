@@ -109,16 +109,25 @@ export function parseBulkImportText(text) {
   return { rows, errors };
 }
 
+// 대량 등록 시 키워드의 띄어쓰기 차이는 무시하고 동일 키워드로 판정한다.
+// 예: "휴대폰 성지 창업" === "휴대폰성지창업"
+export function normalizeKeyword(keyword) {
+  return String(keyword || '').replace(/\s+/g, '');
+}
+
 export function groupParsedRows(rows, existingKeywordSet) {
-  const groups = new Map();
+  const normalizedExisting = new Set(Array.from(existingKeywordSet, normalizeKeyword));
+  const groups = new Map(); // normalizeKeyword(keyword) -> { keyword, urls: Set }
+
   for (const { keyword, url } of rows) {
-    if (!groups.has(keyword)) groups.set(keyword, new Set());
-    groups.get(keyword).add(url);
+    const norm = normalizeKeyword(keyword);
+    if (!groups.has(norm)) groups.set(norm, { keyword, urls: new Set() });
+    groups.get(norm).urls.add(url);
   }
 
-  return Array.from(groups.entries()).map(([keyword, urlSet]) => ({
+  return Array.from(groups.values()).map(({ keyword, urls }) => ({
     keyword,
-    urls: Array.from(urlSet),
-    isNew: !existingKeywordSet.has(keyword),
+    urls: Array.from(urls),
+    isNew: !normalizedExisting.has(normalizeKeyword(keyword)),
   }));
 }
