@@ -242,7 +242,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
           style={pillItem('pricing')}
           onMouseEnter={() => setHoveredNav('pricing')}
           onMouseLeave={() => setHoveredNav(null)}
-          onClick={() => onSwitchTab('pricing')}
+          onClick={() => alert('준비 중입니다.')}
         >
           요금제
         </button>
