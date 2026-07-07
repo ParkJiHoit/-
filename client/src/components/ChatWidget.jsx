@@ -12,8 +12,8 @@ const SUGGESTED_QUESTIONS = [
   '대량 등록이랑 일괄 등록이 궁금해요',
 ];
 
-const COLLAPSED_WIDTH = 156;
-const COLLAPSED_HEIGHT = 56;
+const COLLAPSED_WIDTH = 112;
+const COLLAPSED_HEIGHT = 42;
 const EXPANDED_WIDTH = 420;
 const EXPANDED_HEIGHT = 600;
 
@@ -21,21 +21,15 @@ function initialMessages() {
   return [{ role: 'bot', text: GREETING }];
 }
 
-// 그라디언트가 천천히 회전하는 작은 오브 — 로고/봇 아바타로 사용.
+// 서로 다른 속도/방향으로 도는 3개의 그라디언트 레이어가 겹쳐 불규칙하게
+// 일렁이는 오브 — 로고/봇 아바타로 사용.
 function ColorOrb({ dimension = 24 }) {
-  const blur = Math.max(dimension * 0.15, 4);
-  const dot = Math.max(dimension * 0.03, 0.7);
-  const shadow = Math.max(dimension * 0.08, 2);
+  const blur = Math.max(dimension * 0.13, 3);
 
   return (
     <div
       className="chat-color-orb"
-      style={{
-        width: dimension, height: dimension, flexShrink: 0,
-        '--co-blur': `${blur}px`,
-        '--co-dot': `${dot}px`,
-        '--co-shadow': `${shadow}px`,
-      }}
+      style={{ width: dimension, height: dimension, flexShrink: 0, '--co-blur': `${blur}px` }}
     />
   );
 }
@@ -94,33 +88,24 @@ export default function ChatWidget({ user, token }) {
   return (
     <>
       <style>{`
-        @property --co-angle {
-          syntax: '<angle>';
-          inherits: false;
-          initial-value: 0deg;
-        }
+        @property --co-angle-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+        @property --co-angle-b { syntax: '<angle>'; inherits: false; initial-value: 120deg; }
+        @property --co-angle-c { syntax: '<angle>'; inherits: false; initial-value: 250deg; }
         .chat-color-orb {
           position: relative; display: block; border-radius: 50%; overflow: hidden;
-          transform: scale(1.1);
-        }
-        .chat-color-orb::before, .chat-color-orb::after {
-          content: ''; position: absolute; inset: 0; border-radius: 50%;
         }
         .chat-color-orb::before {
+          content: ''; position: absolute; inset: -20%; border-radius: 50%;
           background:
-            conic-gradient(from calc(var(--co-angle) * 2) at 25% 70%, #34C1FF, transparent 20% 80%, #34C1FF),
-            conic-gradient(from calc(var(--co-angle) * -3) at 80% 20%, var(--accent), transparent 40% 60%, var(--accent)),
-            conic-gradient(from calc(var(--co-angle) * 1) at 20% 80%, #63E6E2, transparent 10% 90%, #63E6E2);
-          box-shadow: inset var(--bg-elevated) 0 0 var(--co-shadow) calc(var(--co-shadow) * 0.2);
-          filter: blur(var(--co-blur)) contrast(1.3);
-          animation: coSpin 14s linear infinite;
+            conic-gradient(from var(--co-angle-a) at 30% 70%, #40C8FF, transparent 30% 70%, #40C8FF),
+            conic-gradient(from var(--co-angle-b) at 75% 30%, #A64BFF, transparent 35% 65%, #A64BFF),
+            conic-gradient(from var(--co-angle-c) at 25% 20%, #0A84FF, transparent 25% 75%, #0A84FF);
+          filter: blur(var(--co-blur)) saturate(1.8) contrast(1.3);
+          animation: coSpinA 6s linear infinite, coSpinB 9.5s linear infinite reverse, coSpinC 4.5s linear infinite;
         }
-        .chat-color-orb::after {
-          background-image: radial-gradient(circle at center, var(--bg-elevated) var(--co-dot), transparent var(--co-dot));
-          background-size: calc(var(--co-dot) * 2) calc(var(--co-dot) * 2);
-          mix-blend-mode: overlay;
-        }
-        @keyframes coSpin { to { --co-angle: 360deg; } }
+        @keyframes coSpinA { to { --co-angle-a: 360deg; } }
+        @keyframes coSpinB { to { --co-angle-b: 480deg; } }
+        @keyframes coSpinC { to { --co-angle-c: 610deg; } }
         @media (prefers-reduced-motion: reduce) { .chat-color-orb::before { animation: none; } }
 
         @keyframes chatBubbleInUser {
@@ -167,8 +152,9 @@ export default function ChatWidget({ user, token }) {
           position: 'fixed', bottom: 24, right: 24, zIndex: 1200,
           maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 48px)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
-          boxShadow: open ? '0 32px 80px rgba(0,0,0,0.55)' : '0 10px 28px rgba(10,132,255,0.4)',
+          background: 'var(--bg-elevated)',
+          border: open ? '1px solid var(--border-strong)' : '1px solid rgba(127,127,127,0.16)',
+          boxShadow: open ? '0 32px 80px rgba(0,0,0,0.55)' : '0 4px 14px rgba(0,0,0,0.18)',
         }}
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -183,11 +169,11 @@ export default function ChatWidget({ user, token }) {
               transition={{ duration: 0.15 }}
               style={{
                 width: '100%', height: '100%', border: 'none', background: 'transparent', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '0 18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '0 14px',
               }}
             >
-              <ColorOrb dimension={26} />
-              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>AI 챗봇</span>
+              <ColorOrb dimension={16} />
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>AI 챗봇</span>
             </motion.button>
           ) : (
             <motion.div
