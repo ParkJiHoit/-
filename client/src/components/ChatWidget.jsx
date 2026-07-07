@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Send, RotateCcw } from 'lucide-react';
+import { X, Send, RotateCcw, Mail } from 'lucide-react';
 
 const GREETING = '안녕하세요! 궁금하신 점을 물어보세요.\n자주 묻는 질문에 답변해 드려요.';
 
@@ -11,6 +11,16 @@ const SUGGESTED_QUESTIONS = [
   '순위 추적 모드 차이가 궁금해요',
   '대량 등록이랑 일괄 등록이 궁금해요',
 ];
+
+const PLACEHOLDER_HINTS = [
+  '궁금한 점을 입력하세요',
+  '예: 순위 갱신은 하루에 몇 번 가능해요?',
+  '예: 대량 등록은 어떻게 하나요?',
+  '예: 블로그 진단 등급은 어떻게 매겨져요?',
+];
+
+const CONTACT_QUESTION = '사람한테 직접 물어보고 싶어요';
+const CONTACT_EMAIL = 'qkrwlgh52660724@gmail.com';
 
 const COLLAPSED_WIDTH = 126;
 const COLLAPSED_HEIGHT = 48;
@@ -39,6 +49,7 @@ export default function ChatWidget({ user, token }) {
   const [messages, setMessages] = useState([]); // { role: 'user' | 'bot', text }
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [placeholder, setPlaceholder] = useState(PLACEHOLDER_HINTS[0]);
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -49,6 +60,27 @@ export default function ChatWidget({ user, token }) {
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, sending]);
+
+  // 입력창이 비어 있을 때만 타이핑 애니메이션으로 예시 질문을 순환 표시.
+  useEffect(() => {
+    if (input) return;
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let deleting = false;
+    let timeoutId;
+
+    function tick() {
+      const phrase = PLACEHOLDER_HINTS[phraseIndex];
+      charIndex += deleting ? -1 : 1;
+      setPlaceholder(phrase.slice(0, charIndex));
+      let delay = deleting ? 28 : 55;
+      if (!deleting && charIndex === phrase.length) { deleting = true; delay = 1800; }
+      else if (deleting && charIndex === 0) { deleting = false; phraseIndex = (phraseIndex + 1) % PLACEHOLDER_HINTS.length; delay = 300; }
+      timeoutId = setTimeout(tick, delay);
+    }
+    timeoutId = setTimeout(tick, 1800);
+    return () => clearTimeout(timeoutId);
+  }, [input === '']);
 
   if (!user) return null; // 로그인 사용자만 노출 (게스트 접근 없음)
 
@@ -83,6 +115,14 @@ export default function ChatWidget({ user, token }) {
   function handleReset() {
     setMessages(initialMessages());
     setInput('');
+  }
+
+  function handleContactClick() {
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', text: CONTACT_QUESTION },
+      { role: 'bot', text: `직접 연락하고 싶으시면 아래 이메일로 남겨주세요.\n${CONTACT_EMAIL}` },
+    ]);
   }
 
   return (
@@ -130,11 +170,13 @@ export default function ChatWidget({ user, token }) {
         .chat-send-btn { transition: transform 0.15s ease; }
         .chat-send-btn:hover:not(:disabled) { transform: scale(1.06); }
         .chat-send-btn:active:not(:disabled) { transform: scale(0.94); }
-        .chat-icon-btn { transition: transform 0.2s ease, background 0.15s ease; }
+        .chat-icon-btn { transition: transform 0.2s ease, background 0.15s ease, color 0.15s ease; }
         .chat-icon-btn:hover { background: var(--bg-overlay); }
         .chat-icon-btn.reset:hover { transform: rotate(-45deg); }
-        .chat-chip-btn { transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease; }
-        .chat-chip-btn:hover:not(:disabled) { transform: translateX(3px); border-color: var(--accent); background: var(--bg-elevated); }
+        .chat-icon-btn.close:hover { transform: rotate(135deg) scale(1.12); background: rgba(255,69,58,0.14); color: #FF453A; }
+        .chat-chip-btn { transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease; }
+        .chat-chip-btn:hover:not(:disabled) { transform: translateY(-2px); background: var(--bg-elevated); box-shadow: 0 6px 16px rgba(0,0,0,0.18); }
+        .chat-input::placeholder { color: var(--text-tertiary); opacity: 0.85; }
         .chat-typing-dot {
           width: 6px; height: 6px; border-radius: 999px; background: var(--text-tertiary);
           animation: chatDotBounce 1.1s ease-in-out infinite;
@@ -194,17 +236,18 @@ export default function ChatWidget({ user, token }) {
                   <div>
                     <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>고객센터</div>
                     <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>이용 방법을 물어보세요</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)', opacity: 0.75, marginTop: 1 }}>규칙 기반 FAQ · AI 연동 예정</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 2 }}>
                   <button
                     onClick={handleReset}
                     aria-label="처음으로"
                     title="처음으로"
                     className="chat-icon-btn reset"
                     style={{
-                      width: 32, height: 32, borderRadius: 9, cursor: 'pointer',
-                      border: '1px solid var(--border-strong)', background: 'transparent',
+                      width: 32, height: 32, borderRadius: 999, cursor: 'pointer',
+                      border: 'none', background: 'transparent',
                       color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
@@ -214,10 +257,10 @@ export default function ChatWidget({ user, token }) {
                     onClick={() => setOpen(false)}
                     aria-label="닫기"
                     title="닫기"
-                    className="chat-icon-btn"
+                    className="chat-icon-btn close"
                     style={{
-                      width: 32, height: 32, borderRadius: 9, cursor: 'pointer',
-                      border: '1px solid var(--border-strong)', background: 'transparent',
+                      width: 32, height: 32, borderRadius: 999, cursor: 'pointer',
+                      border: 'none', background: 'transparent',
                       color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
@@ -254,7 +297,7 @@ export default function ChatWidget({ user, token }) {
               </div>
 
               {messages.length <= 1 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 18px 16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, padding: '0 18px 16px' }}>
                   {SUGGESTED_QUESTIONS.map((q, idx) => (
                     <button
                       key={q}
@@ -263,9 +306,9 @@ export default function ChatWidget({ user, token }) {
                       disabled={sending}
                       className="chat-chip-btn"
                       style={{
-                        width: '100%', textAlign: 'left', padding: '11px 14px', borderRadius: 12, cursor: 'pointer',
-                        border: '1px solid var(--border-strong)', background: 'var(--bg-overlay)',
-                        color: 'var(--text-secondary)', fontSize: 13.5, fontFamily: 'inherit',
+                        maxWidth: '88%', textAlign: 'left', padding: '10px 14px', borderRadius: '4px 16px 16px 16px', cursor: 'pointer',
+                        border: 'none', background: 'var(--bg-overlay)',
+                        color: 'var(--text-secondary)', fontSize: 13.5, fontFamily: 'inherit', lineHeight: 1.45,
                         opacity: sending ? 0.5 : 1,
                         animation: 'chatChipIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
                         animationDelay: `${idx * 0.06}s`,
@@ -274,14 +317,32 @@ export default function ChatWidget({ user, token }) {
                       {q}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={handleContactClick}
+                    className="chat-chip-btn"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      maxWidth: '88%', textAlign: 'left', padding: '10px 14px', borderRadius: '4px 16px 16px 16px', cursor: 'pointer',
+                      border: '1px solid color-mix(in srgb, var(--accent) 40%, transparent)',
+                      background: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                      color: 'var(--accent)', fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', lineHeight: 1.45,
+                      animation: 'chatChipIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
+                      animationDelay: `${SUGGESTED_QUESTIONS.length * 0.06}s`,
+                    }}
+                  >
+                    <Mail size={14} />
+                    {CONTACT_QUESTION}
+                  </button>
                 </div>
               )}
 
               <form onSubmit={handleSend} style={{ display: 'flex', gap: 10, padding: 16, borderTop: '1px solid var(--border)' }}>
                 <input
                   value={input} onChange={e => setInput(e.target.value)}
-                  placeholder="궁금한 점을 입력하세요"
+                  placeholder={placeholder}
                   disabled={sending}
+                  className="chat-input"
                   style={{
                     flex: 1, padding: '12px 14px', borderRadius: 12,
                     border: '1px solid var(--border-strong)', background: 'transparent',
