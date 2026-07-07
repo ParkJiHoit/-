@@ -68,9 +68,47 @@ export default function ChatWidget({ user, token }) {
 
   return (
     <>
+      <style>{`
+        @keyframes chatPanelIn {
+          from { opacity: 0; transform: translateY(16px) scale(0.96); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes chatBubbleInUser {
+          from { opacity: 0; transform: translateX(14px) scale(0.94); }
+          to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes chatBubbleInBot {
+          from { opacity: 0; transform: translateX(-14px) scale(0.94); }
+          to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes chatChipIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes chatDotBounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+          30%           { transform: translateY(-5px); opacity: 1; }
+        }
+        .chat-fab-btn { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .chat-fab-btn:hover { transform: scale(1.07); box-shadow: 0 12px 32px rgba(10,132,255,0.55); }
+        .chat-fab-btn:active { transform: scale(0.96); }
+        .chat-send-btn { transition: transform 0.15s ease; }
+        .chat-send-btn:hover:not(:disabled) { transform: scale(1.06); }
+        .chat-send-btn:active:not(:disabled) { transform: scale(0.94); }
+        .chat-reset-btn { transition: transform 0.2s ease, background 0.15s ease; }
+        .chat-reset-btn:hover { background: var(--bg-overlay); transform: rotate(-45deg); }
+        .chat-chip-btn { transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease; }
+        .chat-chip-btn:hover:not(:disabled) { transform: translateX(3px); border-color: var(--accent); background: var(--bg-elevated); }
+        .chat-typing-dot {
+          width: 6px; height: 6px; border-radius: 999px; background: var(--text-tertiary);
+          animation: chatDotBounce 1.1s ease-in-out infinite;
+        }
+      `}</style>
+
       <button
         onClick={() => setOpen(o => !o)}
         aria-label="고객센터 챗봇"
+        className="chat-fab-btn"
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 1200,
           width: 56, height: 56, borderRadius: 999, border: 'none', cursor: 'pointer',
@@ -89,6 +127,7 @@ export default function ChatWidget({ user, token }) {
           display: 'flex', flexDirection: 'column',
           background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
           borderRadius: 22, boxShadow: '0 32px 80px rgba(0,0,0,0.55)', overflow: 'hidden',
+          animation: 'chatPanelIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -112,6 +151,7 @@ export default function ChatWidget({ user, token }) {
               onClick={handleReset}
               aria-label="처음으로"
               title="처음으로"
+              className="chat-reset-btn"
               style={{
                 width: 32, height: 32, borderRadius: 9, cursor: 'pointer',
                 border: '1px solid var(--border-strong)', background: 'transparent',
@@ -131,28 +171,40 @@ export default function ChatWidget({ user, token }) {
                 color: m.role === 'user' ? '#fff' : 'var(--text-primary)',
                 fontSize: 14.5, lineHeight: 1.6, whiteSpace: 'pre-wrap',
                 boxShadow: m.role === 'user' ? '0 6px 16px rgba(10,132,255,0.3)' : 'none',
+                animation: `${m.role === 'user' ? 'chatBubbleInUser' : 'chatBubbleInBot'} 0.32s cubic-bezier(0.16, 1, 0.3, 1) both`,
               }}>
                 {m.text}
               </div>
             ))}
             {sending && (
-              <div style={{ alignSelf: 'flex-start', fontSize: 12.5, color: 'var(--text-tertiary)' }}>답변 작성 중…</div>
+              <div style={{
+                alignSelf: 'flex-start', display: 'flex', gap: 5, padding: '12px 16px',
+                borderRadius: 16, background: 'var(--bg-overlay)',
+                animation: 'chatBubbleInBot 0.32s cubic-bezier(0.16, 1, 0.3, 1) both',
+              }}>
+                <span className="chat-typing-dot" style={{ animationDelay: '0s' }} />
+                <span className="chat-typing-dot" style={{ animationDelay: '0.15s' }} />
+                <span className="chat-typing-dot" style={{ animationDelay: '0.3s' }} />
+              </div>
             )}
           </div>
 
           {messages.length <= 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 18px 16px' }}>
-              {SUGGESTED_QUESTIONS.map(q => (
+              {SUGGESTED_QUESTIONS.map((q, idx) => (
                 <button
                   key={q}
                   type="button"
                   onClick={() => sendMessage(q)}
                   disabled={sending}
+                  className="chat-chip-btn"
                   style={{
                     width: '100%', textAlign: 'left', padding: '11px 14px', borderRadius: 12, cursor: 'pointer',
                     border: '1px solid var(--border-strong)', background: 'var(--bg-overlay)',
                     color: 'var(--text-secondary)', fontSize: 13.5, fontFamily: 'inherit',
                     opacity: sending ? 0.5 : 1,
+                    animation: 'chatChipIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
+                    animationDelay: `${idx * 0.06}s`,
                   }}
                 >
                   {q}
@@ -172,7 +224,7 @@ export default function ChatWidget({ user, token }) {
                 color: 'var(--text-primary)', fontSize: 14.5, fontFamily: 'inherit', outline: 'none',
               }}
             />
-            <button type="submit" disabled={sending || !input.trim()} style={{
+            <button type="submit" disabled={sending || !input.trim()} className="chat-send-btn" style={{
               width: 44, height: 44, borderRadius: 12, border: 'none', flexShrink: 0,
               background: 'linear-gradient(135deg, var(--accent), #34C1FF)', color: '#fff', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
