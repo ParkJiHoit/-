@@ -107,9 +107,14 @@ ADMIN_EMAILS=
 
 # 외부 크론(POST /api/jobs/refresh) 인증 토큰
 JOB_SECRET=
+
+# Claude API (챗봇 — 규칙 기반 매칭 실패 시 LLM 폴백에 사용, 없으면 정적 안내 문구로 대체)
+ANTHROPIC_API_KEY=
 ```
 
 `NAVER_OPEN_API_CLIENT_ID/SECRET`은 네이버 개발자 센터에서 애플리케이션을 만들고 `검색`, `데이터랩(검색어트렌드)` API를 추가해야 합니다.
+
+`ANTHROPIC_API_KEY`가 없으면 챗봇은 규칙 기반 FAQ로만 동작하며, 매칭에 실패한 질문은 정적 안내 문구(문의하기 유도)로 응답합니다.
 
 `DATABASE_URL`이 없으면 순위 추적·구독·사용량 제한 등 DB 의존 기능은 자동으로 비활성화되고(콘솔에 경고만 출력), 키워드/블로그 분석 기능은 정상 동작합니다.
 
