@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import * as XLSX from 'xlsx-js-style';
 import { useAuth } from '../AuthContext';
 import RankCalendar from '../components/RankCalendar';
 import RankChart from '../components/RankChart';
@@ -10,42 +9,56 @@ function getKSTToday() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
+// exceljs는 8자리 ARGB(FF + 6자리 RGB) 헥스를 쓴다. 모든 데이터 셀에 옅은 회색 테두리를
+// 명시적으로 넣어 인쇄/타 프로그램에서도 격자가 유지되게 하고, 헤더 아래엔 더 굵은 구분선을 둔다.
+const THIN_BORDER = { style: 'thin', color: { argb: 'FFD9D9D9' } };
+const CELL_BORDER = { top: THIN_BORDER, left: THIN_BORDER, bottom: THIN_BORDER, right: THIN_BORDER };
+const HEADER_BORDER = { ...CELL_BORDER, bottom: { style: 'medium', color: { argb: 'FF1C2333' } } };
+const EXPORT_FONT = '맑은 고딕';
+
+const NOT_RANKED_COLOR = { bg: 'FFEEEEEE', font: 'FF9E9E9E' };
+const FETCH_FAILED_COLOR = { bg: 'FFBCAAA4', font: 'FF3E2723' };
+
 // RankCalendar 화면 배색과 맞춘 히트맵 셀 색상 — rank==null이면 미노출, status가 fetch_failed면 조회 실패로 별도 표시.
-function heatmapCellColor(cell) {
-  if (!cell) return { bg: 'F2F2F2', font: '9E9E9E' };
-  if (cell.status === 'fetch_failed') return { bg: 'FFCC80', font: '7A4B00' };
-  const rank = cell.rank;
-  if (rank == null) return { bg: 'E0E0E0', font: '9E9E9E' };
-  if (rank === 1) return { bg: '1E8E3E', font: 'FFFFFF' };
-  if (rank <= 2) return { bg: '34A853', font: 'FFFFFF' };
-  if (rank <= 3) return { bg: '81C995', font: '1A3C1A' };
-  if (rank <= 5) return { bg: 'FBBC04', font: '5C4400' };
-  if (rank <= 7) return { bg: 'FDD663', font: '5C4400' };
-  return { bg: 'F28B82', font: '7A1E14' };
+// 채도를 낮춘 초록→황→빨강 그라데이션으로 다듬었다.
+const RANK_COLOR_TIERS = [
+  { max: 1, bg: 'FF2E7D32', font: 'FFFFFFFF' },
+  { max: 2, bg: 'FF43A047', font: 'FFFFFFFF' },
+  { max: 3, bg: 'FF7CB342', font: 'FF1A3C1A' },
+  { max: 5, bg: 'FFF4B942', font: 'FF5C4400' },
+  { max: 7, bg: 'FFEF8354', font: 'FF5C2A00' },
+  { max: Infinity, bg: 'FFD9534F', font: 'FFFFFFFF' },
+];
+
+function heatmapCellColor(snap) {
+  if (!snap) return NOT_RANKED_COLOR;
+  if (snap.status === 'fetch_failed') return FETCH_FAILED_COLOR;
+  if (snap.rank == null) return NOT_RANKED_COLOR;
+  return RANK_COLOR_TIERS.find(t => snap.rank <= t.max);
 }
 
 const HEATMAP_LEGEND = [
-  { label: '1위', bg: '1E8E3E', font: 'FFFFFF' },
-  { label: '2위', bg: '34A853', font: 'FFFFFF' },
-  { label: '3위', bg: '81C995', font: '1A3C1A' },
-  { label: '5위', bg: 'FBBC04', font: '5C4400' },
-  { label: '7위', bg: 'FDD663', font: '5C4400' },
-  { label: '10위', bg: 'F28B82', font: '7A1E14' },
-  { label: '미노출', bg: 'E0E0E0', font: '9E9E9E' },
-  { label: '조회 실패', bg: 'FFCC80', font: '7A4B00' },
+  { label: '1위', bg: 'FF2E7D32', font: 'FFFFFFFF' },
+  { label: '2위', bg: 'FF43A047', font: 'FFFFFFFF' },
+  { label: '3위', bg: 'FF7CB342', font: 'FF1A3C1A' },
+  { label: '5위', bg: 'FFF4B942', font: 'FF5C4400' },
+  { label: '7위', bg: 'FFEF8354', font: 'FF5C2A00' },
+  { label: '10위', bg: 'FFD9534F', font: 'FFFFFFFF' },
+  { label: '미노출', bg: 'FFEEEEEE', font: 'FF9E9E9E' },
+  { label: '조회 실패', bg: 'FFBCAAA4', font: 'FF3E2723' },
 ];
 
 // 통합검색 노출 O/X 셀 색 — 순위 팔레트(초록~빨강)와 겹치면 구분이 안 가서
 // 아예 다른 색 계열(파란색)을 쓴다.
 function integratedCellColor(value) {
-  if (value === 'O') return { bg: '1A73E8', font: 'FFFFFF' };
-  if (value === 'X') return { bg: 'B3C6E8', font: '1A3C6E' };
-  return { bg: 'F2F2F2', font: '9E9E9E' };
+  if (value === 'O') return { bg: 'FF1A73E8', font: 'FFFFFFFF' };
+  if (value === 'X') return { bg: 'FFB3C6E8', font: 'FF1A3C6E' };
+  return NOT_RANKED_COLOR;
 }
 
 const INTEGRATED_LEGEND = [
-  { label: 'O (통검 노출)', bg: '1A73E8', font: 'FFFFFF' },
-  { label: 'X (통검 미노출)', bg: 'B3C6E8', font: '1A3C6E' },
+  { label: 'O (통검 노출)', bg: 'FF1A73E8', font: 'FFFFFFFF' },
+  { label: 'X (통검 미노출)', bg: 'FFB3C6E8', font: 'FF1A3C6E' },
 ];
 
 // 한글 등 전각 문자는 2칸, 그 외는 1칸으로 계산해 열 너비를 값 길이에 맞춰 자동 산출한다.
