@@ -230,6 +230,43 @@ function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
   return worksheet;
 }
 
+// 엑셀 A1 스타일 열 문자(A, B, ..., Z, AA, ...)를 1-based 열 번호로 변환한다.
+function colLetterToNumber(letters) {
+  let n = 0;
+  for (const ch of letters) n = n * 26 + (ch.charCodeAt(0) - 64);
+  return n;
+}
+
+// exceljs의 worksheet.autoFilter는 범위 전체에 일괄로 드롭다운 버튼을 붙일 뿐, 컬럼별로
+// 버튼을 숨기는 API가 없다(내부적으로 <autoFilter ref="..."/> 한 줄만 씀). 하지만 OOXML
+// 포맷 자체는 <filterColumn colId="n" hiddenButton="1"/>로 컬럼별 버튼 숨김을 지원하므로,
+// exceljs가 만든 .xlsx(zip)를 열어 각 시트 XML의 autoFilter 태그에 이 속성을 주입한다.
+// 정보열 순서는 항상 고정(0=등록일, 1=키워드, 2=월간 검색량, 3=블로그, 4=통검 노출, 5+=날짜)
+// 이므로, 숫자/날짜처럼 드롭다운이 쓸모없는 열(월간 검색량, 블로그, 날짜열)만 숨긴다.
+async function hideNumericAutoFilterButtons(buffer) {
+  const { default: JSZip } = await import('jszip');
+  const zip = await JSZip.loadAsync(buffer);
+  const sheetPaths = Object.keys(zip.files).filter(p => /^xl\/worksheets\/sheet\d+\.xml$/.test(p));
+  for (const path of sheetPaths) {
+    const xml = await zip.file(path).async('string');
+    const patched = xml.replace(
+      /<autoFilter ref="([A-Z]+)\d+:([A-Z]+)\d+"\/>/,
+      (match, fromCol, toCol) => {
+        const totalCols = colLetterToNumber(toCol) - colLetterToNumber(fromCol) + 1;
+        const hideColIds = [];
+        for (let colId = 0; colId < totalCols; colId++) {
+          if (colId === 2 || colId === 3 || colId >= 5) hideColIds.push(colId);
+        }
+        const ref = match.match(/ref="([^"]+)"/)[1];
+        const children = hideColIds.map(id => `<filterColumn colId="${id}" hiddenButton="1"/>`).join('');
+        return `<autoFilter ref="${ref}">${children}</autoFilter>`;
+      }
+    );
+    zip.file(path, patched);
+  }
+  return zip.generateAsync({ type: 'uint8array' });
+}
+
 const API = (path) => `/api/rank-tracker${path}`;
 
 async function apiFetch(path, options, token) {
@@ -518,7 +555,8 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
       const groupLabel = selectedGroupId
         ? (groups.find(g => String(g.id) === selectedGroupId)?.name || '그룹')
         : '전체';
-      const buffer = await workbook.xlsx.writeBuffer();
+      const rawBuffer = await workbook.xlsx.writeBuffer();
+      const buffer = await hideNumericAutoFilterButtons(rawBuffer);
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
