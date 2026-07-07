@@ -12,8 +12,8 @@ const SUGGESTED_QUESTIONS = [
   '대량 등록이랑 일괄 등록이 궁금해요',
 ];
 
-const COLLAPSED_WIDTH = 112;
-const COLLAPSED_HEIGHT = 42;
+const COLLAPSED_WIDTH = 126;
+const COLLAPSED_HEIGHT = 48;
 const EXPANDED_WIDTH = 420;
 const EXPANDED_HEIGHT = 600;
 
@@ -152,9 +152,11 @@ export default function ChatWidget({ user, token }) {
           position: 'fixed', bottom: 24, right: 24, zIndex: 1200,
           maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 48px)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          background: 'var(--bg-elevated)',
-          border: open ? '1px solid var(--border-strong)' : '1px solid rgba(127,127,127,0.16)',
-          boxShadow: open ? '0 32px 80px rgba(0,0,0,0.55)' : '0 4px 14px rgba(0,0,0,0.18)',
+          background: open ? 'var(--bg-elevated)' : 'color-mix(in srgb, var(--bg-elevated) 55%, transparent)',
+          backdropFilter: open ? 'none' : 'blur(20px)',
+          WebkitBackdropFilter: open ? 'none' : 'blur(20px)',
+          border: open ? '1px solid var(--border-strong)' : '1px solid color-mix(in srgb, var(--border-strong) 35%, transparent)',
+          boxShadow: open ? '0 32px 80px rgba(0,0,0,0.55)' : '0 6px 20px rgba(10,132,255,0.14), 0 2px 8px rgba(0,0,0,0.14)',
         }}
       >
         <AnimatePresence mode="wait" initial={false}>
@@ -169,11 +171,11 @@ export default function ChatWidget({ user, token }) {
               transition={{ duration: 0.15 }}
               style={{
                 width: '100%', height: '100%', border: 'none', background: 'transparent', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '0 14px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0 16px',
               }}
             >
-              <ColorOrb dimension={16} />
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>AI 챗봇</span>
+              <ColorOrb dimension={18} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>AI 챗봇</span>
             </motion.button>
           ) : (
             <motion.div
