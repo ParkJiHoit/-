@@ -72,6 +72,25 @@ test('groupParsedRows: 같은 키워드의 URL을 하나로 묶고 신규 여부
   assert.equal(busan.isNew, false);
 });
 
+test('groupParsedRows: 띄어쓰기만 다른 키워드는 동일 키워드로 병합한다', () => {
+  const rows = [
+    { rowNumber: 2, keyword: '휴대폰 성지 창업', url: 'https://blog.naver.com/abc/111' },
+    { rowNumber: 3, keyword: '휴대폰성지창업', url: 'https://blog.naver.com/def/222' },
+  ];
+  const groups = groupParsedRows(rows, new Set());
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].urls.length, 2);
+  assert.equal(groups[0].keyword, '휴대폰 성지 창업'); // 먼저 등장한 표기를 대표 키워드로 사용
+});
+
+test('groupParsedRows: 기존 키워드와 띄어쓰기가 달라도 신규로 취급하지 않는다', () => {
+  const rows = [
+    { rowNumber: 2, keyword: '초보휴대폰성지창업', url: 'https://blog.naver.com/abc/111' },
+  ];
+  const groups = groupParsedRows(rows, new Set(['초보 휴대폰 성지 창업']));
+  assert.equal(groups[0].isNew, false);
+});
+
 test('groupParsedRows: 같은 URL이 중복되면 하나로 합친다', () => {
   const rows = [
     { rowNumber: 2, keyword: '강남맛집', url: 'https://blog.naver.com/abc/111' },

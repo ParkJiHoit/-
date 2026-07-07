@@ -6,7 +6,7 @@ import {
   listGroups, createGroup, renameGroup, deleteGroup, exportSnapshots,
   extractPostKey, postKeyToString, backfillSearchVolumeChunk,
 } from '../services/rankTrackerService.js';
-import { parseBulkImportText, groupParsedRows } from '../services/bulkImportService.js';
+import { parseBulkImportText, groupParsedRows, normalizeKeyword } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
 import { getPool } from '../db/index.js';
 import { createRefreshJob, processNextChunk, getJobStatus, retryFailedItems } from '../services/refreshJobService.js';
@@ -214,14 +214,15 @@ router.post('/bulk-import/preview', requirePremium, async (req, res, next) => {
         [req.userId, groupId || null]
       );
       existingKeywords = new Set(existing.map(r => r.keyword));
-      existingBlogIdsByKeyword = new Map(existing.map(r => [r.keyword, new Set(r.blog_ids || [])]));
+      // 띄어쓰기 차이는 무시하고 동일 키워드로 판정하기 위해 정규화한 키워드로 조회한다.
+      existingBlogIdsByKeyword = new Map(existing.map(r => [normalizeKeyword(r.keyword), new Set(r.blog_ids || [])]));
     }
 
     const groups = groupParsedRows(rows, existingKeywords).map(g => {
       if (g.isNew) return { ...g, allDuplicate: false };
       // 기존 키워드라면, 이번에 붙여넣은 URL이 이미 등록된 것과 완전히 겹치는지(추가되는
       // 게 하나도 없는지) 확인해 [중복]으로 표시할 수 있게 한다.
-      const existingKeys = existingBlogIdsByKeyword.get(g.keyword) || new Set();
+      const existingKeys = existingBlogIdsByKeyword.get(normalizeKeyword(g.keyword)) || new Set();
       const allDuplicate = g.urls.every(url => {
         const key = extractPostKey(url);
         return key && existingKeys.has(postKeyToString(key));
@@ -240,21 +241,25 @@ router.post('/bulk-import/confirm', requirePremium, async (req, res, next) => {
     }
 
     const pool = getPool();
+    // 정규화한 키워드 -> DB에 실제 저장된 키워드 텍스트. 붙여넣은 키워드의 띄어쓰기가
+    // 기존 등록과 달라도 같은 행에 병합되도록, upsert에는 항상 기존에 저장된 철자를 쓴다.
+    let normalizedToExistingKeyword = new Map();
     if (pool) {
       const { rows: existing } = await pool.query(
         `SELECT keyword FROM tracked_keywords
          WHERE user_id = $1 AND mode = 'blog' AND group_id IS NOT DISTINCT FROM $2 AND deleted_at IS NULL`,
         [req.userId, groupId || null]
       );
-      const existingSet = new Set(existing.map(r => r.keyword));
-      const newCount = groups.filter(g => !existingSet.has(g.keyword)).length;
+      normalizedToExistingKeyword = new Map(existing.map(r => [normalizeKeyword(r.keyword), r.keyword]));
+      const newCount = groups.filter(g => !normalizedToExistingKeyword.has(normalizeKeyword(g.keyword))).length;
       await assertKeywordCapacity(req, newCount);
     }
 
     let created = 0;
     for (const g of groups) {
       if (!g.keyword?.trim() || !Array.isArray(g.urls) || !g.urls.length) continue;
-      await mergeTrackedBlogUrls(req.userId, g.keyword, 'blog', g.urls, groupId || null);
+      const targetKeyword = normalizedToExistingKeyword.get(normalizeKeyword(g.keyword)) || g.keyword;
+      await mergeTrackedBlogUrls(req.userId, targetKeyword, 'blog', g.urls, groupId || null);
       created++;
     }
     res.status(201).json({ created });
