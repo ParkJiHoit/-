@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 
-const GREETING = '안녕하세요! 궁금하신 점을 물어보세요. 자주 묻는 질문에 답변해 드려요.';
+const GREETING = '안녕하세요! 궁금하신 점을 물어보세요.\n자주 묻는 질문에 답변해 드려요.';
+
+const SUGGESTED_QUESTIONS = [
+  '키워드 분석하면 검색량도 나오나요?',
+  '블로그 구조 분석이 궁금해요',
+  '블로그 진단 등급이 궁금해요',
+  '순위 추적 모드 차이가 궁금해요',
+  '대량 등록이랑 일괄 등록이 궁금해요',
+];
 
 export default function ChatWidget({ user, token }) {
   const [open, setOpen] = useState(false);
@@ -21,12 +29,9 @@ export default function ChatWidget({ user, token }) {
 
   if (!user) return null; // 로그인 사용자만 노출 (게스트 접근 없음)
 
-  async function handleSend(e) {
-    e.preventDefault();
-    const text = input.trim();
+  async function sendMessage(text) {
     if (!text || sending) return;
     setMessages(prev => [...prev, { role: 'user', text }]);
-    setInput('');
     setSending(true);
     try {
       const res = await fetch('/api/chat/message', {
@@ -42,6 +47,14 @@ export default function ChatWidget({ user, token }) {
     } finally {
       setSending(false);
     }
+  }
+
+  function handleSend(e) {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text) return;
+    setInput('');
+    sendMessage(text);
   }
 
   return (
@@ -87,6 +100,26 @@ export default function ChatWidget({ user, token }) {
               <div style={{ alignSelf: 'flex-start', fontSize: 12, color: 'var(--text-tertiary)' }}>답변 작성 중…</div>
             )}
           </div>
+          {messages.length <= 1 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 14px 12px' }}>
+              {SUGGESTED_QUESTIONS.map(q => (
+                <button
+                  key={q}
+                  type="button"
+                  onClick={() => sendMessage(q)}
+                  disabled={sending}
+                  style={{
+                    padding: '6px 10px', borderRadius: 999, cursor: 'pointer',
+                    border: '1px solid var(--border-strong)', background: 'var(--bg-overlay)',
+                    color: 'var(--text-secondary)', fontSize: 11.5, fontFamily: 'inherit',
+                    opacity: sending ? 0.5 : 1,
+                  }}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          )}
           <form onSubmit={handleSend} style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border)' }}>
             <input
               value={input} onChange={e => setInput(e.target.value)}
