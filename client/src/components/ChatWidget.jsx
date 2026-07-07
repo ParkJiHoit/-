@@ -19,7 +19,7 @@ const PLACEHOLDER_HINTS = [
   '예: 블로그 진단 등급은 어떻게 매겨져요?',
 ];
 
-const CONTACT_QUESTION = '사람한테 직접 물어보고 싶어요';
+const CONTACT_QUESTION = '제작자한테 직접 물어보고 싶어요';
 const CONTACT_EMAIL = 'qkrwlgh52660724@gmail.com';
 
 const COLLAPSED_WIDTH = 126;
@@ -234,9 +234,14 @@ export default function ChatWidget({ user, token }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <ColorOrb dimension={30} />
                   <div>
-                    <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>고객센터</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>AI 챗봇</span>
+                      <span style={{
+                        fontSize: 9.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap',
+                        padding: '2px 7px', borderRadius: 999, background: 'var(--bg-overlay)',
+                      }}>규칙 기반 FAQ · AI 연동 예정</span>
+                    </div>
                     <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>이용 방법을 물어보세요</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-tertiary)', opacity: 0.75, marginTop: 1 }}>규칙 기반 FAQ · AI 연동 예정</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 2 }}>
