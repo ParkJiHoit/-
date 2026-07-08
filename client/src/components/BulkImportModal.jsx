@@ -148,15 +148,41 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
               {preview.groups.map(g => {
                 const label = g.isNew ? '[신규] ' : g.allDuplicate ? '[중복] ' : '[기존] ';
                 const color = g.isNew ? '#30D158' : g.allDuplicate ? '#FF9F0A' : 'var(--text-secondary)';
+                const urlDetails = g.urlDetails || g.urls.map(url => ({ url, isDuplicate: false }));
+                const newUrlCount = urlDetails.filter(d => !d.isDuplicate).length;
+                const dupUrlCount = urlDetails.length - newUrlCount;
                 return (
                   <div key={g.keyword} style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
-                    <span style={{ fontWeight: 700, color }}>
-                      {label}{g.keyword}
-                    </span>
-                    <span style={{ color: 'var(--text-tertiary)', marginLeft: 8 }}>URL {g.urls.length}개</span>
-                    {g.allDuplicate && (
-                      <span style={{ color: '#FF9F0A', marginLeft: 8 }}>· 추가되는 URL 없음</span>
-                    )}
+                    <div>
+                      <span style={{ fontWeight: 700, color }}>
+                        {label}{g.keyword}
+                      </span>
+                      <span style={{ color: 'var(--text-tertiary)', marginLeft: 8 }}>
+                        URL {urlDetails.length}개
+                        {newUrlCount > 0 && dupUrlCount > 0 && (
+                          <> (신규 <span style={{ color: '#30D158' }}>{newUrlCount}</span> · 중복 <span style={{ color: '#FF9F0A' }}>{dupUrlCount}</span>)</>
+                        )}
+                      </span>
+                      {g.allDuplicate && (
+                        <span style={{ color: '#FF9F0A', marginLeft: 8 }}>· 추가되는 URL 없음</span>
+                      )}
+                    </div>
+                    <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {urlDetails.map((d, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{
+                            flexShrink: 0, fontSize: 10, fontWeight: 700, borderRadius: 4, padding: '1px 5px',
+                            color: d.isDuplicate ? '#FF9F0A' : '#30D158',
+                            background: d.isDuplicate ? 'rgba(255,159,10,0.12)' : 'rgba(48,209,88,0.12)',
+                          }}>
+                            {d.isDuplicate ? '중복' : '신규'}
+                          </span>
+                          <span style={{ color: 'var(--text-tertiary)', fontFamily: 'monospace', fontSize: 11, wordBreak: 'break-all' }}>
+                            {d.url}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}

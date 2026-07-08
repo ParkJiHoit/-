@@ -219,15 +219,18 @@ router.post('/bulk-import/preview', requirePremium, async (req, res, next) => {
     }
 
     const groups = groupParsedRows(rows, existingKeywords).map(g => {
-      if (g.isNew) return { ...g, allDuplicate: false };
-      // 기존 키워드라면, 이번에 붙여넣은 URL이 이미 등록된 것과 완전히 겹치는지(추가되는
-      // 게 하나도 없는지) 확인해 [중복]으로 표시할 수 있게 한다.
-      const existingKeys = existingBlogIdsByKeyword.get(normalizeKeyword(g.keyword)) || new Set();
-      const allDuplicate = g.urls.every(url => {
+      // 키워드 단위 [신규]/[기존]/[중복] 표시뿐 아니라, URL 하나하나가 이미 등록된
+      // 포스팅인지(신규 vs 중복)도 미리보기에서 구분할 수 있게 URL별 상태를 함께 내려준다.
+      const existingKeys = g.isNew
+        ? new Set()
+        : existingBlogIdsByKeyword.get(normalizeKeyword(g.keyword)) || new Set();
+      const urlDetails = g.urls.map(url => {
         const key = extractPostKey(url);
-        return key && existingKeys.has(postKeyToString(key));
+        const isDuplicate = !!(key && existingKeys.has(postKeyToString(key)));
+        return { url, isDuplicate };
       });
-      return { ...g, allDuplicate };
+      const allDuplicate = !g.isNew && urlDetails.every(d => d.isDuplicate);
+      return { ...g, allDuplicate, urlDetails };
     });
     res.json({ groups, errors, newKeywordCount: groups.filter(g => g.isNew).length });
   } catch (e) { next(e); }
