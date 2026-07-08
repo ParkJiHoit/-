@@ -734,7 +734,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                 const latest = filteredItems.reduce((acc, i) => (
                   i.last_refreshed_at && (!acc || i.last_refreshed_at > acc) ? i.last_refreshed_at : acc
                 ), null);
-                return latest ? `가장 최근 갱신: ${formatKSTDateTime(latest)}` : '아직 갱신 내역 없음';
+                return latest ? `최근 갱신: ${formatKSTDateTime(latest)}` : '아직 갱신 내역 없음';
               })()}
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
