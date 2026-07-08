@@ -9,6 +9,13 @@ function getKSTToday() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
+function formatKSTDateTime(isoString) {
+  const d = new Date(new Date(isoString).getTime() + 9 * 60 * 60 * 1000);
+  const date = d.toISOString().slice(0, 10);
+  const hm = d.toISOString().slice(11, 16);
+  return `${date} ${hm}`;
+}
+
 // exceljs는 8자리 ARGB(FF + 6자리 RGB) 헥스를 쓴다. 모든 데이터 셀에 옅은 회색 테두리를
 // 명시적으로 넣어 인쇄/타 프로그램에서도 격자가 유지되게 하고, 헤더 아래엔 더 굵은 구분선을 둔다.
 const THIN_BORDER = { style: 'thin', color: { argb: 'FFD9D9D9' } };
@@ -722,6 +729,14 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                 </span>
               )}
             </span>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 500 }}>
+              {(() => {
+                const latest = filteredItems.reduce((acc, i) => (
+                  i.last_refreshed_at && (!acc || i.last_refreshed_at > acc) ? i.last_refreshed_at : acc
+                ), null);
+                return latest ? `가장 최근 갱신: ${formatKSTDateTime(latest)}` : '아직 갱신 내역 없음';
+              })()}
+            </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {filteredItems.length > 0 && (
                 <button
@@ -982,12 +997,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
                     {selected.last_refreshed_at
-                      ? (() => {
-                          const d = new Date(new Date(selected.last_refreshed_at).getTime() + 9 * 60 * 60 * 1000);
-                          const date = d.toISOString().slice(0, 10);
-                          const hm = d.toISOString().slice(11, 16);
-                          return `마지막 갱신: ${date} ${hm}`;
-                        })()
+                      ? `마지막 갱신: ${formatKSTDateTime(selected.last_refreshed_at)}`
                       : latestDate ? `마지막 갱신: ${latestDate}` : '아직 갱신 내역 없음'}
                   </div>
                 </div>
