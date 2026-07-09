@@ -295,6 +295,11 @@ button, input, select, textarea { font: inherit; }
   font-weight: 500;
 }
 
+/* 순위 추적 테이블은 정보 밀도가 높아 기본 mac-table보다 폰트를 한 단계 키운다
+   (다른 페이지의 mac-table에는 영향 없게 별도 modifier 클래스로 분리). */
+.mac-table-lg thead th { font-size: 12px; padding: 10px 14px; }
+.mac-table-lg tbody td { font-size: 14px; padding: 11px 14px; }
+
 .mac-table tbody td.td-active {
   color: var(--accent);
   font-weight: 600;

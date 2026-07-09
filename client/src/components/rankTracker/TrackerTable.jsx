@@ -86,7 +86,7 @@ export default function TrackerTable({
           display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', marginBottom: 8,
           borderRadius: 8, background: 'rgba(255,69,58,0.08)', border: '1px solid rgba(255,69,58,0.2)',
         }}>
-          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{selectedIds.size}개 선택됨</span>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedIds.size}개 선택됨</span>
           <button
             onClick={() => onBulkDeleteSelected([...selectedIds])}
             className="mac-btn-ghost mac-btn-sm"
@@ -98,7 +98,7 @@ export default function TrackerTable({
       )}
 
       <div style={{ maxHeight: 560, overflowY: 'auto', borderRadius: 10, border: '1px solid var(--border)' }}>
-      <table className="mac-table" style={{ tableLayout: 'fixed' }}>
+      <table className="mac-table mac-table-lg" style={{ tableLayout: 'fixed' }}>
         <thead>
           <tr>
             <th style={{ width: 32 }}>
@@ -173,7 +173,7 @@ export default function TrackerTable({
                         onChange={e => onMoveItemGroup(item.id, e.target.value || null)}
                         title="그룹 이동"
                         style={{
-                          flexShrink: 0, fontSize: 10, fontWeight: 600, padding: '2px 4px',
+                          flexShrink: 0, fontSize: 11, fontWeight: 600, padding: '3px 5px',
                           borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)',
                           color: 'var(--text-tertiary)', outline: 'none', cursor: 'pointer', fontFamily: 'inherit',
                         }}
@@ -193,14 +193,14 @@ export default function TrackerTable({
                         {blogId || '—'}
                       </span>
                       {entry?.addedDate && (
-                        <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                        <span style={{ flexShrink: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>
                           · {entry.addedDate} 등록
                         </span>
                       )}
                       {isFirst && !isOpen && hiddenCount > 0 && (
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleExpand(item.id); }}
-                          style={{ flexShrink: 0, fontSize: 11, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                         >
                           외 {hiddenCount}개
                         </button>

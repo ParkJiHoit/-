@@ -22,9 +22,9 @@ export default function TrackerToolbar({
           onGroupChange(e.target.value);
         }}
         style={{
-          height: 32, padding: '0 8px', borderRadius: 8,
+          height: 34, padding: '0 8px', borderRadius: 8,
           background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
-          color: 'var(--text-primary)', fontSize: 12, fontWeight: 600,
+          color: 'var(--text-primary)', fontSize: 13, fontWeight: 600,
           outline: 'none', fontFamily: 'inherit', cursor: 'pointer',
         }}
       >
@@ -47,12 +47,12 @@ export default function TrackerToolbar({
         onChange={e => onSearchChange(e.target.value)}
         placeholder="키워드 검색"
         style={{
-          height: 32, padding: '0 10px', borderRadius: 8, width: 160,
+          height: 34, padding: '0 10px', borderRadius: 8, width: 170,
           background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
-          color: 'var(--text-primary)', fontSize: 12, fontFamily: 'inherit', outline: 'none',
+          color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none',
         }}
       />
-      <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
         {lastRefreshed ? `최근 갱신: ${formatKSTDateTime(lastRefreshed)}` : '아직 갱신 내역 없음'}
       </span>
       <div style={{ flex: 1 }} />
