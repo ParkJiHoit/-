@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-export default function HeroScene({ className, dark = true }) {
+// intensity(0~1)는 데이터 위주 페이지(순위 추적 등)에서 배경이 콘텐츠를 방해하지
+// 않도록 불투명도와 회전 속도를 함께 낮추는 용도 — 랜딩 화면(기본값 1)은 그대로 둔다.
+export default function HeroScene({ className, dark = true, particleCount = 500, intensity = 1 }) {
   const mountRef = useRef(null);
 
   useEffect(() => {
@@ -13,7 +15,9 @@ export default function HeroScene({ className, dark = true }) {
     // 잘 보여 그대로 둔다).
     const particleColor = dark ? 0x93c5fd : 0x2563eb;
     const particleSize = dark ? 0.035 : 0.05;
-    const particleOpacity = dark ? 0.7 : 0.85;
+    const particleOpacity = (dark ? 0.7 : 0.85) * intensity;
+    const outerOpacity = 0.55 * intensity;
+    const innerOpacity = 0.4 * intensity;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(50, mount.clientWidth / mount.clientHeight, 0.1, 100);
@@ -31,7 +35,7 @@ export default function HeroScene({ className, dark = true }) {
     const outerWireframe = new THREE.WireframeGeometry(outerGeometry);
     const outerLine = new THREE.LineSegments(
       outerWireframe,
-      new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.55 })
+      new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: outerOpacity })
     );
     group.add(outerLine);
 
@@ -39,14 +43,13 @@ export default function HeroScene({ className, dark = true }) {
     const innerWireframe = new THREE.WireframeGeometry(innerGeometry);
     const innerLine = new THREE.LineSegments(
       innerWireframe,
-      new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.4 })
+      new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: innerOpacity })
     );
     group.add(innerLine);
 
     scene.add(group);
 
     // 별처럼 흩뿌려진 파티클 — 그룹을 감싸는 -12~12 큐브 범위
-    const particleCount = 500;
     const positions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount * 3; i++) {
       positions[i] = (Math.random() - 0.5) * 24;
@@ -66,9 +69,9 @@ export default function HeroScene({ className, dark = true }) {
       // 좌우로 살짝 흔들리는 건 그룹 전체(바깥+안쪽)가 함께 공유하고, Y축 회전은
       // 각자 따로 줘서 안쪽이 바깥과 명확히 반대 방향으로 돌게 한다.
       group.rotation.x = Math.sin(t * 0.1) * 0.3;
-      outerLine.rotation.y = t * 0.11;
-      innerLine.rotation.y = -t * 0.18;
-      particles.rotation.y = t * 0.02;
+      outerLine.rotation.y = t * 0.11 * intensity;
+      innerLine.rotation.y = -t * 0.18 * intensity;
+      particles.rotation.y = t * 0.02 * intensity;
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
     };
@@ -95,7 +98,7 @@ export default function HeroScene({ className, dark = true }) {
       particleMaterial.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
-  }, [dark]);
+  }, [dark, particleCount, intensity]);
 
   return <div ref={mountRef} className={className} />;
 }

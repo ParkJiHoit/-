@@ -818,14 +818,22 @@ export default function App() {
       {/* 결과 페이지 배경 */}
       {hasResults && (
         <>
-          {/* dot grid */}
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-            backgroundImage: 'radial-gradient(circle, rgba(10,132,255,0.18) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-            maskImage: 'radial-gradient(ellipse 100% 70% at 50% 0%, black 0%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 100% 70% at 50% 0%, black 0%, transparent 100%)',
-          }} />
+          {activeTab === 'rank-tracker' ? (
+            // 순위 추적은 표 형태 데이터가 많아 점그리드 대신, 랜딩에 쓰는 HeroScene을
+            // 파티클 수/불투명도/회전 속도를 낮춘 톤다운 버전으로 재사용한다.
+            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: theme === 'dark' ? 0.5 : 0.35 }}>
+              <HeroScene className="absolute inset-0" dark={theme === 'dark'} particleCount={180} intensity={0.55} />
+            </div>
+          ) : (
+            /* dot grid */
+            <div style={{
+              position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+              backgroundImage: 'radial-gradient(circle, rgba(10,132,255,0.18) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+              maskImage: 'radial-gradient(ellipse 100% 70% at 50% 0%, black 0%, transparent 100%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 100% 70% at 50% 0%, black 0%, transparent 100%)',
+            }} />
+          )}
           {/* 상단 haze */}
           <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, height: 320, zIndex: 0, pointerEvents: 'none',
