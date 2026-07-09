@@ -97,6 +97,7 @@ export default function TrackerTable({
         </div>
       )}
 
+      <div style={{ maxHeight: 560, overflowY: 'auto', borderRadius: 10, border: '1px solid var(--border)' }}>
       <table className="mac-table" style={{ tableLayout: 'fixed' }}>
         <thead>
           <tr>
@@ -151,17 +152,19 @@ export default function TrackerTable({
                 <td>
                   {isFirst ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {totalBlogCount > 1 && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleExpand(item.id); }}
-                          className="mac-expand-toggle"
-                          title={isOpen ? '접기' : `블로그 ${totalBlogCount}개 펼치기`}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 2, display: 'flex', flexShrink: 0 }}
-                        >
-                          <ChevronRight size={13} style={{ transform: isOpen ? 'rotate(90deg)' : 'none' }} />
-                        </button>
-                      )}
-                      <span style={{ color: 'var(--accent)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ width: 17, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                        {totalBlogCount > 1 && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleExpand(item.id); }}
+                            className="mac-expand-toggle"
+                            title={isOpen ? '접기' : `블로그 ${totalBlogCount}개 펼치기`}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 2, display: 'flex' }}
+                          >
+                            <ChevronRight size={13} style={{ transform: isOpen ? 'rotate(90deg)' : 'none' }} />
+                          </button>
+                        )}
+                      </span>
+                      <span style={{ color: 'var(--accent)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 0', minWidth: 0 }}>
                         {item.keyword}
                       </span>
                       <select
@@ -220,7 +223,7 @@ export default function TrackerTable({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
                     {mode === 'blog' && blogId && (
                       <button onClick={() => onRemoveBlog(item.id, blogId)} title="이 블로그만 추적에서 빼기"
-                        className="mac-icon-btn mac-icon-btn-danger"
+                        className="mac-icon-btn mac-icon-btn-danger mac-icon-btn-x"
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, display: 'flex' }}>
                         <X size={13} />
                       </button>
@@ -246,6 +249,7 @@ export default function TrackerTable({
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

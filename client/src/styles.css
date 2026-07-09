@@ -318,9 +318,27 @@ button, input, select, textarea { font: inherit; }
   color: #FF453A !important;
 }
 
+.mac-icon-btn-x svg {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mac-icon-btn-x:hover svg {
+  transform: rotate(180deg);
+}
+
+.mac-icon-btn-accent {
+  transition: background 0.15s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease, box-shadow 0.15s ease;
+}
+
 .mac-icon-btn-accent:hover {
-  background: rgba(10,132,255,0.12);
+  background: rgba(10,132,255,0.18);
   color: var(--accent) !important;
+  transform: scale(1.35);
+  box-shadow: 0 0 0 5px rgba(10,132,255,0.14);
+}
+
+.mac-icon-btn-accent:active {
+  transform: scale(1.05);
 }
 
 .mac-expand-toggle {
