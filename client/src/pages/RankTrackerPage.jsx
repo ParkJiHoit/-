@@ -20,6 +20,9 @@ const EXPORT_FONT = '맑은 고딕';
 
 const NOT_RANKED_COLOR = { bg: 'FFEEEEEE', font: 'FF9E9E9E' };
 const FETCH_FAILED_COLOR = { bg: 'FFBCAAA4', font: 'FF3E2723' };
+// 아직 등록되지 않았던 날짜(추적 시작 이전)는 진짜 미노출(X)과 헷갈리지 않도록
+// 흰 배경 + 빈 값으로 비워 두어, 회색 X 셀과 시각적으로 확실히 구분되게 한다.
+const NOT_YET_REGISTERED_COLOR = { bg: 'FFFFFFFF', font: 'FFD0D0D0' };
 
 // RankCalendar 화면 배색과 맞춘 히트맵 셀 색상 — rank==null이면 미노출, status가 fetch_failed면 조회 실패로 별도 표시.
 // 채도를 낮춘 초록→황→빨강 그라데이션으로 다듬었다.
@@ -32,10 +35,20 @@ const RANK_COLOR_TIERS = [
   { max: Infinity, bg: 'FFD9534F', font: 'FFFFFFFF' },
 ];
 
-function heatmapCellColor(snap) {
-  if (!snap) return NOT_RANKED_COLOR;
-  if (snap.status === 'fetch_failed') return FETCH_FAILED_COLOR;
-  if (snap.rank == null) return NOT_RANKED_COLOR;
+// 등록(첫 스냅샷) 이전 날짜는 진짜 미노출과 구분해야 하므로 별도 종류로 먼저 판별한다.
+function cellKind(snap, date, firstSeenDate) {
+  if (firstSeenDate && date < firstSeenDate) return 'not-yet-registered';
+  if (!snap) return 'not-exposed';
+  if (snap.status === 'fetch_failed') return 'fetch-failed';
+  if (snap.rank == null) return 'not-exposed';
+  return 'ranked';
+}
+
+function heatmapCellColor(snap, date, firstSeenDate) {
+  const kind = cellKind(snap, date, firstSeenDate);
+  if (kind === 'not-yet-registered') return NOT_YET_REGISTERED_COLOR;
+  if (kind === 'fetch-failed') return FETCH_FAILED_COLOR;
+  if (kind === 'not-exposed') return NOT_RANKED_COLOR;
   return RANK_COLOR_TIERS.find(t => snap.rank <= t.max);
 }
 
@@ -48,6 +61,7 @@ const HEATMAP_LEGEND = [
   { label: '10위', bg: 'FFD9534F', font: 'FFFFFFFF' },
   { label: '미노출', bg: 'FFEEEEEE', font: 'FF9E9E9E' },
   { label: '조회 실패', bg: 'FFBCAAA4', font: 'FF3E2723' },
+  { label: '등록 전(값 없음)', bg: 'FFFFFFFF', font: 'FFD0D0D0' },
 ];
 
 // 통합검색 노출 O/X 셀 색 — 순위 팔레트(초록~빨강)와 겹치면 구분이 안 가서
@@ -98,7 +112,7 @@ function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
   for (const r of rows) {
     const key = `${r.keyword} ${r.blogId}`;
     if (!rowMap.has(key)) {
-      rowMap.set(key, { keyword: r.keyword, searchVolume: r.searchVolume, blogId: r.blogId, mode: r.mode, registeredAt: r.registeredAt, cells: {} });
+      rowMap.set(key, { keyword: r.keyword, searchVolume: r.searchVolume, blogId: r.blogId, mode: r.mode, registeredAt: r.registeredAt, firstSeenDate: r.firstSeenDate, cells: {} });
     }
     rowMap.get(key).cells[r.date] = { rank: r.rank, status: r.status, integratedExposed: r.integratedExposed, postDate: r.postDate };
   }
@@ -166,9 +180,11 @@ function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
       dr.integratedLatest == null ? '' : (dr.integratedLatest ? 'O' : 'X'),
       ...dates.map(d => {
         const c = dr.cells[d];
-        if (!c) return 'X';
-        if (c.status === 'fetch_failed') return '실패';
-        return c.rank != null ? c.rank : 'X';
+        const kind = cellKind(c, d, dr.firstSeenDate);
+        if (kind === 'not-yet-registered') return '';
+        if (kind === 'fetch-failed') return '실패';
+        if (kind === 'not-exposed') return 'X';
+        return c.rank;
       }),
     ];
     const row = worksheet.addRow(values);
@@ -186,7 +202,7 @@ function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
 
     dates.forEach((d, i) => {
       const cell = row.getCell(infoColCount + 1 + i);
-      const color = heatmapCellColor(dr.cells[d]);
+      const color = heatmapCellColor(dr.cells[d], d, dr.firstSeenDate);
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: color.bg } };
       cell.font = { name: EXPORT_FONT, size: 10, bold: true, color: { argb: color.font } };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };

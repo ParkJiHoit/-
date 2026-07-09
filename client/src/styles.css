@@ -264,6 +264,7 @@ button, input, select, textarea { font: inherit; }
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 9px 14px;
+  text-align: left;
   position: sticky;
   top: 0;
   z-index: 5;
@@ -297,6 +298,43 @@ button, input, select, textarea { font: inherit; }
 .mac-table tbody td.td-active {
   color: var(--accent);
   font-weight: 600;
+}
+
+.mac-icon-btn {
+  transition: background 0.15s ease, transform 0.12s ease, color 0.15s ease;
+  border-radius: 6px;
+}
+
+.mac-icon-btn:hover {
+  transform: scale(1.15);
+}
+
+.mac-icon-btn:active {
+  transform: scale(0.92);
+}
+
+.mac-icon-btn-danger:hover {
+  background: rgba(255,69,58,0.12);
+  color: #FF453A !important;
+}
+
+.mac-icon-btn-accent:hover {
+  background: rgba(10,132,255,0.12);
+  color: var(--accent) !important;
+}
+
+.mac-expand-toggle {
+  transition: background 0.15s ease, transform 0.15s ease, color 0.15s ease;
+  border-radius: 6px;
+}
+
+.mac-expand-toggle:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary) !important;
+}
+
+.mac-expand-toggle svg {
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 
