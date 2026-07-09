@@ -1,5 +1,7 @@
 # 순위 추적 페이지 리디자인 Implementation Plan
 
+> ✅ **구현 완료 (2026-07-09, PR #27 머지).** Task 1~7의 모든 구현 스텝을 실행·커밋했다. 서버 테스트 30/30 통과, 클라이언트 빌드 성공, 목업 데이터로 브라우저 시각 검증(통계 카드·툴바·테이블 그룹핑·오버레이 드로워)을 마쳤다. Task 8의 남은 미체크 항목은 실제 로그인 상태에서 사람이 직접 눌러 확인해야 하는 항목(실 백엔드 전체 갱신 잡, 엑셀 다운로드 등)이다.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** `client/src/pages/RankTrackerPage.jsx`의 레이아웃을 카드 리스트 + 고정 상세 패널 구조에서, 통계 카드 + 툴바 + 정렬 가능한 테이블 + 오버레이 드로워 구조로 전면 교체한다.
@@ -18,7 +20,7 @@
 
 ---
 
-### Task 1: 백엔드 — 목록 조회에 검색량·통합검색 노출 추가
+### ✅ Task 1: 백엔드 — 목록 조회에 검색량·통합검색 노출 추가
 
 **Files:**
 - Modify: `server/services/rankTrackerService.js:103-123` (`listTracked` 함수)
@@ -27,7 +29,7 @@
 - Consumes: 없음 (기존 `getPool()` 재사용)
 - Produces: `listTracked(userId)`가 반환하는 각 항목에 `searchVolume`(숫자 또는 null) 필드 추가, `latestRanks[blogId]`에 `integratedExposed`(boolean 또는 null) 필드 추가. 나머지 필드(`id`, `keyword`, `mode`, `blog_ids`, `group_id`, `created_at`, `last_refreshed_at`)는 기존과 동일.
 
-- [ ] **Step 1: 기존 `listTracked` 함수를 찾아 교체**
+- [x] **Step 1: 기존 `listTracked` 함수를 찾아 교체**
 
 `server/services/rankTrackerService.js`에서 아래 함수를 찾는다:
 
@@ -92,17 +94,17 @@ export async function listTracked(userId) {
 
 이 코드는 `server/services/rankTrackerService.js`의 `exportSnapshots` 함수(이미 같은 파일에 있음)가 검색량과 `integrated_exposed`를 계산하는 방식과 동일한 패턴을 따른다.
 
-- [ ] **Step 2: 문법 오류 없는지 확인**
+- [x] **Step 2: 문법 오류 없는지 확인**
 
 Run: `cd server && node --check services/rankTrackerService.js`
 Expected: 아무 출력 없이 종료 (문법 오류 없음)
 
-- [ ] **Step 3: 기존 테스트 회귀 확인**
+- [x] **Step 3: 기존 테스트 회귀 확인**
 
 Run: `cd server && npm test`
 Expected: `tests 30`, `pass 30`, `fail 0` (이 함수는 DB 연결이 필요해 단위 테스트 대상이 아니므로, 다른 순수 함수 테스트들이 그대로 통과하는지만 확인)
 
-- [ ] **Step 4: 커밋**
+- [x] **Step 4: 커밋**
 
 ```bash
 git add server/services/rankTrackerService.js
@@ -111,7 +113,7 @@ git commit -m "feat: include search volume and integrated exposure in tracked ke
 
 ---
 
-### Task 2: 프론트 — 공용 포맷 유틸 분리
+### ✅ Task 2: 프론트 — 공용 포맷 유틸 분리
 
 **Files:**
 - Create: `client/src/components/rankTracker/trackerFormat.js`
@@ -120,7 +122,7 @@ git commit -m "feat: include search volume and integrated exposure in tracked ke
 **Interfaces:**
 - Produces: `formatKSTDateTime(isoString) => string` ("YYYY-MM-DD HH:MM" 형식, KST 보정), `formatRankStatus(rank, status) => {label, color}`. Task 4(TrackerToolbar), Task 5(TrackerTable), Task 6(TrackerDetailDrawer)가 이 두 함수를 그대로 가져다 쓴다.
 
-- [ ] **Step 1: 공용 유틸 파일 생성**
+- [x] **Step 1: 공용 유틸 파일 생성**
 
 `client/src/components/rankTracker/trackerFormat.js`:
 
@@ -142,7 +144,7 @@ export function formatRankStatus(rank, status) {
 }
 ```
 
-- [ ] **Step 2: `RankTrackerPage.jsx`에서 중복 정의 제거하고 import로 교체**
+- [x] **Step 2: `RankTrackerPage.jsx`에서 중복 정의 제거하고 import로 교체**
 
 파일 최상단 `import { useState, useEffect, useCallback } from 'react';` 바로 다음 줄에 추가:
 
@@ -172,12 +174,12 @@ function formatRankStatus(rank, status) {
 }
 ```
 
-- [ ] **Step 3: 빌드 확인 (동작 변화 없어야 함)**
+- [x] **Step 3: 빌드 확인 (동작 변화 없어야 함)**
 
 Run: `cd client && npm run build`
 Expected: 성공. 이 태스크는 순수 리팩터라 런타임 동작이 하나도 바뀌지 않아야 한다.
 
-- [ ] **Step 4: 커밋**
+- [x] **Step 4: 커밋**
 
 ```bash
 git add client/src/components/rankTracker/trackerFormat.js client/src/pages/RankTrackerPage.jsx
@@ -186,7 +188,7 @@ git commit -m "refactor: extract formatKSTDateTime/formatRankStatus into shared 
 
 ---
 
-### Task 3: 프론트 — `TrackerStatCards` 컴포넌트
+### ✅ Task 3: 프론트 — `TrackerStatCards` 컴포넌트
 
 **Files:**
 - Create: `client/src/components/rankTracker/TrackerStatCards.jsx`
@@ -196,7 +198,7 @@ git commit -m "refactor: extract formatKSTDateTime/formatRankStatus into shared 
 - Produces: `export default function TrackerStatCards({ mode, filteredItems })`. Task 7이 `<TrackerStatCards mode={mode} filteredItems={filteredItems} />`로 사용.
   - `filteredItems`의 각 항목은 `{ id, keyword, mode, blog_ids, group_id, searchVolume, latestRanks: { [blogId]: { rank, status, integratedExposed } } }` 형태 (Task 1 완료 후의 목록 API 응답 형태).
 
-- [ ] **Step 1: 컴포넌트 작성**
+- [x] **Step 1: 컴포넌트 작성**
 
 `client/src/components/rankTracker/TrackerStatCards.jsx`:
 
@@ -273,12 +275,12 @@ export default function TrackerStatCards({ mode, filteredItems }) {
 }
 ```
 
-- [ ] **Step 2: 빌드 확인**
+- [x] **Step 2: 빌드 확인**
 
 Run: `cd client && npm run build`
 Expected: 성공. (아직 어디서도 `import`하지 않으므로 이 단계에서는 화면에 나타나지 않음 — Task 7에서 연결)
 
-- [ ] **Step 3: 커밋**
+- [x] **Step 3: 커밋**
 
 ```bash
 git add client/src/components/rankTracker/TrackerStatCards.jsx
@@ -287,7 +289,7 @@ git commit -m "feat: add TrackerStatCards component"
 
 ---
 
-### Task 4: 프론트 — `TrackerToolbar` 컴포넌트
+### ✅ Task 4: 프론트 — `TrackerToolbar` 컴포넌트
 
 **Files:**
 - Create: `client/src/components/rankTracker/TrackerToolbar.jsx`
@@ -299,7 +301,7 @@ git commit -m "feat: add TrackerStatCards component"
   - `onSearchChange(value: string)`
   - `filteredItems`는 Task 3과 동일한 형태 — "최근 갱신" 텍스트와 버튼 노출 여부(`length > 0`) 계산에 사용.
 
-- [ ] **Step 1: 컴포넌트 작성**
+- [x] **Step 1: 컴포넌트 작성**
 
 `client/src/components/rankTracker/TrackerToolbar.jsx`:
 
@@ -389,12 +391,12 @@ export default function TrackerToolbar({
 }
 ```
 
-- [ ] **Step 2: 빌드 확인**
+- [x] **Step 2: 빌드 확인**
 
 Run: `cd client && npm run build`
 Expected: 성공.
 
-- [ ] **Step 3: 커밋**
+- [x] **Step 3: 커밋**
 
 ```bash
 git add client/src/components/rankTracker/TrackerToolbar.jsx
@@ -403,7 +405,7 @@ git commit -m "feat: add TrackerToolbar component"
 
 ---
 
-### Task 5: 프론트 — `TrackerTable` 컴포넌트
+### ✅ Task 5: 프론트 — `TrackerTable` 컴포넌트
 
 **Files:**
 - Create: `client/src/components/rankTracker/TrackerTable.jsx`
@@ -417,7 +419,7 @@ git commit -m "feat: add TrackerToolbar component"
   - `selectedIds`는 `Set<number>` (tracked_keyword id 집합).
   - `onToggleSelect(id)`, `onToggleSelectAll()`, `onRowClick(item)`, `onMoveItemGroup(itemId, groupId)`, `onAddBlog(item)`, `onRemoveBlog(itemId, blogId)`, `onDeleteKeyword(itemId)`, `onBulkDeleteSelected(ids: number[])` — 전부 기존 `RankTrackerPage.jsx`에 이미 있는 핸들러와 같은 시그니처.
 
-- [ ] **Step 1: 컴포넌트 작성**
+- [x] **Step 1: 컴포넌트 작성**
 
 `client/src/components/rankTracker/TrackerTable.jsx`:
 
@@ -621,12 +623,12 @@ export default function TrackerTable({
 }
 ```
 
-- [ ] **Step 2: 빌드 확인**
+- [x] **Step 2: 빌드 확인**
 
 Run: `cd client && npm run build`
 Expected: 성공.
 
-- [ ] **Step 3: 커밋**
+- [x] **Step 3: 커밋**
 
 ```bash
 git add client/src/components/rankTracker/TrackerTable.jsx
@@ -635,7 +637,7 @@ git commit -m "feat: add TrackerTable component"
 
 ---
 
-### Task 6: 프론트 — `TrackerDetailDrawer` 컴포넌트
+### ✅ Task 6: 프론트 — `TrackerDetailDrawer` 컴포넌트
 
 **Files:**
 - Create: `client/src/components/rankTracker/TrackerDetailDrawer.jsx`
@@ -646,7 +648,7 @@ git commit -m "feat: add TrackerTable component"
   - `open`이 falsy거나 `selected`가 null이면 아무것도 렌더링하지 않는다(`null` 반환).
   - ESC 키로도 `onClose`가 호출되어야 한다.
 
-- [ ] **Step 1: 컴포넌트 작성**
+- [x] **Step 1: 컴포넌트 작성**
 
 `client/src/components/rankTracker/TrackerDetailDrawer.jsx`:
 
@@ -815,12 +817,12 @@ export default function TrackerDetailDrawer({ open, onClose, mode, selected, sna
 }
 ```
 
-- [ ] **Step 2: 빌드 확인**
+- [x] **Step 2: 빌드 확인**
 
 Run: `cd client && npm run build`
 Expected: 성공.
 
-- [ ] **Step 3: 커밋**
+- [x] **Step 3: 커밋**
 
 ```bash
 git add client/src/components/rankTracker/TrackerDetailDrawer.jsx
@@ -829,7 +831,7 @@ git commit -m "feat: add TrackerDetailDrawer component"
 
 ---
 
-### Task 7: 프론트 — `RankTrackerPage.jsx` 통합
+### ✅ Task 7: 프론트 — `RankTrackerPage.jsx` 통합
 
 **Files:**
 - Modify: `client/src/pages/RankTrackerPage.jsx`
@@ -838,7 +840,7 @@ git commit -m "feat: add TrackerDetailDrawer component"
 - Consumes: Task 3의 `TrackerStatCards`, Task 4의 `TrackerToolbar`, Task 5의 `TrackerTable`, Task 6의 `TrackerDetailDrawer` — 각 컴포넌트의 시그니처는 위 태스크들에 정의된 그대로.
 - Produces: 없음 (최종 조립 지점)
 
-- [ ] **Step 1: import 블록 교체**
+- [x] **Step 1: import 블록 교체**
 
 파일 최상단의 import 블록(현재 아래 형태 — Task 2에서 `trackerFormat` import가 이미 추가된 상태):
 
@@ -867,7 +869,7 @@ import { X } from 'lucide-react';
 
 (`RankCalendar`/`RankChart`는 이제 `TrackerDetailDrawer` 내부에서만 쓰이므로 페이지 레벨 import 제거. `formatKSTDateTime`/`formatRankStatus`도 페이지에서 직접 호출하는 곳이 이 태스크로 없어지므로 제거. `lucide-react`는 파일 뒤쪽의 `AddTrackerModal`이 `X` 아이콘만 쓰므로 `X`만 남긴다.)
 
-- [ ] **Step 2: 정렬 상태 + 전체선택 핸들러 추가**
+- [x] **Step 2: 정렬 상태 + 전체선택 핸들러 추가**
 
 `const [searchQuery, setSearchQuery] = useState('');` 바로 다음 줄에 추가:
 
@@ -889,7 +891,7 @@ import { X } from 'lucide-react';
 
 (`filteredItems`는 이 함수 아래에 정의돼 있지만, `handleToggleSelectAll`은 실제로 호출될 때(렌더 이후 이벤트)만 `filteredItems`를 참조하므로 클로저상 문제없다 — 파일 내 다른 핸들러들도 동일한 패턴을 이미 쓰고 있음.)
 
-- [ ] **Step 3: 더 이상 쓰지 않는 로컬 변수 제거**
+- [x] **Step 3: 더 이상 쓰지 않는 로컬 변수 제거**
 
 아래 4줄을 찾아서 삭제한다(각각 `TrackerDetailDrawer` 내부로 옮겨졌으므로 페이지 레벨에서는 불필요):
 
@@ -902,7 +904,7 @@ import { X } from 'lucide-react';
     : [];
 ```
 
-- [ ] **Step 4: 메인 return의 JSX를 통째로 교체**
+- [x] **Step 4: 메인 return의 JSX를 통째로 교체**
 
 `if (!user) { ... }` 블록 다음의 `return (` 부터, 그 함수의 마지막 `);` `}` (그 다음에 `function AddTrackerModal` 정의가 이어짐) 까지 — 즉 모드 탭부터 시작해서 `<style>{...}</style>` 태그까지 포함한 전체 반환 블록 — 을 아래로 교체한다:
 
@@ -1025,17 +1027,17 @@ import { X } from 'lucide-react';
 
 (마지막 `}`는 `RankTrackerPage` 함수 자체를 닫는 괄호 — 그 다음에 이어지는 `function AddTrackerModal(...) { ... }`는 손대지 않고 그대로 둔다.)
 
-- [ ] **Step 5: 빌드 확인**
+- [x] **Step 5: 빌드 확인**
 
 Run: `cd client && npm run build`
 Expected: 성공.
 
-- [ ] **Step 6: 사용하지 않는 변수/미정의 참조 확인**
+- [x] **Step 6: 사용하지 않는 변수/미정의 참조 확인**
 
 Run: `grep -nE "RankCalendar|RankChart|formatKSTDateTime|formatRankStatus|RefreshCw|ExternalLink|Pencil|Download" client/src/pages/RankTrackerPage.jsx`
 Expected: 결과가 전혀 없거나(0건), 있다면 전부 `AddTrackerModal` 함수 밖(사용하지 않는 곳)이 아닌지 확인 — 이 시점엔 페이지 상단에서 이 이름들을 더는 참조하지 않아야 한다.
 
-- [ ] **Step 7: 커밋**
+- [x] **Step 7: 커밋**
 
 ```bash
 git add client/src/pages/RankTrackerPage.jsx
@@ -1044,7 +1046,7 @@ git commit -m "feat: compose rank tracker page from stat cards, toolbar, table, 
 
 ---
 
-### Task 8: 수동 통합 검증
+### ✅ Task 8: 수동 통합 검증
 
 **Files:** 없음 (코드 변경 없음, 검증만)
 
@@ -1052,7 +1054,7 @@ git commit -m "feat: compose rank tracker page from stat cards, toolbar, table, 
 - Consumes: Task 1~7의 전체 결과물
 - Produces: 없음
 
-- [ ] **Step 1: 서버·클라이언트 로컬 구동**
+- [x] **Step 1: 서버·클라이언트 로컬 구동**
 
 ```bash
 cd server && npm run dev
@@ -1064,7 +1066,7 @@ cd server && npm run dev
 cd client && npm run dev
 ```
 
-- [ ] **Step 2: 화면 확인 체크리스트**
+- [x] **Step 2: 화면 확인 체크리스트**
 
 브라우저에서 로그인 후 "순위 추적" 탭으로 이동해 아래를 모두 확인한다:
 
@@ -1080,7 +1082,7 @@ cd client && npm run dev
 - [ ] "블로그 URL 추가"(+) 버튼과 "이 블로그만 빼기"(✕) 버튼이 정상 동작함
 - [ ] "전체 순위 모드" 탭으로 전환해도 위 항목들이 (모드에 맞게 컬럼이 줄어든 채로) 정상 동작함
 
-- [ ] **Step 3: 최종 빌드 재확인**
+- [x] **Step 3: 최종 빌드 재확인**
 
 ```bash
 cd client && npm run build
@@ -1088,7 +1090,7 @@ cd client && npm run build
 
 Expected: 성공.
 
-- [ ] **Step 4: 서버 테스트 재확인 + 푸시**
+- [x] **Step 4: 서버 테스트 재확인 + 푸시**
 
 ```bash
 cd server && npm test
