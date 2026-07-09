@@ -1,17 +1,24 @@
-import { Plus, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Trash2, X, ChevronRight } from 'lucide-react';
 import { formatRankStatus } from './trackerFormat';
 
-const SORT_DEFAULT_DIR = { keyword: 'asc', searchVolume: 'desc', rank: 'asc' };
+const SORT_DEFAULT_DIR = { keyword: 'asc', searchVolume: 'desc', rank: 'asc', addedDate: 'desc' };
 
 function bestRank(item) {
   const ranks = Object.values(item.latestRanks || {}).filter(r => r.rank != null).map(r => r.rank);
   return ranks.length ? Math.min(...ranks) : null;
 }
 
+function earliestAddedDate(item) {
+  const dates = Object.values(item.latestRanks || {}).map(r => r.addedDate).filter(Boolean);
+  return dates.length ? dates.sort()[0] : null;
+}
+
 function getSortValue(item, key) {
   if (key === 'keyword') return item.keyword;
   if (key === 'searchVolume') return item.searchVolume ?? -1;
   if (key === 'rank') return bestRank(item) ?? 999;
+  if (key === 'addedDate') return earliestAddedDate(item) || '';
   return 0;
 }
 
@@ -21,6 +28,15 @@ export default function TrackerTable({
   onRowClick, onMoveItemGroup, onAddBlog, onRemoveBlog, onDeleteKeyword, onBulkDeleteSelected,
   loading,
 }) {
+  const [expanded, setExpanded] = useState(new Set());
+  const toggleExpand = (id) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-tertiary)', fontSize: 13 }}>불러오는 중…</div>;
   }
@@ -45,9 +61,12 @@ export default function TrackerTable({
   for (const item of sortedItems) {
     const blogIds = mode === 'blog' ? (item.blog_ids || []) : [];
     if (!blogIds.length) {
-      flatRows.push({ item, blogId: null, isFirst: true });
+      flatRows.push({ item, blogId: null, isFirst: true, isOpen: false, hiddenCount: 0 });
     } else {
-      blogIds.forEach((blogId, i) => flatRows.push({ item, blogId, isFirst: i === 0 }));
+      const isOpen = blogIds.length > 1 && expanded.has(item.id);
+      const visibleIds = blogIds.length > 1 && !isOpen ? blogIds.slice(0, 1) : blogIds;
+      const hiddenCount = blogIds.length - visibleIds.length;
+      visibleIds.forEach((blogId, i) => flatRows.push({ item, blogId, isFirst: i === 0, isOpen, hiddenCount }));
     }
   }
 
@@ -87,7 +106,11 @@ export default function TrackerTable({
             <th className={sortKey === 'keyword' ? 'th-active' : ''} onClick={() => headerClick('keyword')} style={{ cursor: 'pointer', width: '22%' }}>
               키워드{sortArrow('keyword')}
             </th>
-            {mode === 'blog' && <th style={{ width: '26%' }}>블로그</th>}
+            {mode === 'blog' && (
+              <th className={sortKey === 'addedDate' ? 'th-active' : ''} onClick={() => headerClick('addedDate')} style={{ cursor: 'pointer', width: '26%' }}>
+                블로그{sortArrow('addedDate')}
+              </th>
+            )}
             <th className={sortKey === 'searchVolume' ? 'th-active' : ''} onClick={() => headerClick('searchVolume')} style={{ cursor: 'pointer', width: '12%' }}>
               검색량{sortArrow('searchVolume')}
             </th>
@@ -99,8 +122,9 @@ export default function TrackerTable({
           </tr>
         </thead>
         <tbody>
-          {flatRows.map(({ item, blogId, isFirst }, i) => {
+          {flatRows.map(({ item, blogId, isFirst, isOpen, hiddenCount }, i) => {
             const entry = blogId ? item.latestRanks?.[blogId] ?? null : null;
+            const totalBlogCount = mode === 'blog' ? (item.blog_ids || []).length : 0;
             const { label, color } = formatRankStatus(entry?.rank ?? null, entry?.status ?? null);
             const best = bestRank(item);
             const allLabel = best != null ? `최고 ${best}위` : '기록 없음';
@@ -127,6 +151,16 @@ export default function TrackerTable({
                 <td>
                   {isFirst ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {totalBlogCount > 1 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleExpand(item.id); }}
+                          className="mac-expand-toggle"
+                          title={isOpen ? '접기' : `블로그 ${totalBlogCount}개 펼치기`}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 2, display: 'flex', flexShrink: 0 }}
+                        >
+                          <ChevronRight size={13} style={{ transform: isOpen ? 'rotate(90deg)' : 'none' }} />
+                        </button>
+                      )}
                       <span style={{ color: 'var(--accent)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.keyword}
                       </span>
@@ -150,8 +184,25 @@ export default function TrackerTable({
                   )}
                 </td>
                 {mode === 'blog' && (
-                  <td style={{ color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {blogId || '—'}
+                  <td style={{ color: 'var(--text-secondary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                      <span style={{ flex: '0 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {blogId || '—'}
+                      </span>
+                      {entry?.addedDate && (
+                        <span style={{ flexShrink: 0, fontSize: 11, color: 'var(--text-tertiary)' }}>
+                          · {entry.addedDate} 등록
+                        </span>
+                      )}
+                      {isFirst && !isOpen && hiddenCount > 0 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleExpand(item.id); }}
+                          style={{ flexShrink: 0, fontSize: 11, fontWeight: 600, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                        >
+                          외 {hiddenCount}개
+                        </button>
+                      )}
+                    </div>
                   </td>
                 )}
                 <td>{isFirst ? (item.searchVolume ?? '—') : ''}</td>
@@ -169,18 +220,21 @@ export default function TrackerTable({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
                     {mode === 'blog' && blogId && (
                       <button onClick={() => onRemoveBlog(item.id, blogId)} title="이 블로그만 추적에서 빼기"
+                        className="mac-icon-btn mac-icon-btn-danger"
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, display: 'flex' }}>
                         <X size={13} />
                       </button>
                     )}
                     {isFirst && mode === 'blog' && (
                       <button onClick={() => onAddBlog(item)} title="블로그 URL 추가"
+                        className="mac-icon-btn mac-icon-btn-accent"
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: 4, display: 'flex' }}>
                         <Plus size={13} />
                       </button>
                     )}
                     {isFirst && (
                       <button onClick={() => onDeleteKeyword(item.id)} title="삭제"
+                        className="mac-icon-btn mac-icon-btn-danger"
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, display: 'flex' }}>
                         <Trash2 size={13} />
                       </button>

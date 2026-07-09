@@ -108,8 +108,12 @@ export async function listTracked(userId) {
     [userId]
   );
   const result = await Promise.all(rows.map(async (row) => {
+    // added_date는 blog_id별 최초 스냅샷일(윈도우 함수로 전체 이력 기준 계산 — LIMIT 20으로
+    // 잘리기 전에 집계되므로 정확함) — 별도 등록일 저장 컬럼이 없어 "처음 추적된 날짜"를
+    // 등록일의 근사치로 보여준다(등록 직후 아직 한 번도 갱신 안 했다면 null).
     const { rows: snaps } = await pool.query(
-      `SELECT blog_id, rank, status, integrated_exposed, TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
+      `SELECT blog_id, rank, status, integrated_exposed, TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at,
+              TO_CHAR(MIN(snapshotted_at) OVER (PARTITION BY blog_id), 'YYYY-MM-DD') AS added_date
        FROM rank_snapshots WHERE tracked_id = $1 ORDER BY snapshotted_at DESC LIMIT 20`,
       [row.id]
     );
@@ -120,6 +124,7 @@ export async function listTracked(userId) {
           rank: s.rank,
           status: s.status,
           integratedExposed: row.mode === 'blog' ? s.integrated_exposed : null,
+          addedDate: s.added_date,
         };
       }
     }
@@ -235,6 +240,16 @@ export async function exportSnapshots(userId, trackedIds) {
     return (info.blog_ids || []).includes(s.blog_id);
   });
 
+  // blog_id는 키워드 생성 이후에도 추가될 수 있어(onAddBlog) tracked_keywords.created_at을
+  // "이 블로그의 등록일"로 쓰면 부정확하다 — blog_id별 최초 스냅샷 날짜를 실제 등록일
+  // 근사치로 따로 구해, 등록 이전 날짜(값 없음)와 등록 이후 진짜 미노출(X)을 구분할 수 있게 한다.
+  const firstSeenByKey = new Map();
+  for (const s of filtered) {
+    const key = `${s.tracked_id}::${s.blog_id}`;
+    const prev = firstSeenByKey.get(key);
+    if (!prev || s.snapshotted_at < prev) firstSeenByKey.set(key, s.snapshotted_at);
+  }
+
   return filtered.map(s => {
     const info = idToInfo.get(s.tracked_id);
     return {
@@ -249,6 +264,7 @@ export async function exportSnapshots(userId, trackedIds) {
       postLink: s.post_link,
       postDate: s.post_date,
       registeredAt: info?.registered_at || null,
+      firstSeenDate: firstSeenByKey.get(`${s.tracked_id}::${s.blog_id}`) || null,
       integratedExposed: s.integrated_exposed,
       searchVolume: (info?.pc_search != null || info?.mobile_search != null)
         ? (info.pc_search || 0) + (info.mobile_search || 0)
