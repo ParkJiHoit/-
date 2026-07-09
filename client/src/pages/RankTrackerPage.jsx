@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { formatKSTDateTime, formatRankStatus } from '../components/rankTracker/trackerFormat';
 import { useAuth } from '../AuthContext';
 import RankCalendar from '../components/RankCalendar';
 import RankChart from '../components/RankChart';
@@ -7,13 +8,6 @@ import { RefreshCw, Plus, Trash2, X, ExternalLink, Pencil, Download } from 'luci
 
 function getKSTToday() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
-}
-
-function formatKSTDateTime(isoString) {
-  const d = new Date(new Date(isoString).getTime() + 9 * 60 * 60 * 1000);
-  const date = d.toISOString().slice(0, 10);
-  const hm = d.toISOString().slice(11, 16);
-  return `${date} ${hm}`;
 }
 
 // exceljs는 8자리 ARGB(FF + 6자리 RGB) 헥스를 쓴다. 모든 데이터 셀에 옅은 회색 테두리를
@@ -296,14 +290,6 @@ async function apiFetch(path, options, token) {
 }
 
 // status는 이미 상위 5위 판정을 반영한다(백엔드 refreshRanks) — 'ranked'일 때만 숫자를 보여준다.
-function formatRankStatus(rank, status) {
-  if (status === 'fetch_failed') return { label: '⚠ 조회 실패', color: '#FF9F0A' };
-  if (status === 'ranked' && rank != null) {
-    return { label: `${rank}위`, color: rank <= 3 ? '#30D158' : '#FF9F0A' };
-  }
-  return { label: '미노출', color: 'var(--text-tertiary)' };
-}
-
 export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const { user, session } = useAuth();
   const token = session?.access_token;
