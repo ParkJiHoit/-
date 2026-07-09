@@ -103,21 +103,30 @@ export async function backfillSearchVolumeChunk(userId) {
 export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at FROM tracked_keywords
-     WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC`,
+    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search
+     FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC`,
     [userId]
   );
   const result = await Promise.all(rows.map(async (row) => {
     const { rows: snaps } = await pool.query(
-      `SELECT blog_id, rank, status, TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
+      `SELECT blog_id, rank, status, integrated_exposed, TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at
        FROM rank_snapshots WHERE tracked_id = $1 ORDER BY snapshotted_at DESC LIMIT 20`,
       [row.id]
     );
     const latestByBlog = {};
     for (const s of snaps) {
-      if (!latestByBlog[s.blog_id]) latestByBlog[s.blog_id] = { rank: s.rank, status: s.status };
+      if (!latestByBlog[s.blog_id]) {
+        latestByBlog[s.blog_id] = {
+          rank: s.rank,
+          status: s.status,
+          integratedExposed: row.mode === 'blog' ? s.integrated_exposed : null,
+        };
+      }
     }
-    return { ...row, latestRanks: latestByBlog };
+    const searchVolume = (row.pc_search != null || row.mobile_search != null)
+      ? (row.pc_search || 0) + (row.mobile_search || 0)
+      : null;
+    return { ...row, latestRanks: latestByBlog, searchVolume };
   }));
   return result;
 }
