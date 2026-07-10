@@ -473,6 +473,18 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     } catch (e) { setError(e.message); }
   };
 
+  // 즐겨찾기는 상단 고정이 바로 눈에 보여야 자연스러워서 낙관적으로 먼저 반영하고,
+  // 실패하면 되돌린다.
+  const handleToggleFavorite = async (itemId, favorite) => {
+    setItems(prev => prev.map(i => i.id === itemId ? { ...i, is_favorite: favorite } : i));
+    try {
+      await apiFetch(`/${itemId}/favorite`, { method: 'PATCH', body: JSON.stringify({ favorite }) }, token);
+    } catch (e) {
+      setItems(prev => prev.map(i => i.id === itemId ? { ...i, is_favorite: !favorite } : i));
+      setError(e.message);
+    }
+  };
+
   const selectItem = useCallback(async (item) => {
     setSelected(item);
     setSnapshots([]);
@@ -780,6 +792,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         onToggleSelectAll={handleToggleSelectAll}
         onRowClick={selectItem}
         onMoveItemGroup={handleMoveItemGroup}
+        onToggleFavorite={handleToggleFavorite}
         onAddBlog={(item) => { setEditItem(item); setShowModal(true); }}
         onRemoveBlog={handleRemoveBlog}
         onDeleteKeyword={handleDelete}

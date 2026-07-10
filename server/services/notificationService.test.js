@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { diffRankChanges } from './notificationService.js';
+import { diffRankChanges, formatChangeMessage } from './notificationService.js';
 
 test('처음 순위권에 진입하면 rank_in 변화를 반환한다', () => {
   const previous = new Map();
@@ -52,4 +52,15 @@ test('조회 실패(fetch_failed) 행은 변화 계산에서 제외한다', () =
   const upserts = [{ blog_id: 'a', rank: null, status: 'fetch_failed', integrated_exposed: null }];
   const changes = diffRankChanges(previous, upserts);
   assert.deepEqual(changes, []);
+});
+
+test('즐겨찾기 키워드는 Slack 메시지 제목에 별 이모지와 "핵심 키워드" 라벨이 붙는다', () => {
+  const msg = formatChangeMessage('키워드A', [{ blogId: 'a', kind: 'rank_in', rank: 2 }], true);
+  assert.match(msg, /^⭐ \*\[키워드A\]\* 핵심 키워드 순위 변동 알림 ⭐/);
+});
+
+test('즐겨찾기가 아니면 기존과 동일한 제목 형식을 유지한다', () => {
+  const msg = formatChangeMessage('키워드A', [{ blogId: 'a', kind: 'rank_in', rank: 2 }], false);
+  assert.match(msg, /^\*\[키워드A\]\* 순위 변동 알림/);
+  assert.doesNotMatch(msg, /⭐/);
 });

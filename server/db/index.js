@@ -81,6 +81,8 @@ export async function initDb() {
     -- 키워드 등록 시 딱 한 번만 조회해두는 월간 검색량(순위 갱신 때마다 다시 조회하지 않음).
     ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS pc_search INTEGER;
     ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS mobile_search INTEGER;
+    -- 즐겨찾기 — 체크하면 목록 상단에 고정되고, Slack 알림에서도 강조 표시된다.
+    ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN NOT NULL DEFAULT FALSE;
     CREATE TABLE IF NOT EXISTS rank_snapshots (
       id             SERIAL PRIMARY KEY,
       tracked_id     INTEGER     NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,
