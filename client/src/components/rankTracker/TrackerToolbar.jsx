@@ -1,4 +1,4 @@
-import { RefreshCw, Plus, Trash2, Download, Pencil, Bell } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Download, Pencil, Bell, Share2 } from 'lucide-react';
 import { formatKSTDateTime } from './trackerFormat';
 
 export default function TrackerToolbar({
@@ -7,7 +7,7 @@ export default function TrackerToolbar({
   filteredItems,
   refreshingAll, refreshAllProgress, onRefreshAll,
   failedJobId, onRetryFailed,
-  onExport, onOpenBulkModal, onOpenAddModal, onOpenNotificationSettings,
+  onExport, onOpenBulkModal, onOpenAddModal, onOpenNotificationSettings, onOpenShareModal,
 }) {
   const lastRefreshed = filteredItems.reduce((acc, i) => (
     i.last_refreshed_at && (!acc || i.last_refreshed_at > acc) ? i.last_refreshed_at : acc
@@ -39,6 +39,9 @@ export default function TrackerToolbar({
           </button>
           <button onClick={onDeleteGroup} title="그룹 삭제" className="mac-btn-ghost mac-btn-sm" style={{ display: 'flex', padding: 6, color: '#FF453A' }}>
             <Trash2 size={12} />
+          </button>
+          <button onClick={onOpenShareModal} title="이 그룹 리포트 공유" className="mac-btn-ghost mac-btn-sm" style={{ display: 'flex', padding: 6 }}>
+            <Share2 size={12} />
           </button>
         </>
       )}
