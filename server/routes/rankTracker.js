@@ -8,6 +8,7 @@ import {
 } from '../services/rankTrackerService.js';
 import { parseBulkImportText, groupParsedRows, normalizeKeyword } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
+import { getSubscriptionStatus } from '../services/subscriptionService.js';
 import { getPool } from '../db/index.js';
 import { createRefreshJob, processNextChunk, getJobStatus, retryFailedItems } from '../services/refreshJobService.js';
 import { getNotificationSettings, saveNotificationSettings, sendTestSlackMessage } from '../services/notificationService.js';
@@ -30,15 +31,8 @@ async function requireAuth(req, res, next) {
     req.userId = user.id;
     req.isAdmin = ADMIN_EMAILS.includes(user.email);
     if (!req.isAdmin) {
-      const pool = getPool();
-      if (pool) {
-        const { rows } = await pool.query(
-          `SELECT status FROM subscriptions WHERE user_id = $1 LIMIT 1`,
-          [user.id]
-        );
-        const s = rows[0]?.status;
-        req.isSubscribed = s === 'active' || s === 'trialing';
-      }
+      const { isSubscribed } = await getSubscriptionStatus(user.id, user.created_at);
+      req.isSubscribed = isSubscribed;
     }
     next();
   } catch {

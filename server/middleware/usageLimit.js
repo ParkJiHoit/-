@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { getPool } from '../db/index.js';
+import { getSubscriptionStatus } from '../services/subscriptionService.js';
 
 // 베이직 플랜 일별 한도
 const BASIC_LIMITS = {
@@ -48,15 +49,8 @@ export async function optionalAuth(req, _res, next) {
       req.userId = user.id;
       req.isAdmin = ADMIN_EMAILS.includes(user.email);
       if (!req.isAdmin) {
-        const pool = getPool();
-        if (pool) {
-          const { rows } = await pool.query(
-            `SELECT status FROM subscriptions WHERE user_id = $1 LIMIT 1`,
-            [user.id]
-          );
-          const s = rows[0]?.status;
-          req.isSubscribed = s === 'active' || s === 'trialing';
-        }
+        const { isSubscribed } = await getSubscriptionStatus(user.id, user.created_at);
+        req.isSubscribed = isSubscribed;
       }
     }
   } catch { /* 인증 실패해도 non-blocking */ }

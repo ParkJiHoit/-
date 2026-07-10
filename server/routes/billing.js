@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { ADMIN_EMAILS } from '../middleware/usageLimit.js';
-import { getPool } from '../db/index.js';
+import { getSubscriptionStatus } from '../services/subscriptionService.js';
 
 const router = Router();
 
@@ -14,6 +14,7 @@ async function requireAuth(req, res, next) {
     if (error || !user) return res.status(401).json({ message: '인증에 실패했습니다.' });
     req.userId = user.id;
     req.userEmail = user.email;
+    req.userCreatedAt = user.created_at;
     req.isAdmin = ADMIN_EMAILS.includes(user.email);
     next();
   } catch {
@@ -89,14 +90,7 @@ router.post('/checkout', requireAuth, async (req, res) => {
 router.get('/status', requireAuth, async (req, res) => {
   if (req.isAdmin) return res.json({ status: 'admin', isSubscribed: true });
   try {
-    const pool = getPool();
-    if (!pool) return res.json({ status: 'none', isSubscribed: false });
-    const { rows } = await pool.query(
-      `SELECT status FROM subscriptions WHERE user_id = $1 LIMIT 1`,
-      [req.userId]
-    );
-    const status = rows[0]?.status || 'none';
-    const isSubscribed = status === 'active' || status === 'trialing';
+    const { status, isSubscribed } = await getSubscriptionStatus(req.userId, req.userCreatedAt);
     res.json({ status, isSubscribed });
   } catch (e) {
     console.error('[billing/status] 오류:', e.message);
