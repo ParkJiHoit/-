@@ -14,6 +14,11 @@ function earliestAddedDate(item) {
   return dates.length ? dates.sort()[0] : null;
 }
 
+// "2026-07-10" -> "26-07-10"
+function formatShortDate(dateStr) {
+  return dateStr ? dateStr.slice(2) : null;
+}
+
 function getSortValue(item, key) {
   if (key === 'keyword') return item.keyword;
   if (key === 'searchVolume') return item.searchVolume ?? -1;
@@ -104,13 +109,16 @@ export default function TrackerTable({
             <th style={{ width: 32 }}>
               <input type="checkbox" className="mac-checkbox" checked={allSelected} onChange={onToggleSelectAll} />
             </th>
-            <th className={sortKey === 'keyword' ? 'th-active' : ''} onClick={() => headerClick('keyword')} style={{ cursor: 'pointer', width: '22%' }}>
+            {mode === 'blog' && (
+              <th className={sortKey === 'addedDate' ? 'th-active' : ''} onClick={() => headerClick('addedDate')} style={{ cursor: 'pointer', width: '9%' }}>
+                등록일{sortArrow('addedDate')}
+              </th>
+            )}
+            <th className={sortKey === 'keyword' ? 'th-active' : ''} onClick={() => headerClick('keyword')} style={{ cursor: 'pointer', width: '20%' }}>
               키워드{sortArrow('keyword')}
             </th>
             {mode === 'blog' && (
-              <th className={sortKey === 'addedDate' ? 'th-active' : ''} onClick={() => headerClick('addedDate')} style={{ cursor: 'pointer', width: '26%' }}>
-                블로그{sortArrow('addedDate')}
-              </th>
+              <th style={{ width: '20%' }}>블로그</th>
             )}
             <th className={sortKey === 'searchVolume' ? 'th-active' : ''} onClick={() => headerClick('searchVolume')} style={{ cursor: 'pointer', width: '12%' }}>
               검색량{sortArrow('searchVolume')}
@@ -149,6 +157,11 @@ export default function TrackerTable({
                     />
                   )}
                 </td>
+                {mode === 'blog' && (
+                  <td style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>
+                    {formatShortDate(entry?.addedDate) || '—'}
+                  </td>
+                )}
                 <td>
                   {isFirst ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -192,11 +205,6 @@ export default function TrackerTable({
                       <span style={{ flex: '0 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {blogId || '—'}
                       </span>
-                      {entry?.addedDate && (
-                        <span style={{ flexShrink: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>
-                          · {entry.addedDate} 등록
-                        </span>
-                      )}
                       {isFirst && !isOpen && hiddenCount > 0 && (
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleExpand(item.id); }}
