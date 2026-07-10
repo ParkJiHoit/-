@@ -4,7 +4,7 @@ import {
   listTracked, createTracked, deleteTracked, deleteTrackedBulk, removeTrackedBlogUrl,
   getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup,
   listGroups, createGroup, renameGroup, deleteGroup, exportSnapshots,
-  extractPostKey, postKeyToString, backfillSearchVolumeChunk,
+  extractPostKey, postKeyToString, backfillSearchVolumeChunk, getDashboardSummary,
 } from '../services/rankTrackerService.js';
 import { parseBulkImportText, groupParsedRows, normalizeKeyword } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
@@ -75,6 +75,13 @@ async function assertKeywordCapacity(req, additionalCount) {
     throw err;
   }
 }
+
+router.get('/dashboard-summary', requirePremium, async (req, res, next) => {
+  try {
+    const summary = await getDashboardSummary(req.userId);
+    res.json(summary);
+  } catch (e) { next(e); }
+});
 
 router.get('/', requirePremium, async (req, res, next) => {
   try {

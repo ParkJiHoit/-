@@ -471,3 +471,62 @@ export async function refreshRanks(userId, trackedId) {
   console.log(`[rank-tracker] refresh ${fetchFailed ? '✗ fetch_failed' : '✓'} "${keyword}" mode=${mode} upserted=${upserts.length}`);
   return { refreshed: upserts.length, date: today, fetchFailed };
 }
+
+// 홈 대시보드용 요약 — 전체 그룹을 가로질러 현재 상태 집계 + 가장 최근 갱신에서 생긴
+// 변화(diffRankChanges와 동일한 판정)를 함께 반환한다. Slack 알림과 달리 여기는 화면에
+// 보여줄 목적이라 실제로 알림을 보내지는 않고, 각 링크의 "최근 2개 스냅샷"만 비교한다.
+export async function getDashboardSummary(userId) {
+  const empty = { totalKeywords: 0, totalLinks: 0, top5LinkCount: 0, integratedCount: 0, recentChanges: [] };
+  const pool = getPool();
+  if (!pool) return empty;
+
+  const { rows: tracked } = await pool.query(
+    `SELECT id, keyword, mode, blog_ids FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL`,
+    [userId]
+  );
+  const totalKeywords = tracked.length;
+  const blogTracked = tracked.filter(t => t.mode === 'blog');
+  const totalLinks = blogTracked.reduce((sum, t) => sum + (t.blog_ids?.length || 0), 0);
+  if (!blogTracked.length) return { ...empty, totalKeywords };
+
+  const trackedIds = blogTracked.map(t => t.id);
+  const idToKeyword = new Map(blogTracked.map(t => [t.id, t.keyword]));
+
+  const { rows: snaps } = await pool.query(
+    `SELECT tracked_id, blog_id, rank, status, integrated_exposed,
+            TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at,
+            ROW_NUMBER() OVER (PARTITION BY tracked_id, blog_id ORDER BY snapshotted_at DESC) AS rn
+     FROM rank_snapshots WHERE tracked_id = ANY($1)`,
+    [trackedIds]
+  );
+
+  const byPair = new Map();
+  for (const s of snaps) {
+    const rn = Number(s.rn);
+    if (rn > 2) continue;
+    const key = `${s.tracked_id}::${s.blog_id}`;
+    if (!byPair.has(key)) byPair.set(key, {});
+    if (rn === 1) byPair.get(key).latest = s;
+    else byPair.get(key).previous = s;
+  }
+
+  let top5LinkCount = 0;
+  let integratedCount = 0;
+  const recentChanges = [];
+  for (const { latest, previous } of byPair.values()) {
+    if (!latest || latest.status === 'fetch_failed') continue;
+    if (latest.status === 'ranked') top5LinkCount++;
+    if (latest.integrated_exposed === true) integratedCount++;
+
+    const previousByBlog = previous ? new Map([[latest.blog_id, previous]]) : new Map();
+    const changes = diffRankChanges(previousByBlog, [{
+      blog_id: latest.blog_id, rank: latest.rank, status: latest.status, integrated_exposed: latest.integrated_exposed,
+    }]);
+    for (const c of changes) {
+      recentChanges.push({ keyword: idToKeyword.get(latest.tracked_id), ...c, date: latest.snapshotted_at });
+    }
+  }
+  recentChanges.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+  return { totalKeywords, totalLinks, top5LinkCount, integratedCount, recentChanges: recentChanges.slice(0, 12) };
+}
