@@ -42,7 +42,12 @@ router.post('/analyze', optionalAuth, checkDailyLimit('keyword_analyze'), async 
   }
 });
 
-router.post('/expand', async (req, res, next) => {
+// 로그인 유저 전용 — 게스트가 인증 없이 이 엔드포인트를 직접 두드리면 유료 네이버 API를
+// 무제한으로 호출할 수 있게 되므로, /analyze와 같은 키워드 분석 한도(keyword_analyze)로 묶는다.
+router.post('/expand', optionalAuth, (req, res, next) => {
+  if (!req.userId) return res.status(401).json({ message: '로그인이 필요합니다.' });
+  next();
+}, checkDailyLimit('keyword_analyze'), async (req, res, next) => {
   try {
     const seedKeywords = normalizeWordArray(req.body?.seedKeywords);
     const legacyBaseKeyword = String(req.body?.baseKeyword || '').trim();

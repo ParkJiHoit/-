@@ -242,7 +242,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
           style={pillItem('pricing')}
           onMouseEnter={() => setHoveredNav('pricing')}
           onMouseLeave={() => setHoveredNav(null)}
-          onClick={() => alert('준비 중입니다.')}
+          onClick={() => onSwitchTab('pricing')}
         >
           요금제
         </button>
@@ -278,7 +278,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         style={pillItem('guide')}
         onMouseEnter={() => setHoveredNav('guide')}
         onMouseLeave={() => setHoveredNav(null)}
-        onClick={() => alert('준비 중입니다.')}
+        onClick={() => window.open(NOTION_GUIDE_URL, '_blank', 'noopener,noreferrer')}
       >
         사용 가이드
       </button>
@@ -288,7 +288,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         style={pillItem('updates')}
         onMouseEnter={() => setHoveredNav('updates')}
         onMouseLeave={() => setHoveredNav(null)}
-        onClick={() => alert('준비 중입니다.')}
+        onClick={() => window.open(NOTION_UPDATE_URL, '_blank', 'noopener,noreferrer')}
       >
         업데이트
       </button>
