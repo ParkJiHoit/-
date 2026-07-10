@@ -13,7 +13,7 @@ const FAQ_ITEMS = [
   { q: '환불은 어떻게 하나요?', a: '결제일로부터 7일 이내에 문의해 주시면 전액 환불해 드려요. 우측 하단 챗봇이나 이메일로 요청하시면 됩니다.' },
   { q: '구독 해지는 언제든 가능한가요?', a: '네. 해지하시면 다음 결제부터 청구되지 않고, 이미 결제한 기간까지는 프리미엄 기능을 계속 이용하실 수 있어요.' },
   { q: '베이직에서 프리미엄으로 업그레이드하면 바로 적용되나요?', a: '네, 결제가 완료되는 즉시 프리미엄 한도로 전환됩니다.' },
-  { q: '결제 수단은 무엇인가요?', a: 'LemonSqueezy를 통해 신용·체크카드로 결제되며, 카드 정보는 Ranklet 서버에 저장되지 않아요.' },
+  { q: '결제 수단은 무엇인가요?', a: 'Groble를 통해 신용·체크카드로 결제되며, 카드 정보는 Ranklet 서버에 저장되지 않아요.' },
   { q: '순위·검색량 데이터는 얼마나 정확한가요?', a: '네이버 검색광고 API와 자체 크롤링을 기반으로 합니다. 네이버 공식 API가 아니기 때문에 실제 수치와 약간의 차이가 있을 수 있어 참고용 지표로 활용해 주세요.' },
   { q: '궁금한 점이나 문제가 생기면 어디로 문의하나요?', a: '우측 하단 챗봇이나 상단 네비게이션의 피드백 버튼으로 남겨주시면, Ranklet을 직접 만든 사람이 확인하고 답변드려요.' },
 ];
@@ -75,31 +75,18 @@ const PREMIUM_FEATURES = [
   'Excel / CSV 다운로드',
 ];
 
+// PG사를 Groble로 전환 — LemonSqueezy 연동(/api/billing/checkout)은 코드상 그대로 두되
+// (추후 재사용 가능성), 결제 버튼은 Groble 상품 페이지로 직접 이동시킨다.
+const GROBLE_CHECKOUT_URL = 'https://www.groble.im/products/uGDdR9';
+
 export default function PricingPage({ onGoToAuth, user, token, theme, isSubscribed }) {
-  const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState(null); // 'privacy' | 'terms' | null
   const isAdmin = isSubscribed === 'admin';
   const isDark = theme !== 'light';
 
-  async function handleSubscribe() {
+  function handleSubscribe() {
     if (!user) { onGoToAuth(); return; }
-    setLoading(true);
-    try {
-      const res = await fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (json.url) {
-        window.location.href = json.url;
-      } else {
-        alert(json.message || '결제 URL 생성에 실패했습니다.');
-      }
-    } catch {
-      alert('결제 요청 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
+    window.location.href = GROBLE_CHECKOUT_URL;
   }
 
   return (
@@ -119,7 +106,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme, isSubscrib
         월 <span style={{
           background: 'linear-gradient(120deg, #0A84FF 0%, #34C1FF 55%, #30D158 100%)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-        }}>9,900원</span>으로 다 됩니다
+        }}>990원</span>으로 다 됩니다
       </h1>
 
       <p style={{ fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center', margin: '0 0 32px', lineHeight: 1.6, maxWidth: 480 }}>
@@ -213,22 +200,22 @@ export default function PricingPage({ onGoToAuth, user, token, theme, isSubscrib
 
           <div style={{ marginBottom: 4 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-tertiary)', textDecoration: 'line-through' }}>₩34,900</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-tertiary)', textDecoration: 'line-through' }}>₩9,900</span>
               <span style={{
                 background: 'linear-gradient(135deg, #FF3B30, #FF6B35)',
                 borderRadius: 6, padding: '2px 7px',
                 fontSize: 10, fontWeight: 800, color: '#fff',
-              }}>71% OFF</span>
+              }}>90% OFF</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-2px', color: 'var(--text-primary)', lineHeight: 1 }}>₩9,900</span>
+              <span style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-2px', color: 'var(--text-primary)', lineHeight: 1 }}>₩990</span>
               <span style={{ fontSize: 13, color: 'var(--text-tertiary)', fontWeight: 500 }}> / 월</span>
             </div>
           </div>
 
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 12 }}>
             <Sparkles size={10} color="#FF6B35" />
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#FF6B35' }}>출시 기념 · 한달 한정 특가</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#FF6B35' }}>출시 기념 · 7월 한 달 한정 특가</span>
           </div>
 
           <div style={{ height: 1, background: 'rgba(10,132,255,0.2)', marginBottom: 12 }} />
@@ -256,22 +243,21 @@ export default function PricingPage({ onGoToAuth, user, token, theme, isSubscrib
             ) : (
               <button
                 onClick={handleSubscribe}
-                disabled={loading}
                 style={{
                   width: '100%', padding: '12px 0',
-                  background: loading ? 'rgba(10,132,255,0.5)' : 'linear-gradient(135deg, #0A84FF 0%, #34C1FF 100%)',
+                  background: 'linear-gradient(135deg, #0A84FF 0%, #34C1FF 100%)',
                   border: 'none', borderRadius: 10,
                   fontSize: 13, fontWeight: 700, color: '#fff',
-                  cursor: loading ? 'default' : 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit',
+                  cursor: 'pointer', letterSpacing: '0.02em', fontFamily: 'inherit',
                   boxShadow: '0 4px 20px rgba(10,132,255,0.4)',
                   transition: 'opacity 0.15s, transform 0.15s',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
-                onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                 onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 <Zap size={13} />
-                {loading ? '연결 중...' : '7일 무료로 시작하기'}
+                7일 무료로 시작하기
               </button>
             )}
             <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'center' }}>
