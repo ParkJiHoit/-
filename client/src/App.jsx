@@ -713,6 +713,12 @@ export default function App() {
     if (next === 'blog') { setBlogStructure(null); setBlogStructureKeyword(''); setBlogAudit(null); setBlogAuditError(''); }
   };
 
+  // 네비게이션의 "최근 검색"에서 항목을 고르면 해당 탭으로 이동해 그 자리에서 바로 재검색한다.
+  const handleSelectHistory = (type, keyword) => {
+    if (type === 'blog') { switchTab('blog'); analyzeBlogStructure(keyword); }
+    else { switchTab('analysis'); analyzeKeyword(keyword); }
+  };
+
   const goHome = () => {
     setActiveTab('analysis');
     setAnalysis(null);
@@ -849,7 +855,7 @@ export default function App() {
       )}
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-      <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} isSubscribed={isSubscribed} />
+      <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} isSubscribed={isSubscribed} onSelectHistory={handleSelectHistory} />
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
       <ChatWidget user={user} token={session?.access_token} />
 

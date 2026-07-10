@@ -1,6 +1,7 @@
 import { ChevronDown, FileText, LogOut, MessageSquarePlus, Search, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
+import SearchHistoryDropdown from './SearchHistoryDropdown';
 import logoLight from '../assets/logo-light.png';
 import logoDark from '../assets/logo-dark.png';
 
@@ -35,7 +36,7 @@ const SERVICES = [
   { id: 'rank-tracker', icon: TrendingUp,  label: '순위 추적',   desc: '블로그 키워드 순위 일별 추적' },
 ];
 
-export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, theme, isSubscribed }) {
+export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, theme, isSubscribed, onSelectHistory }) {
   const { user, signInWithGoogle, signOut } = useAuth();
   const [serviceOpen, setServiceOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -235,6 +236,16 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
           </div>
         )}
       </div>
+
+      {/* 최근 검색 */}
+      {user && (
+        <SearchHistoryDropdown
+          user={user}
+          isDark={isDark}
+          onSelect={onSelectHistory}
+          pillStyle={pillItem('history')}
+        />
+      )}
 
       {/* 요금제 */}
       <div style={{ position: 'relative' }}>
