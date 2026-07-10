@@ -75,7 +75,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [] }) {
     r5:  { bg: 'rgba(255,159,10,0.55)',  border: 'rgba(255,159,10,0.35)', text: '#fff' },
     r7:  { bg: 'rgba(255,159,10,0.35)',  border: 'rgba(255,159,10,0.2)',  text: 'rgba(255,255,255,0.8)' },
     r10: { bg: 'rgba(255,69,58,0.40)',   border: 'rgba(255,69,58,0.25)',  text: '#fff' },
-    out: { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.08)', text: 'transparent' },
+    out: { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.08)', text: 'rgba(255,255,255,0.32)' },
   } : {
     r1:  { bg: 'rgba(22,163,74,0.85)',   border: 'rgba(22,163,74,0.5)',   text: '#fff' },
     r2:  { bg: 'rgba(22,163,74,0.65)',   border: 'rgba(22,163,74,0.35)',  text: '#fff' },
@@ -83,7 +83,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [] }) {
     r5:  { bg: 'rgba(217,119,6,0.55)',   border: 'rgba(217,119,6,0.35)',  text: '#fff' },
     r7:  { bg: 'rgba(217,119,6,0.35)',   border: 'rgba(217,119,6,0.2)',   text: 'rgba(0,0,0,0.6)' },
     r10: { bg: 'rgba(220,38,38,0.40)',   border: 'rgba(220,38,38,0.25)',  text: '#fff' },
-    out: { bg: 'rgba(0,0,0,0.06)',       border: 'rgba(0,0,0,0.12)',      text: 'transparent' },
+    out: { bg: 'rgba(0,0,0,0.06)',       border: 'rgba(0,0,0,0.12)',      text: 'rgba(0,0,0,0.3)' },
   };
 
   const CELL = 36;
@@ -178,7 +178,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [] }) {
                   e.currentTarget.style.zIndex = '1';
                 }}
               >
-                {rank != null ? rank : ''}
+                {rank != null ? rank : 'X'}
               </div>
             );
           })}
