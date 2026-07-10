@@ -8,9 +8,6 @@ import logoDark from '../assets/logo-dark.png';
 const NOTION_UPDATE_URL =
   'https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link';
 
-const NOTION_GUIDE_URL =
-  'https://helix-territory-c92.notion.site/37b24604a091802abe38f48e986102d7?source=copy_link';
-
 const SHADCN_AVATARS = [
   'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-1.png',
   'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-2.png',
@@ -265,7 +262,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         style={pillItem('guide')}
         onMouseEnter={() => setHoveredNav('guide')}
         onMouseLeave={() => setHoveredNav(null)}
-        onClick={() => window.open(NOTION_GUIDE_URL, '_blank', 'noopener,noreferrer')}
+        onClick={() => onSwitchTab('guide')}
       >
         사용 가이드
       </button>

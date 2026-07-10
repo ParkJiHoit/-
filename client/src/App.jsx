@@ -22,6 +22,7 @@ import AuthPage from './pages/AuthPage';
 import RankTrackerPage from './pages/RankTrackerPage';
 import DashboardPage from './pages/DashboardPage';
 import SharedReportPage from './pages/SharedReportPage';
+import GuidePage from './pages/GuidePage';
 import SummaryCards from './components/SummaryCards';
 import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
@@ -916,6 +917,8 @@ export default function App() {
 
       {activeTab === 'pricing' ? (
         <PricingPage onGoToAuth={() => setActiveTab('auth')} user={user} token={session?.access_token} theme={theme} isSubscribed={isSubscribed} />
+      ) : activeTab === 'guide' ? (
+        <GuidePage />
       ) : activeTab === 'dashboard' ? (
         <div style={{ paddingTop: 'calc(var(--nav-offset) + 24px)', paddingBottom: 64 }}>
           <div className="mx-auto w-full max-w-[1000px] px-5 lg:px-10">
