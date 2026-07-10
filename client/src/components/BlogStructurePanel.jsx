@@ -194,6 +194,21 @@ export default function BlogStructurePanel({ result, keyword }) {
     avgTitleLength, avgDailyVisitors, viewMix = {},
   } = analysis;
 
+  if (!posts.length) {
+    return (
+      <div className="mac-card" style={{ padding: '48px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: 40, opacity: 0.25, marginBottom: 12 }}>📭</div>
+        <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px' }}>
+          "{keyword}"의 블로그 게시물을 찾을 수 없습니다
+        </p>
+        <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: 0, lineHeight: 1.7 }}>
+          네이버 블로그탭에 노출된 게시물이 없거나 일시적으로 조회에 실패했을 수 있어요.<br />
+          다른 키워드로 다시 시도해 보세요.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {/* 헤더 */}

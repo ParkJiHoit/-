@@ -67,6 +67,35 @@ function Toast({ message, onDone }) {
   return <div className="mac-toast">{message}</div>;
 }
 
+/* ── 사용량 한도 초과 배너 (키워드 분석/블로그 구조 분석/블로그 진단 3곳에서 공용) ── */
+function ErrorBanner({ message, limitExceeded, onUpgrade, variant = 'card' }) {
+  if (!message) return null;
+  const color = limitExceeded ? '#FF9F0A' : 'var(--destructive)';
+  const content = (
+    <>
+      <span style={{ fontSize: 13, color, margin: 0 }}>{message}</span>
+      {limitExceeded && onUpgrade && (
+        <button onClick={onUpgrade} style={{ flexShrink: 0, padding: '6px 14px', background: 'linear-gradient(135deg,#0A84FF,#34C1FF)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+          프리미엄 업그레이드
+        </button>
+      )}
+    </>
+  );
+  if (variant === 'inline') {
+    return (
+      <div className="mac-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+        {content}
+      </div>
+    );
+  }
+  return (
+    <div className="mac-fade-in mac-card mb-5 px-5 py-4"
+      style={{ border: limitExceeded ? '1px solid rgba(255,159,10,0.35)' : '1px solid rgba(255,69,58,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      {content}
+    </div>
+  );
+}
+
 /* ── Loading ── */
 function LoadingRow({ label }) {
   return (
@@ -952,14 +981,12 @@ export default function App() {
           </p>
         )}
         {activeTab === 'blog' && blogSubTab === 'audit' && !blogAudit && blogAuditError && (
-          <div className="mac-fade-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
-            <p style={{ fontSize: 13, color: limitExceeded ? '#FF9F0A' : 'var(--destructive)', margin: 0 }}>{blogAuditError}</p>
-            {limitExceeded && !isSubscribed && (
-              <button onClick={() => switchTab('pricing')} style={{ padding: '6px 14px', background: 'linear-gradient(135deg,#0A84FF,#34C1FF)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
-                프리미엄 업그레이드
-              </button>
-            )}
-          </div>
+          <ErrorBanner
+            message={blogAuditError}
+            limitExceeded={limitExceeded}
+            onUpgrade={!isSubscribed ? () => switchTab('pricing') : null}
+            variant="inline"
+          />
         )}
       </HeroSection>
 
@@ -978,26 +1005,18 @@ export default function App() {
         )}
 
         {error && isKeywordTab && (
-          <div className="mac-fade-in mac-card mb-5 px-5 py-4"
-            style={{ border: limitExceeded ? '1px solid rgba(255,159,10,0.35)' : '1px solid rgba(255,69,58,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: limitExceeded ? '#FF9F0A' : 'var(--destructive)' }}>{error}</span>
-            {limitExceeded && !isSubscribed && (
-              <button onClick={() => switchTab('pricing')} style={{ flexShrink: 0, padding: '6px 14px', background: 'linear-gradient(135deg,#0A84FF,#34C1FF)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
-                프리미엄 업그레이드
-              </button>
-            )}
-          </div>
+          <ErrorBanner
+            message={error}
+            limitExceeded={limitExceeded}
+            onUpgrade={!isSubscribed ? () => switchTab('pricing') : null}
+          />
         )}
         {error && activeTab === 'blog' && blogStructure && (
-          <div className="mac-fade-in mac-card mb-5 px-5 py-4"
-            style={{ border: limitExceeded ? '1px solid rgba(255,159,10,0.35)' : '1px solid rgba(255,69,58,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: limitExceeded ? '#FF9F0A' : 'var(--destructive)' }}>{error}</span>
-            {limitExceeded && !isSubscribed && (
-              <button onClick={() => switchTab('pricing')} style={{ flexShrink: 0, padding: '6px 14px', background: 'linear-gradient(135deg,#0A84FF,#34C1FF)', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
-                프리미엄 업그레이드
-              </button>
-            )}
-          </div>
+          <ErrorBanner
+            message={error}
+            limitExceeded={limitExceeded}
+            onUpgrade={!isSubscribed ? () => switchTab('pricing') : null}
+          />
         )}
 
         {/* Keyword results */}
