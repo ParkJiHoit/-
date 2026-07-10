@@ -1,0 +1,576 @@
+# 인앱 사용 가이드 페이지 Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 네비게이션의 "사용 가이드" 버튼이 열던 외부 노션 링크를 걷어내고, 앱 안에 자체 가이드 페이지(왼쪽 목차 + 오른쪽 단계별 설명)를 새로 만든다.
+
+**Architecture:** 콘텐츠(카테고리·항목·단계별 설명)를 `client/src/data/guideContent.js`에 순수 데이터로 정의하고, `client/src/pages/GuidePage.jsx`가 이 데이터를 순회해 사이드바+콘텐츠 패널을 렌더링하는 프레젠테이션 컴포넌트로만 존재한다. `App.jsx`에 `activeTab === 'guide'` 분기를 추가하고, `Navbar.jsx`의 버튼이 그 탭으로 전환하도록 바꾼다.
+
+**Tech Stack:** React 18, 기존 `styles.css`의 `.mac-card` 재사용 + Tailwind 반응형 그리드(`lg:grid-cols-[...]`, 이 파일에 이미 쓰이는 패턴).
+
+## Global Constraints
+
+- 새로운 시각 스타일을 발명하지 않는다 — `.mac-card`와 이 앱의 색상 변수(`var(--accent)`, `var(--text-primary)` 등)를 그대로 쓴다.
+- 가이드 페이지는 로그인 여부와 무관하게 접근 가능해야 한다(요금제 페이지와 동일).
+- 다른 페이지/기능 로직은 건드리지 않는다 — 신규 페이지 추가 + 네비게이션 버튼 1개 동작 변경으로 범위를 한정한다.
+- 이 클라이언트 패키지엔 프론트 자동 테스트 러너가 없다 — 각 태스크의 검증은 `npm run build` 통과 + (해당되는 경우) 수동 확인으로 한다.
+- 참조 스펙: `docs/superpowers/specs/2026-07-10-guide-page-design.md`
+
+---
+
+### Task 1: 가이드 콘텐츠 데이터 파일
+
+**Files:**
+- Create: `client/src/data/guideContent.js`
+
+**Interfaces:**
+- Produces: `export const GUIDE_CATEGORIES` — `{ id, label, items: [{ id, title, summary, steps: string[], tip?: string }] }[]` 형태의 배열. Task 2가 이 배열을 그대로 import해서 사이드바 목차와 콘텐츠 패널을 렌더링한다. 모든 `item.id`는 배열 전체에서 유일해야 한다(사이드바 선택 상태를 이 id로 관리하므로).
+
+- [ ] **Step 1: 콘텐츠 파일 작성**
+
+`client/src/data/guideContent.js`:
+
+```js
+export const GUIDE_CATEGORIES = [
+  {
+    id: 'getting-started',
+    label: '시작하기',
+    items: [
+      {
+        id: 'signup',
+        title: '회원가입과 로그인',
+        summary: '구글 계정이나 이메일로 가입하면 바로 7일 무료체험이 시작됩니다.',
+        steps: [
+          '화면 오른쪽 위 "로그인" 버튼을 클릭합니다.',
+          '"Google로 계속하기"를 누르거나, 이메일/비밀번호/이름을 입력하고 "계정 만들기"를 누릅니다.',
+          '가입이 완료되면 자동으로 프리미엄 플랜 7일 무료체험이 시작됩니다 — 별도로 신청할 필요가 없습니다.',
+          '7일이 지나면 자동으로 베이직 플랜으로 전환되며, 계속 프리미엄을 쓰려면 요금제 페이지에서 결제하면 됩니다.',
+        ],
+        tip: '무료체험 중에는 프리미엄과 동일한 사용 한도가 적용됩니다.',
+      },
+      {
+        id: 'plans',
+        title: '베이직 vs 프리미엄 차이',
+        summary: '무료인 베이직 플랜과 월 9,900원 프리미엄 플랜의 기능·한도 차이를 확인하세요.',
+        steps: [
+          '상단 네비게이션의 "요금제" 버튼을 클릭해 플랜 비교표를 확인합니다.',
+          '베이직 플랜은 키워드 분석 하루 10회, 블로그 분석·진단 하루 3회, 순위 추적 갱신 하루 2회까지 무료로 이용할 수 있습니다.',
+          '프리미엄 플랜은 키워드 분석 분당 15회·일 300회, 블로그 구조 분석 하루 50회, 블로그 진단 하루 20회, 순위 추적 키워드 최대 30개 등록, 수동 갱신 하루 10회까지 이용할 수 있고, 키워드 효율 점수·트렌드 차트·Excel 다운로드 같은 기능이 추가로 열립니다.',
+          '이용 한도를 넘으면 화면에 "프리미엄 업그레이드" 배너가 나타나며, 클릭하면 바로 요금제 페이지로 이동합니다.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'keyword-analysis',
+    label: '키워드 분석',
+    items: [
+      {
+        id: 'kw-search',
+        title: '키워드 검색하는 법',
+        summary: '메인 화면 검색창에 기준 키워드를 입력하면 연관 키워드를 한 번에 찾아줍니다.',
+        steps: [
+          '메인 화면 가운데 검색창에 분석하고 싶은 키워드를 입력합니다.',
+          '검색 아이콘을 클릭하거나 Enter를 누르면 분석이 시작됩니다.',
+          '로그인하지 않은 상태에서는 4회까지만 분석할 수 있고, 그 이상은 로그인이 필요하다는 안내가 뜹니다.',
+          '이전에 검색했던 키워드는 검색창 아래 "최근 검색어" 목록에 남아 다시 클릭 한 번으로 재검색할 수 있습니다.',
+        ],
+        tip: "검색 결과 화면 하단에 뜨는 '#키워드' 추천 검색어를 클릭하면 그 키워드로 바로 이어서 분석할 수 있습니다.",
+      },
+      {
+        id: 'kw-filter',
+        title: '필터로 키워드 좁히기',
+        summary: '경쟁도, 추천 상태, 검색량 조건으로 연관 키워드를 원하는 범위로 걸러낼 수 있습니다.',
+        steps: [
+          '결과 화면의 필터 영역에서 키워드를 텍스트로 검색할 수 있습니다.',
+          '"경쟁도" 드롭다운에서 낮음/중간/높음/알 수 없음 중 원하는 값을 고를 수 있습니다.',
+          '"추천 상태" 드롭다운에서 우선 테스트/기회 키워드/모바일 집중/과포화 주의/제외 검토/핵심 후보/모니터링 중에서 골라 특정 성격의 키워드만 볼 수 있습니다.',
+          '"최소 검색량"에 숫자를 입력하면 그 이상 검색되는 키워드만 남길 수 있습니다.',
+          '"낮은 연관도 제외"(기본 켜짐), "과포화 제외"(기본 꺼짐) 체크박스로 원치 않는 키워드를 빠르게 걸러낼 수 있습니다.',
+          '필터를 전부 초기 상태로 되돌리려면 "초기화" 버튼을 누릅니다.',
+        ],
+      },
+      {
+        id: 'kw-result',
+        title: '결과 해석하기',
+        summary: '인사이트 카드와 요약 카드에서 이 키워드의 시장 상황과 추천 방향을 확인하세요.',
+        steps: [
+          '결과 상단 "키워드 인사이트" 카드에서 이 키워드에 대한 전반적인 요약을 확인합니다.',
+          '"키워드 요약" 카드에서 전체 연관 키워드 수, 우선 테스트/기회/과포화 키워드 개수 등을 한눈에 봅니다.',
+          '표의 "효율 점수"는 검색량 대비 경쟁강도를 종합한 점수로, 높을수록 시도해볼 만한 키워드입니다.',
+          '"추천 액션" 컬럼(우선 테스트/기회 키워드/과포화 주의 등)은 이 키워드로 콘텐츠를 만들지 판단하는 데 참고할 수 있습니다.',
+          '특정 키워드 행에서 "상세 보기"를 클릭하면 블로그 구조 분석 탭으로 이동해 그 키워드의 상위 노출 게시물 패턴을 바로 확인할 수 있습니다.',
+        ],
+      },
+      {
+        id: 'kw-sort',
+        title: '정렬과 컬럼 커스터마이즈',
+        summary: '원하는 기준으로 정렬하고, 필요 없는 컬럼은 숨겨서 표를 보기 편하게 만들 수 있습니다.',
+        steps: [
+          '표 헤더의 컬럼 이름을 클릭하면 그 기준으로 정렬됩니다(기본은 효율 점수 내림차순).',
+          '같은 컬럼을 다시 클릭하면 오름차순·내림차순이 번갈아 바뀝니다.',
+          '컬럼 설정 아이콘을 클릭하면 표에 보여줄 컬럼을 직접 선택할 수 있습니다(예: 경쟁도, 검색량, CTR 등 원하는 것만 남기기).',
+        ],
+      },
+      {
+        id: 'kw-export',
+        title: '엑셀로 다운로드하기',
+        summary: '필터링된 키워드 목록을 엑셀 파일로 저장해서 팀과 공유하거나 따로 정리할 수 있습니다.',
+        steps: [
+          '결과 화면의 "엑셀 다운로드" 버튼을 클릭합니다(필터링 결과가 0개면 버튼이 비활성화됩니다).',
+          '키워드, 검색 의도, 발굴 점수, 연관도, PC·모바일·총 검색량, 모바일 비중, 평균 CTR, 경쟁도, 평균 노출 깊이, 포화도 점수, 효율 점수, 추천 액션이 포함된 .xlsx 파일이 바로 다운로드됩니다.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'blog-analysis',
+    label: '블로그 분석',
+    items: [
+      {
+        id: 'blog-structure',
+        title: '블로그 구조 분석',
+        summary: '키워드를 입력하면 그 키워드로 상위 노출 중인 게시물들의 공통 패턴을 분석해줍니다.',
+        steps: [
+          '상단 "블로그 분석" 탭으로 이동한 뒤, "블로그 구조 분석" 서브탭을 선택합니다.',
+          '검색창에 URL이 아니라 분석하고 싶은 키워드를 입력하고 검색합니다(로그인 필요).',
+          '결과에서 제목에 키워드가 포함된 비율, 최근 30일 이내 발행 비율, 블로그 다양성, 평균 제목 길이, 평균 방문자 수, VIEW·카페 비중 같은 통계 카드를 확인합니다.',
+          '"제목 키워드 위치 분포", "게시물 최신성 분포" 도넛 차트로 상위 노출 게시물들의 공통 패턴을 시각적으로 파악합니다.',
+          '"콘텐츠 전략 인사이트" 카드에서 이 키워드로 글을 쓸 때 참고할 만한 조언을 확인합니다.',
+          '"상위 블로그 상세" 표에서 순위별 블로그명, 제목, 키워드 위치, 발행일, 방문자수를 개별적으로 확인할 수 있습니다.',
+        ],
+      },
+      {
+        id: 'blog-audit',
+        title: '블로그 진단',
+        summary: '내 블로그 URL을 입력하면 활동성·영향력·신뢰도 등을 점수화해서 등급을 매겨줍니다.',
+        steps: [
+          '"블로그 분석" 탭에서 "블로그 진단" 서브탭을 선택합니다.',
+          '검색창에 진단하고 싶은 네이버 블로그 URL(예: https://blog.naver.com/example)을 입력합니다(로그인 필요).',
+          '결과로 S/A/B/C/D 등급과 100점 만점 점수, 진단 코멘트를 확인합니다.',
+          '활동성(30점)/상위노출이력(30점)/블로그영향력(20점)/신뢰도(10점)/블로그연차(10점) 항목별 점수 바로 어느 부분이 부족한지 확인합니다.',
+          '월 포스팅 수, 포스팅 주기, 상위 노출률, 일/누적 방문자 수, 이웃 수, 광고 비중, 블로그 연차 같은 핵심 지표 칩을 확인합니다.',
+          '"상위 노출 확인된 키워드" 태그와 "최근 포스트" 표(제목/날짜/광고 여부)에서 세부 내역을 볼 수 있습니다.',
+          '한 번 진단한 블로그는 "최근 분석 블로그" 목록에 남아 다시 클릭 한 번으로 재진단할 수 있습니다.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'rank-tracker',
+    label: '순위 추적',
+    items: [
+      {
+        id: 'rt-register',
+        title: '키워드·블로그 등록하기',
+        summary: '추적하고 싶은 키워드와 블로그 URL을 등록하면 매일 순위를 기록해 줍니다.',
+        steps: [
+          '상단 "순위 추적" 탭으로 이동합니다(프리미엄 플랜 필요).',
+          '"등록" 버튼을 클릭해 키워드와 추적할 블로그 URL을 입력하고 저장합니다.',
+          '키워드·URL 쌍이 여러 개라면 "대량 등록" 버튼으로 한 번에 여러 건을 붙여넣거나 엑셀 파일로 업로드해 등록할 수 있습니다.',
+          '등록한 키워드는 표에 한 행씩 나타나며, 같은 키워드에 블로그를 여러 개 추적 중이면 화살표를 눌러 펼쳐볼 수 있습니다.',
+        ],
+        tip: '프리미엄 플랜은 최대 30개 키워드까지 등록할 수 있습니다.',
+      },
+      {
+        id: 'rt-group',
+        title: '그룹으로 관리하기',
+        summary: '키워드가 많아지면 그룹으로 나눠서 관리하고, 그룹 단위로 필터링할 수 있습니다.',
+        steps: [
+          '상단 그룹 선택 드롭다운에서 "+ 새 그룹 만들기"를 클릭해 그룹을 만듭니다.',
+          '표에서 각 키워드 행의 그룹 선택 드롭다운으로 원하는 그룹에 배정합니다.',
+          '상단 그룹 드롭다운에서 특정 그룹을 선택하면 그 그룹에 속한 키워드만 표에 보여줍니다.',
+          '그룹 이름 변경·삭제도 같은 드롭다운 옆 아이콘 버튼으로 할 수 있습니다.',
+        ],
+      },
+      {
+        id: 'rt-refresh',
+        title: '순위 갱신하기',
+        summary: '등록한 키워드의 최신 순위를 수동으로 확인할 수 있습니다.',
+        steps: [
+          '표 위 "전체 갱신" 버튼을 클릭하면 현재 화면에 보이는 모든 키워드의 순위를 한 번에 갱신합니다.',
+          '특정 키워드 하나만 갱신하려면 그 키워드를 클릭해 상세 화면을 연 뒤 "순위 갱신" 버튼을 누릅니다.',
+          '베이직 플랜은 하루 2회, 프리미엄 플랜은 하루 10회까지 수동 갱신할 수 있습니다.',
+          '갱신이 실패한 항목이 있으면 "실패 항목 재시도" 버튼이 나타나 실패한 것만 다시 시도할 수 있습니다.',
+        ],
+      },
+      {
+        id: 'rt-sort-favorite',
+        title: '정렬·검색·즐겨찾기',
+        summary: '표 헤더로 정렬하고, 자주 보는 키워드는 별표로 고정해 항상 위에서 볼 수 있습니다.',
+        steps: [
+          '검색창에 키워드를 입력하면 표가 바로 필터링됩니다.',
+          '"키워드"/"검색량"/"순위" 컬럼 헤더를 클릭하면 그 기준으로 정렬되고, 다시 클릭하면 오름차순·내림차순이 바뀝니다.',
+          '각 행 맨 앞의 별 아이콘을 클릭하면 즐겨찾기로 표시되고(노란색으로 채워짐), 즐겨찾기한 키워드는 정렬 기준과 상관없이 항상 표 맨 위에 고정됩니다.',
+        ],
+      },
+      {
+        id: 'rt-detail',
+        title: '상세 보기 (차트·캘린더)',
+        summary: '키워드 행을 클릭하면 순위 추이 그래프와 날짜별 캘린더를 볼 수 있습니다.',
+        steps: [
+          '표에서 확인하고 싶은 키워드 행을 클릭하면 오른쪽에서 상세 패널이 열립니다.',
+          '순위 추이 차트에서 시간에 따른 순위 변화를 그래프로 확인합니다.',
+          '캘린더 뷰에서 날짜별로 몇 위였는지, 통합검색 노출 여부(O/X)를 한눈에 확인합니다.',
+          '패널 안에서 바로 "순위 갱신" 버튼을 눌러 이 키워드만 새로고침할 수도 있습니다.',
+        ],
+      },
+      {
+        id: 'rt-notification',
+        title: 'Slack 알림 설정',
+        summary: '순위가 5위 안팎으로 변하거나 통합검색 노출이 시작·종료되면 Slack으로 알려줍니다.',
+        steps: [
+          '순위 추적 화면에서 알림 설정 메뉴를 열고 Slack Webhook URL을 입력합니다.',
+          '"알림 켜기" 체크박스를 켭니다.',
+          '"테스트 보내기" 버튼으로 알림이 실제로 오는지 확인할 수 있습니다(URL을 입력해야 활성화됩니다).',
+          '"저장"을 누르면 설정이 반영되고, 이후 5위 안 진입·이탈이나 통합검색 노출 시작·종료가 감지될 때마다 Slack으로 알림이 옵니다.',
+        ],
+      },
+      {
+        id: 'rt-share',
+        title: '리포트 공유 링크 만들기',
+        summary: '로그인이 없어도 순위 현황만 볼 수 있는 읽기 전용 링크를 만들어 팀·클라이언트와 공유할 수 있습니다.',
+        steps: [
+          '그룹 목록에서 공유하고 싶은 그룹의 "리포트 공유" 메뉴를 엽니다.',
+          '"공유 링크 만들기" 버튼을 클릭하면 읽기 전용 URL이 생성됩니다.',
+          '"복사" 버튼으로 링크를 복사해 원하는 사람에게 전달합니다. 받은 사람은 로그인 없이 순위 현황만 볼 수 있고 수정은 할 수 없습니다.',
+          '더 이상 공유하고 싶지 않으면 "공유 링크 해제" 버튼을 눌러 확인 후 링크를 무효화할 수 있습니다.',
+        ],
+      },
+      {
+        id: 'rt-export',
+        title: '엑셀로 내보내기',
+        summary: '그룹별 순위 기록 전체를 엑셀로 내려받아 히트맵 형태로 보고 정리할 수 있습니다.',
+        steps: [
+          '표 위 "내보내기" 버튼을 클릭합니다.',
+          '그룹별로 시트가 나뉜 .xlsx 파일이 다운로드되며, 키워드·블로그별로 날짜별 순위가 색상으로 구분된 히트맵 표로 정리되어 있습니다.',
+          '헤더 행과 키워드 정보 열은 고정되어 있어 스크롤해도 항상 보이고, 필요한 컬럼만 필터링해서 볼 수도 있습니다.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'dashboard',
+    label: '대시보드',
+    items: [
+      {
+        id: 'dashboard-overview',
+        title: '대시보드에서 한눈에 보기',
+        summary: '순위 추적 데이터를 기반으로 최근 변동과 검색 이력을 요약해서 보여줍니다(프리미엄 전용).',
+        steps: [
+          '상단 네비게이션의 "대시보드" 버튼을 클릭합니다(프리미엄 플랜과 순위 추적 등록 키워드가 있어야 내용이 표시됩니다).',
+          '상단 통계 카드에서 추적 키워드 수, 추적 링크 수, 5위 내 노출 개수, 통합검색 노출 중인 개수를 확인합니다.',
+          '"최근 변동" 목록에서 최근에 5위 안에 새로 들어왔거나 밀려난 키워드, 통합검색 노출이 시작·종료된 키워드를 확인하고, 클릭하면 순위 추적 탭에서 바로 해당 키워드를 볼 수 있습니다.',
+          '"최근 검색" 목록에서 최근에 분석했던 키워드·블로그 분석 기록을 다시 확인할 수 있습니다.',
+        ],
+      },
+    ],
+  },
+  {
+    id: 'billing',
+    label: '요금제·결제',
+    items: [
+      {
+        id: 'billing-compare',
+        title: '플랜 비교하고 업그레이드하기',
+        summary: '베이직과 프리미엄 플랜의 기능을 비교하고 필요하면 업그레이드할 수 있습니다.',
+        steps: [
+          '상단 네비게이션의 "요금제" 버튼을 클릭합니다.',
+          '왼쪽 베이직 카드와 오른쪽 프리미엄 카드에서 각각 포함된 기능과 하루 이용 한도를 비교합니다.',
+          '프리미엄 카드의 "프리미엄 시작하기" 버튼을 클릭하면 결제 페이지로 이동합니다(로그인이 안 되어 있으면 먼저 로그인 화면으로 이동합니다).',
+        ],
+      },
+      {
+        id: 'billing-pay',
+        title: '결제 방법 (Groble)',
+        summary: '결제는 외부 결제 서비스 Groble 상품 페이지에서 진행됩니다.',
+        steps: [
+          '"프리미엄 시작하기" 버튼을 클릭하면 Groble 결제 페이지로 이동합니다.',
+          'Groble 페이지에서 카드 정보를 입력하고 결제를 완료합니다. 카드 정보는 Ranklet 서버에 저장되지 않습니다.',
+          '결제일로부터 7일 이내에는 전액 환불이 가능하며, 요금제 페이지 하단의 "환불 보장" 안내나 우측 하단 챗봇으로 문의하면 됩니다.',
+        ],
+      },
+    ],
+  },
+];
+```
+
+- [ ] **Step 2: 문법 오류 없는지 확인**
+
+Run: `cd client && node --check src/data/guideContent.js 2>&1 || node -e "require('esbuild')" 2>&1 || echo "skip-check"`
+Expected: 이 파일은 ESM(`export const`)이라 plain `node --check`로는 문법만 확인되고 실행은 안 됨 — 문법 오류(따옴표 깨짐 등)만 없으면 통과. 실제 동작 확인은 Step 3의 빌드로 한다.
+
+- [ ] **Step 3: 모든 item.id가 유일한지 확인**
+
+Run:
+```bash
+cd client && node -e "
+const { GUIDE_CATEGORIES } = await import('./src/data/guideContent.js');
+const ids = GUIDE_CATEGORIES.flatMap(c => c.items.map(i => i.id));
+const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+console.log('total items:', ids.length, 'dupes:', dupes);
+if (dupes.length) process.exit(1);
+"
+```
+Expected: `total items: 20 dupes: []`
+
+- [ ] **Step 4: 커밋**
+
+```bash
+git add client/src/data/guideContent.js
+git commit -m "feat: add usage guide content data"
+```
+
+---
+
+### Task 2: `GuidePage` 컴포넌트
+
+**Files:**
+- Create: `client/src/pages/GuidePage.jsx`
+
+**Interfaces:**
+- Consumes: Task 1의 `GUIDE_CATEGORIES` (`client/src/data/guideContent.js`에서 import)
+- Produces: `export default function GuidePage()` — props 없음(로그인 상태와 무관하게 정적 콘텐츠만 렌더링). Task 3이 `<GuidePage />`로 사용.
+
+- [ ] **Step 1: 컴포넌트 작성**
+
+`client/src/pages/GuidePage.jsx`:
+
+```jsx
+import { useState } from 'react';
+import { GUIDE_CATEGORIES } from '../data/guideContent';
+
+export default function GuidePage() {
+  const [selectedId, setSelectedId] = useState(GUIDE_CATEGORIES[0].items[0].id);
+
+  const selectedItem = GUIDE_CATEGORIES
+    .flatMap(cat => cat.items)
+    .find(item => item.id === selectedId) || GUIDE_CATEGORIES[0].items[0];
+
+  return (
+    <div className="mx-auto w-full max-w-[1100px] px-5 lg:px-10" style={{
+      paddingTop: 'calc(var(--nav-offset) + 32px)', paddingBottom: 64,
+    }}>
+      <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '0 0 24px' }}>
+        사용 가이드
+      </h1>
+
+      <div className="grid gap-8 lg:grid-cols-[240px_1fr]" style={{ alignItems: 'start' }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 20, position: 'sticky', top: 'calc(var(--nav-offset) + 16px)' }}>
+          {GUIDE_CATEGORIES.map(cat => (
+            <div key={cat.id}>
+              <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+                {cat.label}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {cat.items.map(item => {
+                  const active = item.id === selectedId;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelectedId(item.id)}
+                      style={{
+                        textAlign: 'left', padding: '7px 10px', borderRadius: 8,
+                        border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                        fontSize: 13, fontWeight: active ? 700 : 500,
+                        color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                        background: active ? 'rgba(10,132,255,0.1)' : 'transparent',
+                        borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent',
+                      }}
+                    >
+                      {item.title}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        <div className="mac-card" style={{ padding: '28px 32px', minWidth: 0 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 8px' }}>
+            {selectedItem.title}
+          </h2>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '0 0 20px', lineHeight: 1.6 }}>
+            {selectedItem.summary}
+          </p>
+          <ol style={{ margin: 0, padding: '0 0 0 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {selectedItem.steps.map((step, i) => (
+              <li key={i} style={{ fontSize: 13.5, color: 'var(--text-primary)', lineHeight: 1.7 }}>
+                {step}
+              </li>
+            ))}
+          </ol>
+          {selectedItem.tip && (
+            <div style={{
+              marginTop: 20, padding: '12px 16px', borderRadius: 10,
+              background: 'rgba(10,132,255,0.08)', borderLeft: '3px solid var(--accent)',
+            }}>
+              <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                💡 {selectedItem.tip}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: 빌드 확인**
+
+Run: `cd client && npm run build`
+Expected: 성공. (아직 어디서도 `import`하지 않으므로 화면엔 나타나지 않음 — Task 3에서 연결)
+
+- [ ] **Step 3: 커밋**
+
+```bash
+git add client/src/pages/GuidePage.jsx
+git commit -m "feat: add GuidePage component"
+```
+
+---
+
+### Task 3: 네비게이션 연결
+
+**Files:**
+- Modify: `client/src/App.jsx`
+- Modify: `client/src/components/Navbar.jsx`
+
+**Interfaces:**
+- Consumes: Task 2의 `GuidePage`
+- Produces: 없음 (최종 조립 지점)
+
+- [ ] **Step 1: `App.jsx`에 `GuidePage` import 추가**
+
+`client/src/App.jsx`에서 아래 두 줄을 찾는다:
+
+```js
+import DashboardPage from './pages/DashboardPage';
+import SharedReportPage from './pages/SharedReportPage';
+```
+
+바로 다음 줄에 추가:
+
+```js
+import GuidePage from './pages/GuidePage';
+```
+
+- [ ] **Step 2: `activeTab === 'guide'` 분기 추가**
+
+`client/src/App.jsx`에서 아래 코드를 찾는다:
+
+```jsx
+      {activeTab === 'pricing' ? (
+        <PricingPage onGoToAuth={() => setActiveTab('auth')} user={user} token={session?.access_token} theme={theme} isSubscribed={isSubscribed} />
+      ) : activeTab === 'dashboard' ? (
+```
+
+이 부분을 아래로 교체한다(기존 `PricingPage` 줄은 그대로 두고, 그 다음에 `guide` 분기만 끼워 넣는다):
+
+```jsx
+      {activeTab === 'pricing' ? (
+        <PricingPage onGoToAuth={() => setActiveTab('auth')} user={user} token={session?.access_token} theme={theme} isSubscribed={isSubscribed} />
+      ) : activeTab === 'guide' ? (
+        <GuidePage />
+      ) : activeTab === 'dashboard' ? (
+```
+
+- [ ] **Step 3: `Navbar.jsx`에서 "사용 가이드" 버튼이 노션 대신 인앱 탭으로 이동하게 변경**
+
+`client/src/components/Navbar.jsx`에서 아래 코드를 찾는다:
+
+```jsx
+      {/* 사용 가이드 */}
+      <button
+        style={pillItem('guide')}
+        onMouseEnter={() => setHoveredNav('guide')}
+        onMouseLeave={() => setHoveredNav(null)}
+        onClick={() => window.open(NOTION_GUIDE_URL, '_blank', 'noopener,noreferrer')}
+      >
+        사용 가이드
+      </button>
+```
+
+아래로 교체한다(버튼 자체와 텍스트는 그대로, `onClick`만 변경):
+
+```jsx
+      {/* 사용 가이드 */}
+      <button
+        style={pillItem('guide')}
+        onMouseEnter={() => setHoveredNav('guide')}
+        onMouseLeave={() => setHoveredNav(null)}
+        onClick={() => onSwitchTab('guide')}
+      >
+        사용 가이드
+      </button>
+```
+
+- [ ] **Step 4: 더 이상 쓰지 않는 `NOTION_GUIDE_URL` 상수 제거**
+
+`client/src/components/Navbar.jsx` 최상단에서 아래 두 줄을 찾아 삭제한다:
+
+```js
+const NOTION_GUIDE_URL =
+  'https://helix-territory-c92.notion.site/37b24604a091802abe38f48e986102d7?source=copy_link';
+```
+
+(바로 위에 있는 `NOTION_UPDATE_URL` 상수는 다른 버튼("업데이트")이 계속 쓰고 있으므로 그대로 둔다.)
+
+- [ ] **Step 5: 빌드 확인**
+
+Run: `cd client && npm run build`
+Expected: 성공.
+
+- [ ] **Step 6: 남은 참조 확인**
+
+Run: `grep -n "NOTION_GUIDE_URL" client/src/components/Navbar.jsx`
+Expected: 결과 없음(0건) — 상수 정의와 사용처가 모두 제거되었어야 함.
+
+- [ ] **Step 7: 커밋**
+
+```bash
+git add client/src/App.jsx client/src/components/Navbar.jsx
+git commit -m "feat: wire up in-app guide page, drop Notion guide link"
+```
+
+---
+
+### Task 4: 수동 통합 검증
+
+**Files:** 없음 (코드 변경 없음, 검증만)
+
+**Interfaces:**
+- Consumes: Task 1~3의 전체 결과물
+- Produces: 없음
+
+- [ ] **Step 1: 로컬 구동**
+
+```bash
+cd client && npm run dev
+```
+
+- [ ] **Step 2: 화면 확인 체크리스트**
+
+브라우저에서 확인한다(로그인하지 않은 상태로 시작):
+
+- [ ] 로그인하지 않은 상태에서 네비게이션의 "사용 가이드"를 클릭하면 새 탭이 아니라 인앱 가이드 페이지로 이동한다(로그인 요구 없음)
+- [ ] 왼쪽에 6개 카테고리(시작하기/키워드 분석/블로그 분석/순위 추적/대시보드/요금제·결제)와 그 아래 항목들이 보인다
+- [ ] 첫 화면엔 "회원가입과 로그인" 항목이 기본 선택되어 오른쪽에 내용이 보인다
+- [ ] 다른 항목을 클릭하면 페이지 이동/스크롤 없이 오른쪽 내용만 바뀌고, 선택된 항목이 강조 표시된다
+- [ ] "tip"이 있는 항목(예: "회원가입과 로그인")은 하단에 강조 박스가 보이고, 없는 항목은 안 보인다
+- [ ] 다른 탭(요금제 등)으로 이동했다가 다시 "사용 가이드"를 클릭해도 정상적으로 이동한다
+- [ ] 브라우저 창 폭을 좁혀보면(모바일 폭) 사이드바와 콘텐츠가 세로로 쌓이며 레이아웃이 깨지지 않는다
+
+- [ ] **Step 3: 최종 빌드 재확인 + 푸시**
+
+```bash
+cd client && npm run build
+```
+
+Expected: 성공. 문제 없으면 이미 Task 1~3에서 커밋된 내용을 원격에 푸시한다:
+
+```bash
+git push origin master
+```
