@@ -120,7 +120,13 @@ export default function TrackerTable({
               </th>
             )}
             <th className={sortKey === 'keyword' ? 'th-active' : ''} onClick={() => headerClick('keyword')} style={{ cursor: 'pointer', width: '26%' }}>
-              키워드{sortArrow('keyword')}
+              {/* 즐겨찾기 별표 + 펼치기 화살표가 차지하는 폭만큼 앞에 빈 자리를 둬서
+                  "키워드" 라벨이 별표가 아니라 실제 키워드 텍스트 위에 오게 맞춘다. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 20, flexShrink: 0 }} />
+                <span style={{ width: 17, flexShrink: 0 }} />
+                <span>키워드{sortArrow('keyword')}</span>
+              </div>
             </th>
             {mode === 'blog' && (
               <th style={{ width: '24%' }}>블로그</th>
