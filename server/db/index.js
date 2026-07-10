@@ -156,6 +156,16 @@ export async function initDb() {
   `);
   console.log('[DB] subscriptions 테이블 준비 완료');
   await p.query(`
+    CREATE TABLE IF NOT EXISTS notification_settings (
+      user_id            UUID PRIMARY KEY,
+      slack_webhook_url  TEXT,
+      slack_enabled      BOOLEAN     NOT NULL DEFAULT TRUE,
+      created_at         TIMESTAMPTZ DEFAULT NOW(),
+      updated_at         TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+  console.log('[DB] notification_settings 테이블 준비 완료');
+  await p.query(`
     CREATE TABLE IF NOT EXISTS feedback (
       id         SERIAL PRIMARY KEY,
       type       TEXT        NOT NULL,
