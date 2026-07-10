@@ -325,7 +325,7 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
           계정 만들기
         </h1>
         <p style={{ fontSize: 12, color: isDark ? '#8E8E93' : '#8E8E93', margin: 0 }}>
-          7일 무료 체험을 시작해보세요
+          지금 가입하고 시작해보세요
         </p>
       </div>
 

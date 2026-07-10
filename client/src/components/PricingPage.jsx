@@ -106,7 +106,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme, isSubscrib
         월 <span style={{
           background: 'linear-gradient(120deg, #0A84FF 0%, #34C1FF 55%, #30D158 100%)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-        }}>990원</span>으로 다 됩니다
+        }}>9,900원</span>으로 다 됩니다
       </h1>
 
       <p style={{ fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center', margin: '0 0 32px', lineHeight: 1.6, maxWidth: 480 }}>
@@ -257,7 +257,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme, isSubscrib
                 onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 <Zap size={13} />
-                7일 무료로 시작하기
+                프리미엄 시작하기
               </button>
             )}
             <p style={{ margin: '6px 0 0', fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'center' }}>

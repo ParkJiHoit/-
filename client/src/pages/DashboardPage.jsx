@@ -130,7 +130,7 @@ export default function DashboardPage({ user, token, onLoginRequest, onGoToServi
             boxShadow: '0 4px 20px rgba(10,132,255,0.4)',
           }}
         >
-          7일 무료로 시작하기
+          프리미엄 알아보기
         </button>
       </div>
     );

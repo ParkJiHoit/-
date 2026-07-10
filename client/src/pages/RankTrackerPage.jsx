@@ -681,7 +681,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         <div style={{ fontSize: 48, opacity: 0.25 }}>🔒</div>
         <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>프리미엄 전용 기능입니다</div>
         <p style={{ fontSize: 15, color: 'var(--text-secondary)', textAlign: 'center', lineHeight: 1.8, margin: 0 }}>
-          순위 추적은 프리미엄 플랜 구독자만 이용할 수 있어요.<br />7일 무료 체험으로 먼저 써보세요.
+          순위 추적은 프리미엄 플랜 구독자만 이용할 수 있어요.<br />프리미엄으로 업그레이드해보세요.
         </p>
         <button
           onClick={onGoPricing}
@@ -692,7 +692,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
             marginTop: 4, boxShadow: '0 4px 20px rgba(10,132,255,0.4)',
           }}
         >
-          7일 무료로 시작하기
+          프리미엄 알아보기
         </button>
       </div>
     );

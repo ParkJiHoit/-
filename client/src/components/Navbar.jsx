@@ -258,31 +258,6 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         >
           요금제
         </button>
-        {(!isSubscribed && !serviceOpen) && (
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 12px)', left: '50%',
-            transform: 'translateX(-50%)', pointerEvents: 'none', whiteSpace: 'nowrap', zIndex: 10,
-          }}>
-            <div className="float-bob" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{
-                width: 0, height: 0,
-                borderLeft: '4px solid transparent', borderRight: '4px solid transparent',
-                borderBottom: `5px solid ${isDark ? 'rgba(30,80,180,0.6)' : 'rgba(30,80,180,0.4)'}`,
-                marginBottom: -1,
-              }} />
-              <div style={{
-                background: isDark ? 'rgba(20,60,160,0.28)' : 'rgba(20,60,160,0.14)',
-                borderRadius: 20, padding: '4px 11px', fontSize: 10, fontWeight: 600,
-                color: isDark ? 'rgba(150,190,255,0.95)' : 'rgba(30,80,200,0.9)',
-                letterSpacing: '0.04em',
-                border: `1px solid ${isDark ? 'rgba(60,120,240,0.4)' : 'rgba(60,120,240,0.3)'}`,
-                backdropFilter: 'blur(8px)',
-              }}>
-                7일 무료체험
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 사용 가이드 */}
