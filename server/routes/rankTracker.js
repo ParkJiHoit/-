@@ -11,6 +11,7 @@ import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
 import { getPool } from '../db/index.js';
 import { createRefreshJob, processNextChunk, getJobStatus, retryFailedItems } from '../services/refreshJobService.js';
 import { getNotificationSettings, saveNotificationSettings, sendTestSlackMessage } from '../services/notificationService.js';
+import { getShareForGroup, createShareForGroup, revokeShareForGroup } from '../services/reportShareService.js';
 
 const router = Router();
 
@@ -326,6 +327,27 @@ router.put('/notification-settings', requirePremium, async (req, res, next) => {
 router.post('/notification-settings/test', requirePremium, async (req, res, next) => {
   try {
     await sendTestSlackMessage(req.userId, req.body?.slackWebhookUrl);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+router.get('/groups/:groupId/share', requirePremium, async (req, res, next) => {
+  try {
+    const share = await getShareForGroup(req.userId, Number(req.params.groupId));
+    res.json(share || { token: null });
+  } catch (e) { next(e); }
+});
+
+router.post('/groups/:groupId/share', requirePremium, async (req, res, next) => {
+  try {
+    const share = await createShareForGroup(req.userId, Number(req.params.groupId));
+    res.json(share);
+  } catch (e) { next(e); }
+});
+
+router.delete('/groups/:groupId/share', requirePremium, async (req, res, next) => {
+  try {
+    await revokeShareForGroup(req.userId, Number(req.params.groupId));
     res.json({ ok: true });
   } catch (e) { next(e); }
 });

@@ -21,6 +21,7 @@ import LoginPromptModal from './components/LoginPromptModal';
 import AuthPage from './pages/AuthPage';
 import RankTrackerPage from './pages/RankTrackerPage';
 import DashboardPage from './pages/DashboardPage';
+import SharedReportPage from './pages/SharedReportPage';
 import SummaryCards from './components/SummaryCards';
 import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
@@ -498,6 +499,9 @@ export default function App() {
   const [theme, setTheme] = useState(() =>
     window.localStorage.getItem(THEME_STORAGE_KEY) || 'dark'
   );
+  // 클라이언트 공유 리포트 — ?report=<token> 쿼리로 들어오면 로그인/탭 시스템을
+  // 전부 건너뛰고 읽기전용 리포트만 보여준다(URL 라우터가 없는 앱이라 쿼리 파라미터로 대체).
+  const [sharedReportToken] = useState(() => new URLSearchParams(window.location.search).get('report'));
   const [activeTab, setActiveTab]       = useState('analysis');
   const [analysis,  setAnalysis]        = useState(null);
   const [blogStructure, setBlogStructure] = useState(null);
@@ -784,6 +788,10 @@ export default function App() {
   };
 
   const handleMockAction = () => showToast('준비 중인 기능입니다 — 곧 만나보실 수 있어요!');
+
+  if (sharedReportToken) {
+    return <SharedReportPage token={sharedReportToken} />;
+  }
 
   /* ── Render ── */
   return (

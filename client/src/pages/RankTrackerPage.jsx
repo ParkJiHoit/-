@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
 import BulkImportModal from '../components/BulkImportModal';
 import NotificationSettingsModal from '../components/rankTracker/NotificationSettingsModal';
+import ShareReportModal from '../components/rankTracker/ShareReportModal';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import TrackerToolbar from '../components/rankTracker/TrackerToolbar';
 import TrackerTable from '../components/rankTracker/TrackerTable';
@@ -397,6 +398,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [editItem, setEditItem] = useState(null); // null = 신규, item = 수정
   const [error, setError] = useState('');
   const [premiumOnly, setPremiumOnly] = useState(false);
@@ -763,6 +765,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         onOpenBulkModal={() => setShowBulkModal(true)}
         onOpenAddModal={() => { setEditItem(null); setShowModal(true); }}
         onOpenNotificationSettings={() => setShowNotificationModal(true)}
+        onOpenShareModal={() => setShowShareModal(true)}
       />
 
       <TrackerTable
@@ -810,6 +813,15 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         <NotificationSettingsModal
           token={token}
           onClose={() => setShowNotificationModal(false)}
+        />
+      )}
+
+      {showShareModal && selectedGroupId && (
+        <ShareReportModal
+          token={token}
+          groupId={selectedGroupId}
+          groupName={groups.find(g => String(g.id) === selectedGroupId)?.name || '그룹'}
+          onClose={() => setShowShareModal(false)}
         />
       )}
 

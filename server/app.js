@@ -12,6 +12,7 @@ import webhookRoutes from './routes/webhooks.js';
 import billingRoutes from './routes/billing.js';
 import feedbackRoutes from './routes/feedback.js';
 import chatRoutes from './routes/chat.js';
+import publicReportRoutes from './routes/publicReports.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -48,6 +49,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/rank-tracker', rankTrackerRoutes);
+app.use('/api/public-reports', publicReportRoutes);
 app.use('/api/jobs', jobRoutes);
 
 app.use('/api', (_req, res) => {
