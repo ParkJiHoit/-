@@ -1,5 +1,58 @@
 import { useState } from 'react';
-import { Check, Sparkles, Zap } from 'lucide-react';
+import { Check, ChevronDown, Sparkles, Zap } from 'lucide-react';
+
+const CONTACT_EMAIL = 'qkrwlgh52660724@gmail.com';
+
+const TRUST_BADGES = [
+  { icon: '💳', text: '7일 이내 100% 환불 보장' },
+  { icon: '👨‍💻', text: '만든 사람이 직접 답변해요', href: `mailto:${CONTACT_EMAIL}` },
+  { icon: '🔓', text: '언제든 해지 가능' },
+];
+
+const FAQ_ITEMS = [
+  { q: '환불은 어떻게 하나요?', a: '결제일로부터 7일 이내에 문의해 주시면 전액 환불해 드려요. 우측 하단 챗봇이나 이메일로 요청하시면 됩니다.' },
+  { q: '구독 해지는 언제든 가능한가요?', a: '네. 해지하시면 다음 결제부터 청구되지 않고, 이미 결제한 기간까지는 프리미엄 기능을 계속 이용하실 수 있어요.' },
+  { q: '베이직에서 프리미엄으로 업그레이드하면 바로 적용되나요?', a: '네, 결제가 완료되는 즉시 프리미엄 한도로 전환됩니다.' },
+  { q: '결제 수단은 무엇인가요?', a: 'LemonSqueezy를 통해 신용·체크카드로 결제되며, 카드 정보는 Ranklet 서버에 저장되지 않아요.' },
+  { q: '순위·검색량 데이터는 얼마나 정확한가요?', a: '네이버 검색광고 API와 자체 크롤링을 기반으로 합니다. 네이버 공식 API가 아니기 때문에 실제 수치와 약간의 차이가 있을 수 있어 참고용 지표로 활용해 주세요.' },
+  { q: '궁금한 점이나 문제가 생기면 어디로 문의하나요?', a: '우측 하단 챗봇이나 상단 네비게이션의 피드백 버튼으로 남겨주시면, Ranklet을 직접 만든 사람이 확인하고 답변드려요.' },
+];
+
+function FaqAccordion({ items }) {
+  const [openIndex, setOpenIndex] = useState(null);
+  return (
+    <div style={{ width: '100%', maxWidth: 640, marginTop: 48 }}>
+      <h2 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', textAlign: 'center', margin: '0 0 20px' }}>
+        자주 묻는 질문
+      </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {items.map((item, i) => {
+          const open = openIndex === i;
+          return (
+            <div key={item.q} className="mac-card" style={{ padding: 0, overflow: 'hidden' }}>
+              <button
+                onClick={() => setOpenIndex(open ? null : i)}
+                style={{
+                  width: '100%', padding: '14px 18px', background: 'none', border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{item.q}</span>
+                <ChevronDown size={14} style={{ color: 'var(--text-tertiary)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0, marginLeft: 12 }} />
+              </button>
+              {open && (
+                <div style={{ padding: '0 18px 16px' }}>
+                  <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{item.a}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const BASIC_FEATURES = [
   '연관 키워드 발굴',
@@ -228,6 +281,29 @@ export default function PricingPage({ onGoToAuth, user, token, theme, isSubscrib
         </div>
 
       </div>
+
+      {/* 신뢰 배지: 환불 보장 / 직접 소통 / 자유 해지 */}
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 28, maxWidth: 640 }}>
+        {TRUST_BADGES.map(b => {
+          const Tag = b.href ? 'a' : 'div';
+          return (
+            <Tag
+              key={b.text}
+              href={b.href}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+                borderRadius: 999, background: 'var(--bg-overlay)', border: '1px solid var(--border)',
+                fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)',
+                textDecoration: 'none', cursor: b.href ? 'pointer' : 'default',
+              }}
+            >
+              <span>{b.icon}</span>{b.text}
+            </Tag>
+          );
+        })}
+      </div>
+
+      <FaqAccordion items={FAQ_ITEMS} />
 
       <p style={{ marginTop: 32, fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.7 }}>
         * 아직 베타 서비스입니다. 정식 출시 시 요금제가 확정됩니다.
