@@ -5,8 +5,8 @@ import VerticalCutReveal from '../components/VerticalCutReveal';
 import rankletLogoDark from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_42_18-removebg-preview.png';
 import rankletLogoLight from '../assets/ChatGPT_Image_2026년_6월_14일_오후_11_45_46-removebg-preview.png';
 
-export default function AuthPage({ onSuccess, onClose, theme }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'email' | 'signup'
+export default function AuthPage({ onSuccess, onClose, theme, forceMode }) {
+  const [mode, setMode] = useState(forceMode || 'login'); // 'login' | 'email' | 'signup' | 'reset' | 'newPassword'
   const isDark = theme !== 'light';
 
   // ESC 키로 닫기
@@ -108,6 +108,7 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
               <EmailPanel
                 isDark={isDark}
                 onSuccess={onSuccess}
+                onForgotPassword={() => setMode('reset')}
               />
             )}
             {mode === 'signup' && (
@@ -115,6 +116,18 @@ export default function AuthPage({ onSuccess, onClose, theme }) {
                 isDark={isDark}
                 onSuccess={onSuccess}
                 onDone={() => setMode('login')}
+              />
+            )}
+            {mode === 'reset' && (
+              <ResetPasswordPanel
+                isDark={isDark}
+                onDone={() => setMode('login')}
+              />
+            )}
+            {mode === 'newPassword' && (
+              <NewPasswordPanel
+                isDark={isDark}
+                onSuccess={onSuccess}
               />
             )}
           </div>
@@ -217,7 +230,7 @@ function LoginPanel({ isDark, onEmailMode, onSignup, onSuccess }) {
 }
 
 /* ─── 이메일 로그인 패널 ─── */
-function EmailPanel({ isDark, onSuccess }) {
+function EmailPanel({ isDark, onSuccess, onForgotPassword }) {
   const { signInWithEmail } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -254,6 +267,9 @@ function EmailPanel({ isDark, onSuccess }) {
           <AuthInput type="password" value={password} onChange={e => setPassword(e.target.value)}
             placeholder="••••••••" autoComplete="current-password" required isDark={isDark} />
         </FormField>
+        <div style={{ textAlign: 'right', marginTop: -5 }}>
+          <InlineLink onClick={onForgotPassword} isDark={isDark}>비밀번호를 잊으셨나요?</InlineLink>
+        </div>
         {error && <ErrorMsg>{error}</ErrorMsg>}
         <PrimaryButton type="submit" disabled={loading} style={{ marginTop: 4 }}>
           {loading ? '로그인 중...' : '로그인'}
@@ -290,16 +306,7 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
   if (done) {
     return (
       <div style={{ width: '100%', maxWidth: 300, textAlign: 'center' }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: 12, margin: '0 auto 14px',
-          background: 'linear-gradient(135deg,#0A84FF,#34C1FF)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 16px rgba(10,132,255,0.35)',
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
+        <SuccessCheck />
         <h2 style={{ fontSize: 18, fontWeight: 700, color: isDark ? '#F5F5F7' : '#1C1C1E', margin: '0 0 8px' }}>
           이메일을 확인해주세요
         </h2>
@@ -351,7 +358,145 @@ function SignupPanel({ isDark, onSuccess, onDone }) {
   );
 }
 
+/* ─── 비밀번호 재설정 요청 패널 (이메일 입력 → 재설정 링크 전송) ─── */
+function ResetPasswordPanel({ isDark, onDone }) {
+  const { resetPasswordForEmail } = useAuth();
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    const { error } = await resetPasswordForEmail(email);
+    setLoading(false);
+    if (error) setError(getKoreanError(error.message));
+    else setSent(true);
+  }
+
+  if (sent) {
+    return (
+      <div style={{ width: '100%', maxWidth: 300, textAlign: 'center' }}>
+        <SuccessCheck />
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: isDark ? '#F5F5F7' : '#1C1C1E', margin: '0 0 8px' }}>
+          이메일을 확인해주세요
+        </h2>
+        <p style={{ fontSize: 13, color: isDark ? '#8E8E93' : '#636366', margin: '0 0 20px', lineHeight: 1.6 }}>
+          <span style={{ color: isDark ? '#C4C4C8' : '#1C1C1E', fontWeight: 500 }}>{email}</span>으로<br/>비밀번호 재설정 링크를 보냈습니다.
+        </p>
+        <PrimaryButton onClick={onDone}>로그인으로 돌아가기</PrimaryButton>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ width: '100%', maxWidth: 300 }}>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.3px', color: isDark ? '#F5F5F7' : '#1C1C1E' }}>
+          비밀번호 재설정
+        </h1>
+        <p style={{ fontSize: 12, color: isDark ? '#8E8E93' : '#8E8E93', margin: 0 }}>
+          가입하신 이메일로 재설정 링크를 보내드릴게요
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+        <FormField label="이메일" isDark={isDark}>
+          <AuthInput type="email" value={email} onChange={e => setEmail(e.target.value)}
+            placeholder="name@example.com" autoComplete="email" required isDark={isDark} />
+        </FormField>
+        {error && <ErrorMsg>{error}</ErrorMsg>}
+        <PrimaryButton type="submit" disabled={loading} style={{ marginTop: 4 }}>
+          {loading ? '전송 중...' : '재설정 링크 보내기'}
+        </PrimaryButton>
+      </form>
+    </div>
+  );
+}
+
+/* ─── 새 비밀번호 설정 패널 (재설정 이메일의 링크를 눌러 돌아왔을 때) ─── */
+function NewPasswordPanel({ isDark, onSuccess }) {
+  const { updatePassword, clearPasswordRecovery } = useAuth();
+  const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    if (password.length < 8) { setError('패스워드는 8자 이상이어야 합니다.'); return; }
+    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) { setError('패스워드는 영문과 숫자를 모두 포함해야 합니다.'); return; }
+    if (password !== passwordConfirm) { setError('패스워드가 일치하지 않습니다.'); return; }
+    setLoading(true);
+    const { error } = await updatePassword(password);
+    setLoading(false);
+    if (error) { setError(getKoreanError(error.message)); return; }
+    setDone(true);
+    setTimeout(() => { clearPasswordRecovery(); onSuccess?.(); }, 1200);
+  }
+
+  if (done) {
+    return (
+      <div style={{ width: '100%', maxWidth: 300, textAlign: 'center' }}>
+        <SuccessCheck />
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: isDark ? '#F5F5F7' : '#1C1C1E', margin: '0 0 8px' }}>
+          비밀번호가 변경되었습니다
+        </h2>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ width: '100%', maxWidth: 300 }}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.3px', color: isDark ? '#F5F5F7' : '#1C1C1E' }}>
+          새 비밀번호 설정
+        </h1>
+        <p style={{ fontSize: 12, color: isDark ? '#8E8E93' : '#8E8E93', margin: 0 }}>
+          새로 사용할 비밀번호를 입력해주세요
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <FormField label="새 패스워드" isDark={isDark}>
+          <AuthInput type="password" value={password} onChange={e => setPassword(e.target.value)}
+            placeholder="••••••••" autoComplete="new-password" required isDark={isDark} />
+          <p style={{ margin: '3px 0 0', fontSize: 11, color: isDark ? '#636366' : '#8E8E93' }}>
+            8자 이상, 영문+숫자 포함
+          </p>
+        </FormField>
+        <FormField label="새 패스워드 확인" isDark={isDark}>
+          <AuthInput type="password" value={passwordConfirm} onChange={e => setPasswordConfirm(e.target.value)}
+            placeholder="••••••••" autoComplete="new-password" required isDark={isDark} />
+        </FormField>
+        {error && <ErrorMsg>{error}</ErrorMsg>}
+        <PrimaryButton type="submit" disabled={loading} style={{ marginTop: 2 }}>
+          {loading ? '변경 중...' : '비밀번호 변경'}
+        </PrimaryButton>
+      </form>
+    </div>
+  );
+}
+
 /* ─── 공통 원자 컴포넌트 ─── */
+function SuccessCheck() {
+  return (
+    <div style={{
+      width: 48, height: 48, borderRadius: 12, margin: '0 auto 14px',
+      background: 'linear-gradient(135deg,#0A84FF,#34C1FF)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      boxShadow: '0 4px 16px rgba(10,132,255,0.35)',
+    }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </div>
+  );
+}
 function IconBtn({ children, onClick, isDark, title }) {
   const [hovered, setHovered] = useState(false);
   return (

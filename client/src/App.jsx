@@ -464,7 +464,7 @@ function QuickToggle({ label, checked, onChange, title }) {
 
 /* ═══════════════════════════════════════════ */
 export default function App() {
-  const { user, session } = useAuth();
+  const { user, session, passwordRecovery, clearPasswordRecovery } = useAuth();
   const [theme, setTheme] = useState(() =>
     window.localStorage.getItem(THEME_STORAGE_KEY) || 'dark'
   );
@@ -856,6 +856,16 @@ export default function App() {
       {/* Auth 모달 오버레이 */}
       {activeTab === 'auth' && (
         <AuthPage onSuccess={() => switchTab('analysis')} onClose={() => switchTab('analysis')} theme={theme} />
+      )}
+
+      {/* 비밀번호 재설정 이메일 링크를 눌러 돌아온 경우 — 현재 탭과 무관하게 최우선으로 띄운다 */}
+      {passwordRecovery && activeTab !== 'auth' && (
+        <AuthPage
+          forceMode="newPassword"
+          onSuccess={clearPasswordRecovery}
+          onClose={clearPasswordRecovery}
+          theme={theme}
+        />
       )}
 
       {activeTab === 'pricing' ? (
