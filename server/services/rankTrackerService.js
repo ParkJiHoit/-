@@ -104,8 +104,9 @@ export async function backfillSearchVolumeChunk(userId) {
 export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search
-     FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC`,
+    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search, is_favorite
+     FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL
+     ORDER BY is_favorite DESC, created_at DESC`,
     [userId]
   );
   const result = await Promise.all(rows.map(async (row) => {
@@ -191,6 +192,17 @@ export async function updateTrackedGroup(userId, trackedId, groupId) {
     `UPDATE tracked_keywords SET group_id = $1 WHERE id = $2 AND user_id = $3
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
     [groupId, trackedId, userId]
+  );
+  if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
+  return rows[0];
+}
+
+export async function setFavorite(userId, trackedId, isFavorite) {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `UPDATE tracked_keywords SET is_favorite = $1 WHERE id = $2 AND user_id = $3 AND deleted_at IS NULL
+     RETURNING id, is_favorite`,
+    [isFavorite, trackedId, userId]
   );
   if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
   return rows[0];
@@ -362,12 +374,12 @@ export async function getSnapshots(userId, trackedId) {
 export async function refreshRanks(userId, trackedId) {
   const pool = getPool();
   const { rows: own } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids FROM tracked_keywords WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+    `SELECT id, keyword, mode, blog_ids, is_favorite FROM tracked_keywords WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
     [trackedId, userId]
   );
   if (!own.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
 
-  const { keyword, mode, blog_ids } = own[0];
+  const { keyword, mode, blog_ids, is_favorite: isFavorite } = own[0];
 
   // 블로그탭 스크래핑과 통합검색 스크래핑은 서로 독립적인 네이버 검색 호출이라
   // 순차로 기다리지 않고 동시에 요청해 왕복 시간을 겹친다. 통합검색은 blog 모드에서만
@@ -465,7 +477,7 @@ export async function refreshRanks(userId, trackedId) {
 
   if (mode === 'blog' && !fetchFailed) {
     const changes = diffRankChanges(previousByBlog, upserts);
-    await notifyRankChanges(userId, keyword, changes);
+    await notifyRankChanges(userId, keyword, changes, isFavorite);
   }
 
   console.log(`[rank-tracker] refresh ${fetchFailed ? '✗ fetch_failed' : '✓'} "${keyword}" mode=${mode} upserted=${upserts.length}`);

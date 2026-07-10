@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, X, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, X, ChevronRight, Star } from 'lucide-react';
 import { formatRankStatus } from './trackerFormat';
 
 const SORT_DEFAULT_DIR = { keyword: 'asc', searchVolume: 'desc', rank: 'asc', addedDate: 'desc' };
@@ -31,6 +31,7 @@ export default function TrackerTable({
   mode, rows, groups, sortKey, sortDir, onSortChange,
   selectedIds, onToggleSelect, onToggleSelectAll,
   onRowClick, onMoveItemGroup, onAddBlog, onRemoveBlog, onDeleteKeyword, onBulkDeleteSelected,
+  onToggleFavorite,
   loading,
 }) {
   const [expanded, setExpanded] = useState(new Set());
@@ -53,7 +54,7 @@ export default function TrackerTable({
     );
   }
 
-  const sortedItems = sortKey
+  const sortedByKey = sortKey
     ? [...rows].sort((a, b) => {
         const av = getSortValue(a, sortKey);
         const bv = getSortValue(b, sortKey);
@@ -61,6 +62,10 @@ export default function TrackerTable({
         return sortDir === 'asc' ? cmp : -cmp;
       })
     : rows;
+
+  // 즐겨찾기는 현재 정렬 기준과 무관하게 항상 맨 위에 고정한다(Array.sort는 안정 정렬이라
+  // 즐겨찾기/일반 그룹 내부의 상대 순서는 위에서 계산한 정렬 결과 그대로 유지된다).
+  const sortedItems = [...sortedByKey].sort((a, b) => (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0));
 
   const flatRows = [];
   for (const item of sortedItems) {
@@ -165,6 +170,17 @@ export default function TrackerTable({
                 <td>
                   {isFirst ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id, !item.is_favorite); }}
+                        className="mac-icon-btn mac-icon-btn-star"
+                        title={item.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+                        style={{
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 3, display: 'flex', flexShrink: 0,
+                          color: item.is_favorite ? '#FFD60A' : 'var(--text-tertiary)',
+                        }}
+                      >
+                        <Star size={14} fill={item.is_favorite ? '#FFD60A' : 'none'} />
+                      </button>
                       <span style={{ width: 17, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
                         {totalBlogCount > 1 && (
                           <button

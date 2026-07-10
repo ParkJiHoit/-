@@ -95,7 +95,7 @@ export function diffRankChanges(previousByBlog, upserts) {
   return changes;
 }
 
-function formatChangeMessage(keyword, changes) {
+export function formatChangeMessage(keyword, changes, isFavorite) {
   const lines = changes.map((c) => {
     if (c.kind === 'rank_in') return `🟢 *${c.blogId}* 가 *${c.rank}위*로 5위 안에 진입했습니다.`;
     if (c.kind === 'rank_out') return `🔴 *${c.blogId}* 가 5위 밖으로 이탈했습니다.`;
@@ -103,17 +103,21 @@ function formatChangeMessage(keyword, changes) {
     if (c.kind === 'integrated_out') return `⚪ *${c.blogId}* 통합검색 노출이 사라졌습니다.`;
     return '';
   }).filter(Boolean);
-  return `*[${keyword}]* 순위 변동 알림\n${lines.join('\n')}`;
+  // 즐겨찾기(핵심 키워드)는 별 이모지 + "핵심 키워드" 라벨로 다른 알림과 구분되게 강조한다.
+  const title = isFavorite
+    ? `⭐ *[${keyword}]* 핵심 키워드 순위 변동 알림 ⭐`
+    : `*[${keyword}]* 순위 변동 알림`;
+  return `${title}\n${lines.join('\n')}`;
 }
 
 // refreshRanks가 갱신을 마친 뒤 호출한다 — 웹훅 실패가 갱신 자체를 실패시키지 않도록
 // 내부에서 에러를 삼키고 로그만 남긴다.
-export async function notifyRankChanges(userId, keyword, changes) {
+export async function notifyRankChanges(userId, keyword, changes, isFavorite = false) {
   if (!changes.length) return;
   try {
     const settings = await getNotificationSettings(userId);
     if (!settings.slackEnabled || !settings.slackWebhookUrl) return;
-    await sendSlackMessage(settings.slackWebhookUrl, formatChangeMessage(keyword, changes));
+    await sendSlackMessage(settings.slackWebhookUrl, formatChangeMessage(keyword, changes, isFavorite));
   } catch (e) {
     console.error('[notification] Slack 전송 실패:', e.message);
   }

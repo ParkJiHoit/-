@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import {
   listTracked, createTracked, deleteTracked, deleteTrackedBulk, removeTrackedBlogUrl,
-  getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup,
+  getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup, setFavorite,
   listGroups, createGroup, renameGroup, deleteGroup, exportSnapshots,
   extractPostKey, postKeyToString, backfillSearchVolumeChunk, getDashboardSummary,
 } from '../services/rankTrackerService.js';
@@ -158,6 +158,13 @@ router.patch('/:id/group', requirePremium, async (req, res, next) => {
   try {
     const { groupId } = req.body || {};
     const data = await updateTrackedGroup(req.userId, Number(req.params.id), groupId || null);
+    res.json(data);
+  } catch (e) { next(e); }
+});
+
+router.patch('/:id/favorite', requirePremium, async (req, res, next) => {
+  try {
+    const data = await setFavorite(req.userId, Number(req.params.id), !!req.body?.favorite);
     res.json(data);
   } catch (e) { next(e); }
 });
