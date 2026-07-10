@@ -852,7 +852,7 @@ export default function App() {
         position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
         opacity: hasResults ? 0 : 1, transition: 'opacity 0.6s ease',
       }}>
-        <HeroScene className="absolute inset-0" dark={theme === 'dark'} />
+        <HeroScene className="absolute inset-0" dark={theme === 'dark'} showSpheres={activeTab !== 'guide'} />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
