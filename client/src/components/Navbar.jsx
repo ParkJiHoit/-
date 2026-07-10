@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, LogOut, MessageSquarePlus, Search, TrendingUp } from 'lucide-react';
+import { ChevronDown, FileText, Home, LogOut, MessageSquarePlus, Search, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import SearchHistoryDropdown from './SearchHistoryDropdown';
@@ -31,6 +31,7 @@ function getAssignedAvatar(userId) {
 }
 
 const SERVICES = [
+  { id: 'dashboard',    icon: Home,        label: '대시보드',   desc: '순위 변동과 최근 활동 한눈에 보기' },
   { id: 'analysis',     icon: Search,      label: '키워드 분석', desc: '기준 키워드로 연관 키워드 발굴' },
   { id: 'blog',         icon: FileText,    label: '블로그 분석', desc: '콘텐츠 기회 점수 분석' },
   { id: 'rank-tracker', icon: TrendingUp,  label: '순위 추적',   desc: '블로그 키워드 순위 일별 추적' },

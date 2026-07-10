@@ -20,6 +20,7 @@ import PricingPage from './components/PricingPage';
 import LoginPromptModal from './components/LoginPromptModal';
 import AuthPage from './pages/AuthPage';
 import RankTrackerPage from './pages/RankTrackerPage';
+import DashboardPage from './pages/DashboardPage';
 import SummaryCards from './components/SummaryCards';
 import { formatNumber, formatPercent, getDownloadFileName } from './utils/formatters';
 import { sortKeywords } from './utils/tableSort';
@@ -748,6 +749,8 @@ export default function App() {
       setBlogStructureKeyword('');
     } else if (id === 'rank-tracker') {
       setActiveTab('rank-tracker');
+    } else if (id === 'dashboard') {
+      setActiveTab('dashboard');
     }
   };
 
@@ -876,6 +879,12 @@ export default function App() {
 
       {activeTab === 'pricing' ? (
         <PricingPage onGoToAuth={() => setActiveTab('auth')} user={user} token={session?.access_token} theme={theme} isSubscribed={isSubscribed} />
+      ) : activeTab === 'dashboard' ? (
+        <div style={{ paddingTop: 'calc(var(--nav-offset) + 24px)', paddingBottom: 64 }}>
+          <div className="mx-auto w-full max-w-[1000px] px-5 lg:px-10">
+            <DashboardPage user={user} token={session?.access_token} onLoginRequest={() => switchTab('auth')} onGoToService={goToService} />
+          </div>
+        </div>
       ) : activeTab === 'rank-tracker' ? (
         <div style={{ paddingTop: 'calc(var(--nav-offset) + 24px)', paddingBottom: 64 }}>
           <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-10">
