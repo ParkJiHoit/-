@@ -119,19 +119,19 @@ export default function TrackerTable({
                 등록일{sortArrow('addedDate')}
               </th>
             )}
-            <th className={sortKey === 'keyword' ? 'th-active' : ''} onClick={() => headerClick('keyword')} style={{ cursor: 'pointer', width: '20%' }}>
+            <th className={sortKey === 'keyword' ? 'th-active' : ''} onClick={() => headerClick('keyword')} style={{ cursor: 'pointer', width: '26%' }}>
               키워드{sortArrow('keyword')}
             </th>
             {mode === 'blog' && (
-              <th style={{ width: '20%' }}>블로그</th>
+              <th style={{ width: '24%' }}>블로그</th>
             )}
-            <th className={sortKey === 'searchVolume' ? 'th-active' : ''} onClick={() => headerClick('searchVolume')} style={{ cursor: 'pointer', width: '12%' }}>
+            <th className={sortKey === 'searchVolume' ? 'th-active' : ''} onClick={() => headerClick('searchVolume')} style={{ cursor: 'pointer', width: '8%' }}>
               검색량{sortArrow('searchVolume')}
             </th>
-            <th className={sortKey === 'rank' ? 'th-active' : ''} onClick={() => headerClick('rank')} style={{ cursor: 'pointer', width: '12%' }}>
+            <th className={sortKey === 'rank' ? 'th-active' : ''} onClick={() => headerClick('rank')} style={{ cursor: 'pointer', width: '8%' }}>
               순위{sortArrow('rank')}
             </th>
-            {mode === 'blog' && <th style={{ width: '10%' }}>통검</th>}
+            {mode === 'blog' && <th style={{ width: '7%' }}>통검</th>}
             <th style={{ width: 72 }}></th>
           </tr>
         </thead>
