@@ -104,6 +104,70 @@ function formatDateLabels(dates) {
   return dates;
 }
 
+// 화면의 TrackerStatCards(추적 키워드/추적 링크/5위 내 노출/통검 노출 중)와 같은 지표를
+// 시트별로 요약한다. 전체 순위(all) 모드는 화면과 마찬가지로 "링크" 개념이 없어 카드 구성이 다르다.
+function computeGroupSummary(rows, dataRows) {
+  const keywordCount = new Set(rows.map(r => r.keyword)).size;
+  const isAllMode = dataRows.length > 0 && dataRows.every(dr => dr.mode === 'all');
+
+  if (isAllMode) {
+    const top5Keywords = new Set();
+    for (const dr of dataRows) {
+      if (dr.latestStatus === 'ranked' && dr.latestRank != null && dr.latestRank <= 5) top5Keywords.add(dr.keyword);
+    }
+    return { isAllMode: true, keywordCount, top5KeywordCount: top5Keywords.size };
+  }
+
+  const linkCount = dataRows.length;
+  const top5LinkCount = dataRows.filter(dr => dr.latestStatus === 'ranked').length;
+  const integratedCount = dataRows.filter(dr => dr.integratedLatest === true).length;
+  return { isAllMode: false, keywordCount, linkCount, top5LinkCount, integratedCount };
+}
+
+function addGroupSummaryTable(worksheet, summary, totalCols) {
+  const pct = (value, total) => (total ? Math.round((value / total) * 100) : null);
+  const cards = summary.isAllMode
+    ? [
+        { label: '추적 키워드', value: `${summary.keywordCount}`, pct: null, color: 'FF8E8E93' },
+        { label: '5위 내 노출', value: `${summary.top5KeywordCount}/${summary.keywordCount}`, pct: pct(summary.top5KeywordCount, summary.keywordCount), color: 'FF30D158' },
+      ]
+    : [
+        { label: '추적 키워드', value: `${summary.keywordCount}`, pct: null, color: 'FF8E8E93' },
+        { label: '추적 링크', value: `${summary.linkCount}`, pct: null, color: 'FF0A84FF' },
+        { label: '5위 내 노출', value: `${summary.top5LinkCount}/${summary.linkCount}`, pct: pct(summary.top5LinkCount, summary.linkCount), color: 'FF30D158' },
+        { label: '통검 노출 중', value: `${summary.integratedCount}/${summary.linkCount}`, pct: pct(summary.integratedCount, summary.linkCount), color: 'FF5E5CE6' },
+      ];
+
+  const cardSpan = Math.max(1, Math.floor(totalCols / cards.length));
+  const labelRow = worksheet.addRow([]);
+  const valueRow = worksheet.addRow([]);
+  labelRow.height = 18;
+  valueRow.height = 28;
+
+  cards.forEach((card, i) => {
+    const startCol = i * cardSpan + 1;
+    const endCol = i === cards.length - 1 ? totalCols : startCol + cardSpan - 1;
+
+    worksheet.mergeCells(labelRow.number, startCol, labelRow.number, endCol);
+    const labelCell = labelRow.getCell(startCol);
+    labelCell.value = card.label;
+    labelCell.font = { name: EXPORT_FONT, size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+    labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: card.color } };
+    labelCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    worksheet.mergeCells(valueRow.number, startCol, valueRow.number, endCol);
+    const valueCell = valueRow.getCell(startCol);
+    valueCell.value = card.pct != null ? `${card.value}  (${card.pct}%)` : card.value;
+    valueCell.font = { name: EXPORT_FONT, size: 14, bold: true, color: { argb: card.color } };
+    valueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
+    valueCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    valueCell.border = CELL_BORDER;
+    labelCell.border = CELL_BORDER;
+  });
+
+  worksheet.addRow([]);
+}
+
 function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
   const dates = [...new Set(rows.map(r => r.date))].sort();
   const dateLabels = formatDateLabels(dates);
@@ -126,9 +190,13 @@ function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
   for (const dr of dataRows) {
     let integratedLatest = null;
     let postDate = null;
+    let latestFound = false;
     for (let i = dates.length - 1; i >= 0; i--) {
       const c = dr.cells[dates[i]];
       if (!c) continue;
+      // 그룹 요약 표(추적/노출 현황)는 웹 화면의 TrackerStatCards와 동일하게 "가장 최근 스냅샷"
+      // 기준으로 집계해야 하므로, 날짜 역순으로 훑다가 처음 만나는 값을 최신 상태로 취급한다.
+      if (!latestFound) { dr.latestRank = c.rank; dr.latestStatus = c.status; latestFound = true; }
       if (dr.mode === 'blog' && integratedLatest == null && c.integratedExposed != null) integratedLatest = c.integratedExposed;
       if (postDate == null && c.postDate) postDate = c.postDate;
     }
@@ -162,6 +230,9 @@ function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
   titleCell.font = { name: EXPORT_FONT, size: 13, bold: true, color: { argb: 'FFFFFFFF' } };
   titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2A3550' } };
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  const summary = computeGroupSummary(rows, dataRows);
+  addGroupSummaryTable(worksheet, summary, totalCols);
 
   const headerRow = worksheet.addRow(header);
   headerRow.eachCell((cell) => {
@@ -239,7 +310,7 @@ function buildHeatmapSheet(workbook, sheetName, groupName, rows) {
     ...dateLabels.map(d => ({ width: autoColWidth([d], 8) })),
   ];
 
-  worksheet.views = [{ state: 'frozen', xSplit: infoColCount, ySplit: 2 }];
+  worksheet.views = [{ state: 'frozen', xSplit: infoColCount, ySplit: headerRow.number }];
   worksheet.autoFilter = {
     from: { row: headerRow.number, column: 1 },
     to: { row: headerRow.number, column: totalCols },
