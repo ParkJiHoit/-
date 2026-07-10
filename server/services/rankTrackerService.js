@@ -1,6 +1,7 @@
 import { getPool } from '../db/index.js';
 import { fetchBlogRankings, fetchPostPublishedDate } from './blogRankingService.js';
 import { fetchKeywordVolume } from './naverKeywordService.js';
+import { diffRankChanges, notifyRankChanges } from './notificationService.js';
 
 // 키워드 등록 시 딱 한 번만 월간 검색량을 조회한다 — 이미 저장된 값이 있으면(재등록/URL
 // 추가 포함) 다시 조회하지 않는다. 조회 실패는 등록 자체를 막지 않도록 null로 흡수한다.
@@ -432,6 +433,18 @@ export async function refreshRanks(userId, trackedId) {
     }
   }
 
+  // 순위 변동 알림(Slack)은 "이번 갱신 직전까지의 최신 상태"와 비교해야 하므로,
+  // upsert로 오늘 날짜 행을 덮어쓰기 전에 blog_id별 최신 스냅샷을 먼저 읽어둔다.
+  let previousByBlog = new Map();
+  if (mode === 'blog' && !fetchFailed) {
+    const { rows: prevRows } = await pool.query(
+      `SELECT DISTINCT ON (blog_id) blog_id, rank, status, integrated_exposed
+       FROM rank_snapshots WHERE tracked_id = $1 ORDER BY blog_id, snapshotted_at DESC`,
+      [trackedId]
+    );
+    previousByBlog = new Map(prevRows.map(r => [r.blog_id, r]));
+  }
+
   for (const u of upserts) {
     await pool.query(
       `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, post_date, status, integrated_exposed, snapshotted_at)
@@ -449,6 +462,11 @@ export async function refreshRanks(userId, trackedId) {
     `UPDATE tracked_keywords SET last_refreshed_at = NOW() WHERE id = $1`,
     [trackedId]
   );
+
+  if (mode === 'blog' && !fetchFailed) {
+    const changes = diffRankChanges(previousByBlog, upserts);
+    await notifyRankChanges(userId, keyword, changes);
+  }
 
   console.log(`[rank-tracker] refresh ${fetchFailed ? '✗ fetch_failed' : '✓'} "${keyword}" mode=${mode} upserted=${upserts.length}`);
   return { refreshed: upserts.length, date: today, fetchFailed };

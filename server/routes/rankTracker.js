@@ -10,6 +10,7 @@ import { parseBulkImportText, groupParsedRows, normalizeKeyword } from '../servi
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
 import { getPool } from '../db/index.js';
 import { createRefreshJob, processNextChunk, getJobStatus, retryFailedItems } from '../services/refreshJobService.js';
+import { getNotificationSettings, saveNotificationSettings, sendTestSlackMessage } from '../services/notificationService.js';
 
 const router = Router();
 
@@ -298,6 +299,27 @@ router.post('/refresh-jobs/:id/retry-failed', requirePremium, async (req, res, n
   try {
     const job = await retryFailedItems(req.userId, Number(req.params.id));
     res.status(201).json(job);
+  } catch (e) { next(e); }
+});
+
+router.get('/notification-settings', requirePremium, async (req, res, next) => {
+  try {
+    const settings = await getNotificationSettings(req.userId);
+    res.json(settings);
+  } catch (e) { next(e); }
+});
+
+router.put('/notification-settings', requirePremium, async (req, res, next) => {
+  try {
+    const settings = await saveNotificationSettings(req.userId, req.body || {});
+    res.json(settings);
+  } catch (e) { next(e); }
+});
+
+router.post('/notification-settings/test', requirePremium, async (req, res, next) => {
+  try {
+    await sendTestSlackMessage(req.userId, req.body?.slackWebhookUrl);
+    res.json({ ok: true });
   } catch (e) { next(e); }
 });
 

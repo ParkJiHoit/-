@@ -1,4 +1,4 @@
-import { RefreshCw, Plus, Trash2, Download, Pencil } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Download, Pencil, Bell } from 'lucide-react';
 import { formatKSTDateTime } from './trackerFormat';
 
 export default function TrackerToolbar({
@@ -7,7 +7,7 @@ export default function TrackerToolbar({
   filteredItems,
   refreshingAll, refreshAllProgress, onRefreshAll,
   failedJobId, onRetryFailed,
-  onExport, onOpenBulkModal, onOpenAddModal,
+  onExport, onOpenBulkModal, onOpenAddModal, onOpenNotificationSettings,
 }) {
   const lastRefreshed = filteredItems.reduce((acc, i) => (
     i.last_refreshed_at && (!acc || i.last_refreshed_at > acc) ? i.last_refreshed_at : acc
@@ -74,6 +74,9 @@ export default function TrackerToolbar({
           <Download size={12} /> 내보내기
         </button>
       )}
+      <button onClick={onOpenNotificationSettings} title="순위 변동 Slack 알림 설정" className="mac-btn-ghost mac-btn-sm" style={{ display: 'flex', padding: 6 }}>
+        <Bell size={13} />
+      </button>
       <button onClick={onOpenBulkModal} className="mac-btn-ghost mac-btn-sm">대량 등록</button>
       <button onClick={onOpenAddModal} className="mac-btn mac-btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <Plus size={12} /> 등록
