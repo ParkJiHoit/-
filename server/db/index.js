@@ -14,6 +14,10 @@ export function getPool() {
       ssl: { rejectUnauthorized: false }, // Render PostgreSQL 필수
       max: 5,
       idleTimeoutMillis: 30000,
+      // Render 인프라의 로드밸런서/프록시가 유휴 TCP 연결을 조용히 끊는 경우가 있어
+      // "Connection terminated unexpectedly" 에러로 이어짐 — TCP keepalive로 방지.
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10000,
     });
     pool.on('error', (err) => {
       console.error('[DB] 연결 오류:', err.message);
