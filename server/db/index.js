@@ -4,6 +4,12 @@ const { Pool } = pg;
 
 let pool = null;
 
+function isTransientConnectionError(err) {
+  return err.message?.includes('Connection terminated unexpectedly')
+    || err.message?.includes('terminating connection')
+    || err.code === 'ECONNRESET';
+}
+
 export function getPool() {
   if (!pool) {
     if (!process.env.DATABASE_URL) {
@@ -14,7 +20,7 @@ export function getPool() {
       ssl: { rejectUnauthorized: false }, // Render PostgreSQL 필수
       max: 5,
       idleTimeoutMillis: 30000,
-      // Render 인프라의 로드밸런서/프록시가 유휴 TCP 연결을 조용히 끊는 경우가 있어
+      // 로드밸런서/프록시가 유휴 TCP 연결을 조용히 끊는 경우가 있어
       // "Connection terminated unexpectedly" 에러로 이어짐 — TCP keepalive로 방지.
       keepAlive: true,
       keepAliveInitialDelayMillis: 10000,
@@ -22,6 +28,23 @@ export function getPool() {
     pool.on('error', (err) => {
       console.error('[DB] 연결 오류:', err.message);
     });
+
+    // Vercel 서버리스는 warm 컨테이너가 이전 요청의 풀을 재사용하는데, 그 사이
+    // DB측 프록시가 유휴 커넥션을 끊어버리는 경우가 흔하다. pool.query를 감싸서
+    // 이 특정 에러(끊긴 커넥션 재사용)일 때만 한 번 자동 재시도한다 — pg-pool이
+    // 에러난 클라이언트를 알아서 풀에서 제거하므로 재시도 시 새 커넥션을 쓰게 된다.
+    const rawQuery = pool.query.bind(pool);
+    pool.query = async (...args) => {
+      try {
+        return await rawQuery(...args);
+      } catch (err) {
+        if (isTransientConnectionError(err)) {
+          console.warn('[DB] 끊긴 연결 감지, 재시도:', err.message);
+          return rawQuery(...args);
+        }
+        throw err;
+      }
+    };
   }
   return pool;
 }
