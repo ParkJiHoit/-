@@ -381,13 +381,20 @@ export async function refreshRanks(userId, trackedId) {
 
   const { keyword, mode, blog_ids, is_favorite: isFavorite } = own[0];
 
-  // 블로그탭 스크래핑과 통합검색 스크래핑은 서로 독립적인 네이버 검색 호출이라
-  // 순차로 기다리지 않고 동시에 요청해 왕복 시간을 겹친다. 통합검색은 blog 모드에서만
-  // 필요하므로 다른 모드에서는 아예 요청하지 않는다. 블로그탭 조회가 실패하면
-  // 통합검색 결과는 그냥 버린다(기존과 동일하게 fetchFailed면 null 처리).
-  const [rankings, integratedListRaw] = await Promise.all([
+  // 블로그탭 스크래핑, 통합검색 스크래핑, "이전 스냅샷" DB 조회(Slack 알림 비교용)는
+  // 서로 결과를 필요로 하지 않는 독립적인 작업이라 동시에 시작해 왕복 시간을 겹친다.
+  // 통합검색은 blog 모드에서만 필요하므로 다른 모드에서는 아예 요청하지 않는다.
+  // 블로그탭 조회가 실패하면 통합검색 결과는 그냥 버린다(기존과 동일하게 fetchFailed면 null 처리).
+  const [rankings, integratedListRaw, prevSnapshotRows] = await Promise.all([
     fetchBlogRankings(keyword, 'blog', { skipVisitors: true }),
     mode === 'blog' ? fetchBlogRankings(keyword, 'integrated', { skipVisitors: true }) : Promise.resolve([]),
+    mode === 'blog'
+      ? pool.query(
+          `SELECT DISTINCT ON (blog_id) blog_id, rank, status, integrated_exposed
+           FROM rank_snapshots WHERE tracked_id = $1 ORDER BY blog_id, snapshotted_at DESC`,
+          [trackedId]
+        ).then(r => r.rows)
+      : Promise.resolve([]),
   ]);
   const fetchFailed = rankings.length === 0;
   const integratedList = fetchFailed ? [] : integratedListRaw;
@@ -445,30 +452,24 @@ export async function refreshRanks(userId, trackedId) {
     }
   }
 
-  // 순위 변동 알림(Slack)은 "이번 갱신 직전까지의 최신 상태"와 비교해야 하므로,
-  // upsert로 오늘 날짜 행을 덮어쓰기 전에 blog_id별 최신 스냅샷을 먼저 읽어둔다.
-  let previousByBlog = new Map();
-  if (mode === 'blog' && !fetchFailed) {
-    const { rows: prevRows } = await pool.query(
-      `SELECT DISTINCT ON (blog_id) blog_id, rank, status, integrated_exposed
-       FROM rank_snapshots WHERE tracked_id = $1 ORDER BY blog_id, snapshotted_at DESC`,
-      [trackedId]
-    );
-    previousByBlog = new Map(prevRows.map(r => [r.blog_id, r]));
-  }
+  // 순위 변동 알림(Slack) 비교용 "이전 상태"는 위 Promise.all에서 스크래핑과 동시에
+  // 이미 읽어왔다 — fetchFailed였다면 이번 갱신 자체가 무효라 비교 대상에서 제외한다.
+  const previousByBlog = (mode === 'blog' && !fetchFailed)
+    ? new Map(prevSnapshotRows.map(r => [r.blog_id, r]))
+    : new Map();
 
-  for (const u of upserts) {
-    await pool.query(
-      `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, post_date, status, integrated_exposed, snapshotted_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       ON CONFLICT (tracked_id, blog_id, snapshotted_at)
-       DO UPDATE SET rank = EXCLUDED.rank, post_title = EXCLUDED.post_title,
-                     post_link = EXCLUDED.post_link, post_date = EXCLUDED.post_date,
-                     status = EXCLUDED.status,
-                     integrated_exposed = EXCLUDED.integrated_exposed`,
-      [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, u.post_date, u.status, u.integrated_exposed, today]
-    );
-  }
+  // 블로그별 순위 기록은 서로 다른 blog_id 행에 대한 독립적인 upsert라 순차로
+  // 기다릴 필요 없이 한꺼번에 보낸다.
+  await Promise.all(upserts.map(u => pool.query(
+    `INSERT INTO rank_snapshots (tracked_id, blog_id, rank, post_title, post_link, post_date, status, integrated_exposed, snapshotted_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (tracked_id, blog_id, snapshotted_at)
+     DO UPDATE SET rank = EXCLUDED.rank, post_title = EXCLUDED.post_title,
+                   post_link = EXCLUDED.post_link, post_date = EXCLUDED.post_date,
+                   status = EXCLUDED.status,
+                   integrated_exposed = EXCLUDED.integrated_exposed`,
+    [trackedId, u.blog_id, u.rank, u.post_title, u.post_link, u.post_date, u.status, u.integrated_exposed, today]
+  )));
 
   await pool.query(
     `UPDATE tracked_keywords SET last_refreshed_at = NOW() WHERE id = $1`,
