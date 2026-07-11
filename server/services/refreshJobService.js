@@ -2,7 +2,9 @@ import { getPool } from '../db/index.js';
 import { refreshRanks } from './rankTrackerService.js';
 
 const CHUNK_SIZE = 5;
-const ITEM_DELAY_MS = 700;
+// 네이버 차단/캡차 위험을 낮추려는 안전장치라 순차 처리 구조는 유지하되,
+// refreshRanks 자체가 빨라진 만큼(병렬화) 항목 사이 대기만 보수적으로 줄였다.
+const ITEM_DELAY_MS = 350;
 const CHUNK_TIME_BUDGET_MS = 20000;
 
 function sleep(ms) {
