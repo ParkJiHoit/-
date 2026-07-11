@@ -2,8 +2,11 @@ import { getPool } from '../db/index.js';
 import { refreshRanks } from './rankTrackerService.js';
 
 const CHUNK_SIZE = 5;
-// 네이버 차단/캡차 위험을 낮추려는 안전장치라 순차 처리 구조는 유지하되,
-// refreshRanks 자체가 빨라진 만큼(병렬화) 항목 사이 대기만 보수적으로 줄였다.
+// 실험 중: 네이버 차단 기준이 문서화돼 있지 않아 CONCURRENCY=2로 먼저 테스트해본다.
+// rank_snapshots.status='fetch_failed' 비율이 눈에 띄게 오르면 1로 되돌린다.
+const CONCURRENCY = 2;
+// 네이버 차단/캡차 위험을 낮추려는 안전장치 — 이제 항목 하나마다가 아니라
+// CONCURRENCY개씩 묶은 배치 사이에만 대기한다.
 const ITEM_DELAY_MS = 350;
 const CHUNK_TIME_BUDGET_MS = 20000;
 
@@ -74,10 +77,7 @@ export async function processNextChunk(userId, jobId) {
     [jobId, CHUNK_SIZE]
   );
 
-  const chunkStartedAt = Date.now();
-  for (let i = 0; i < items.length; i++) {
-    if (Date.now() - chunkStartedAt > CHUNK_TIME_BUDGET_MS) break;
-    const item = items[i];
+  const processOne = async (item) => {
     try {
       await refreshRanks(userId, item.tracked_id);
       await pool.query(
@@ -98,7 +98,14 @@ export async function processNextChunk(userId, jobId) {
         [jobId]
       );
     }
-    if (i < items.length - 1) await sleep(ITEM_DELAY_MS);
+  };
+
+  const chunkStartedAt = Date.now();
+  for (let i = 0; i < items.length; i += CONCURRENCY) {
+    if (Date.now() - chunkStartedAt > CHUNK_TIME_BUDGET_MS) break;
+    const batch = items.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(processOne));
+    if (i + CONCURRENCY < items.length) await sleep(ITEM_DELAY_MS);
   }
 
   const { rows: remaining } = await pool.query(
