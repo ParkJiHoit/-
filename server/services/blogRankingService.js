@@ -9,6 +9,13 @@ const pending = new Map();
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
+// axios/native http(s) 기본 에이전트는 keep-alive가 꺼져 있어 요청마다 TCP+TLS 핸드셰이크를
+// 새로 맺는다. 배치 갱신 한 번에 같은 호스트(search.naver.com 등)로 수십 번씩 요청하므로,
+// 커넥션을 재사용하는 keep-alive 에이전트를 공유해서 그 핸드셰이크 비용을 없앤다 —
+// 스크래핑 로직/결과는 전혀 바뀌지 않는 순수 연결 레벨 최적화.
+const keepAliveHttpsAgent = new https.Agent({ keepAlive: true, maxSockets: 20 });
+const keepAliveHttpAgent = new http.Agent({ keepAlive: true, maxSockets: 20 });
+
 const TAB_CONFIG = {
   blog: { ssc: 'tab.blog.all', domains: ['blog.naver.com'] },
   view: { ssc: 'tab.view.all', domains: ['blog.naver.com', 'cafe.naver.com'] },
@@ -103,8 +110,10 @@ function isValidNaverUrl(url, domains) {
 function followRedirect(url, domains, maxRedirects = 6) {
   return new Promise((resolve) => {
     try {
-      const mod = url.startsWith('https') ? https : http;
-      const req = mod.get(url, { headers: { 'User-Agent': UA }, timeout: 5000 }, (res) => {
+      const isHttps = url.startsWith('https');
+      const mod = isHttps ? https : http;
+      const agent = isHttps ? keepAliveHttpsAgent : keepAliveHttpAgent;
+      const req = mod.get(url, { headers: { 'User-Agent': UA }, timeout: 5000, agent }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && maxRedirects > 0) {
           const loc = res.headers.location;
           const next = loc.startsWith('http') ? loc : new URL(loc, url).href;
@@ -137,6 +146,7 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
       'Referer': 'https://www.naver.com',
     },
     timeout: 10000,
+    httpsAgent: keepAliveHttpsAgent,
   });
 
   const $ = cheerio.load(res.data);
@@ -266,6 +276,7 @@ async function fetchBlogRssPosts(blogId) {
           'Accept-Language': 'ko-KR,ko;q=0.9',
         },
         timeout: 8000,
+        httpsAgent: keepAliveHttpsAgent,
       });
       const $ = cheerio.load(res.data, { xmlMode: true });
       const posts = [];
@@ -313,6 +324,7 @@ async function fetchDailyVisitors(blogId) {
       params: { blogId },
       headers: { 'User-Agent': UA, Referer: `https://blog.naver.com/${blogId}` },
       timeout: 5000,
+      httpsAgent: keepAliveHttpsAgent,
     });
     const counts = [...String(res.data).matchAll(/cnt="(\d+)"/g)]
       .map(m => parseInt(m[1], 10))
