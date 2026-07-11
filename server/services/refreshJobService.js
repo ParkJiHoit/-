@@ -2,12 +2,7 @@ import { getPool } from '../db/index.js';
 import { refreshRanks } from './rankTrackerService.js';
 
 const CHUNK_SIZE = 5;
-// 실험 결과: CONCURRENCY=3에서 조회 실패(rank_snapshots.status='fetch_failed')가
-// 눈에 띄게 발생해 2로 되돌림. 2는 문제없이 확인됨 — 현재 안정 값으로 유지.
-const CONCURRENCY = 2;
-// 네이버 차단/캡차 위험을 낮추려는 안전장치 — 이제 항목 하나마다가 아니라
-// CONCURRENCY개씩 묶은 배치 사이에만 대기한다.
-const ITEM_DELAY_MS = 350;
+const ITEM_DELAY_MS = 700;
 const CHUNK_TIME_BUDGET_MS = 20000;
 
 function sleep(ms) {
@@ -77,7 +72,10 @@ export async function processNextChunk(userId, jobId) {
     [jobId, CHUNK_SIZE]
   );
 
-  const processOne = async (item) => {
+  const chunkStartedAt = Date.now();
+  for (let i = 0; i < items.length; i++) {
+    if (Date.now() - chunkStartedAt > CHUNK_TIME_BUDGET_MS) break;
+    const item = items[i];
     try {
       await refreshRanks(userId, item.tracked_id);
       await pool.query(
@@ -98,14 +96,7 @@ export async function processNextChunk(userId, jobId) {
         [jobId]
       );
     }
-  };
-
-  const chunkStartedAt = Date.now();
-  for (let i = 0; i < items.length; i += CONCURRENCY) {
-    if (Date.now() - chunkStartedAt > CHUNK_TIME_BUDGET_MS) break;
-    const batch = items.slice(i, i + CONCURRENCY);
-    await Promise.all(batch.map(processOne));
-    if (i + CONCURRENCY < items.length) await sleep(ITEM_DELAY_MS);
+    if (i < items.length - 1) await sleep(ITEM_DELAY_MS);
   }
 
   const { rows: remaining } = await pool.query(
