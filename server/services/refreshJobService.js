@@ -2,9 +2,10 @@ import { getPool } from '../db/index.js';
 import { refreshRanks } from './rankTrackerService.js';
 
 const CHUNK_SIZE = 5;
-// 실험 중: 네이버 차단 기준이 문서화돼 있지 않아 CONCURRENCY=2로 먼저 테스트해본다.
-// rank_snapshots.status='fetch_failed' 비율이 눈에 띄게 오르면 1로 되돌린다.
-const CONCURRENCY = 2;
+// 실험 중: 네이버 차단 기준이 문서화돼 있지 않아 단계적으로 올려본다 (1 -> 2 -> 3).
+// 2는 문제없이 확인됨 — 이제 3으로 테스트. rank_snapshots.status='fetch_failed'
+// 비율이 눈에 띄게 오르면 바로 2로 되돌린다.
+const CONCURRENCY = 3;
 // 네이버 차단/캡차 위험을 낮추려는 안전장치 — 이제 항목 하나마다가 아니라
 // CONCURRENCY개씩 묶은 배치 사이에만 대기한다.
 const ITEM_DELAY_MS = 350;
