@@ -393,7 +393,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshingAll, setRefreshingAll] = useState(false);
-  const [refreshAllProgress, setRefreshAllProgress] = useState({ done: 0, total: 0 });
+  const [refreshAllProgress, setRefreshAllProgress] = useState({ done: 0, total: 0, etaSeconds: null });
   const [failedJobId, setFailedJobId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -513,11 +513,25 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   };
 
   const runJobToCompletion = async (job) => {
+    const startedAt = Date.now();
     let current = job;
-    setRefreshAllProgress({ done: current.completed_count + current.failed_count, total: current.total_count });
+    // done/total이 처음 갱신된 시점부터의 처리 속도로 남은 시간을 추정한다
+    // (요청 하나하나의 실제 소요 시간이 네트워크 상황에 따라 들쭉날쭉해서
+    // 고정값 계산 대신 지금까지의 실측 속도를 그대로 외삽하는 방식을 쓴다).
+    const updateProgress = () => {
+      const done = current.completed_count + current.failed_count;
+      const total = current.total_count;
+      let etaSeconds = null;
+      if (done > 0 && done < total) {
+        const elapsedSec = (Date.now() - startedAt) / 1000;
+        etaSeconds = Math.round((elapsedSec / done) * (total - done));
+      }
+      setRefreshAllProgress({ done, total, etaSeconds });
+    };
+    updateProgress();
     while (!current.done) {
       current = await apiFetch(`/refresh-jobs/${current.id}/process-chunk`, { method: 'POST' }, token);
-      setRefreshAllProgress({ done: current.completed_count + current.failed_count, total: current.total_count });
+      updateProgress();
     }
     return current;
   };

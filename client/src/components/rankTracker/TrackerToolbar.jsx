@@ -63,7 +63,9 @@ export default function TrackerToolbar({
         <button onClick={onRefreshAll} disabled={refreshingAll} className="mac-btn-ghost mac-btn-sm" title="전체 순위 갱신"
           style={{ display: 'flex', alignItems: 'center', gap: 5, opacity: refreshingAll ? 0.6 : 1 }}>
           <RefreshCw size={12} style={{ animation: refreshingAll ? 'spin 1s linear infinite' : 'none' }} />
-          {refreshingAll ? `${refreshAllProgress.done}/${refreshAllProgress.total}` : '전체 갱신'}
+          {refreshingAll
+            ? `${refreshAllProgress.done}/${refreshAllProgress.total}${refreshAllProgress.etaSeconds != null ? ` · 약 ${refreshAllProgress.etaSeconds}초 남음` : ''}`
+            : '전체 갱신'}
         </button>
       )}
       {failedJobId && !refreshingAll && (
