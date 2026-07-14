@@ -8,6 +8,9 @@ import logoDark from '../assets/logo-dark.png';
 const NOTION_UPDATE_URL =
   'https://helix-territory-c92.notion.site/37b24604a09180c5956cf11cf9595818?source=copy_link';
 
+// 요청으로 임시로 숨김 처리 — 다시 보이게 해달라고 하면 true로.
+const SHOW_PRICING_NAV = false;
+
 const SHADCN_AVATARS = [
   'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-1.png',
   'https://cdn.shadcnstudio.com/ss-assets/avatar/avatar-2.png',
@@ -246,16 +249,18 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       )}
 
       {/* 요금제 */}
-      <div style={{ position: 'relative' }}>
-        <button
-          style={pillItem('pricing')}
-          onMouseEnter={() => setHoveredNav('pricing')}
-          onMouseLeave={() => setHoveredNav(null)}
-          onClick={() => onSwitchTab('pricing')}
-        >
-          요금제
-        </button>
-      </div>
+      {SHOW_PRICING_NAV && (
+        <div style={{ position: 'relative' }}>
+          <button
+            style={pillItem('pricing')}
+            onMouseEnter={() => setHoveredNav('pricing')}
+            onMouseLeave={() => setHoveredNav(null)}
+            onClick={() => onSwitchTab('pricing')}
+          >
+            요금제
+          </button>
+        </div>
+      )}
 
       {/* 사용 가이드 */}
       <button
