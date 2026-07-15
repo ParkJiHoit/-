@@ -190,6 +190,15 @@ button, input, select, textarea { font: inherit; }
 [data-theme="light"] .mac-input { background: rgba(0, 0, 0, 0.04); }
 [data-theme="light"] .mac-input:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
 
+/* <select> 드롭다운 목록(<option>)은 브라우저가 네이티브 UI로 그려서 배경/글자색이
+   테마 변수를 상속받지 못하고 시스템 기본값(흰 배경)으로 나온다 — 다크 모드에서
+   글자색만 밝은 색을 쓰면 흰 배경에 흰 글자로 안 보이는 문제가 생겨서, 모든
+   select의 옵션 목록에 테마 배경/글자색을 명시적으로 지정한다. */
+select option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
 /* Small input (filters) */
 .mac-input-sm {
   height: 34px;
