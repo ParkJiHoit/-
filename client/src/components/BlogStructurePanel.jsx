@@ -88,10 +88,10 @@ function DonutCard({ title, segments, total }) {
             />
           ))}
           {/* 중앙 텍스트 */}
-          <text x={cx} y={cy - 6} textAnchor="middle" fill="var(--text-primary)" fontSize="18" fontWeight="800" fontFamily="-apple-system, sans-serif">
+          <text x={cx} y={cy - 6} textAnchor="middle" fill="var(--text-primary)" fontSize="18" fontWeight="800" fontFamily="'Pretendard Variable', 'Pretendard', -apple-system, sans-serif">
             {total}
           </text>
-          <text x={cx} y={cy + 10} textAnchor="middle" fill="var(--text-tertiary)" fontSize="9" fontWeight="600" fontFamily="-apple-system, sans-serif" letterSpacing="0.05em">
+          <text x={cx} y={cy + 10} textAnchor="middle" fill="var(--text-tertiary)" fontSize="9" fontWeight="600" fontFamily="'Pretendard Variable', 'Pretendard', -apple-system, sans-serif" letterSpacing="0.05em">
             TOTAL
           </text>
         </svg>
