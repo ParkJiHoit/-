@@ -543,10 +543,9 @@ button, input, select, textarea { font: inherit; }
 /* ─── Feature Showcase (탭별 기능 소개 섹션) ─── */
 .feature-showcase {
   position: relative;
-  margin-top: 56px;
-  border-radius: 28px;
-  overflow: hidden;
   isolation: isolate;
+  /* 뒤에 깔린 히어로 배경(구체 등)이 절대 비쳐 보이지 않도록 항상 불투명한 바탕을 깐다 */
+  background: var(--bg-base);
 }
 
 .feature-showcase-bg {
@@ -556,27 +555,17 @@ button, input, select, textarea { font: inherit; }
   pointer-events: none;
 }
 
-.feature-showcase-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to bottom, var(--bg-base) 0%, transparent 8%, transparent 92%, var(--bg-base) 100%);
-}
-
 .feature-showcase-intro {
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 88px 24px 40px;
+  padding: 0 24px;
 }
 
 .feature-showcase-scroller {
   position: relative;
   z-index: 1;
-  height: 82vh;
-  min-height: 540px;
-  max-height: 700px;
+  height: 100vh;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
@@ -585,14 +574,13 @@ button, input, select, textarea { font: inherit; }
 .feature-showcase-scroller::-webkit-scrollbar { display: none; }
 
 .feature-showcase-slide {
-  height: 100%;
-  min-height: 540px;
-  max-height: 700px;
+  height: 100vh;
   scroll-snap-align: start;
   scroll-snap-stop: always;
   display: flex;
   align-items: center;
   padding: 24px;
+  box-sizing: border-box;
 }
 
 .feature-showcase-slide-inner {
@@ -684,9 +672,12 @@ button, input, select, textarea { font: inherit; }
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 20px 0 0;
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  z-index: 2;
+  pointer-events: none;
 }
 .feature-showcase-progress-dot {
   width: 6px;

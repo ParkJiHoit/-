@@ -403,7 +403,14 @@ function HeroSection({ tab, blogSubTab, hasResults, children }) {
         ? 'transparent'
         : 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(10,132,255,0.09) 0%, transparent 65%)',
       paddingTop: hasResults ? 'calc(var(--nav-offset) + 24px)' : 'calc(var(--nav-offset) + 190px)',
-      paddingBottom: hasResults ? 20 : 72
+      paddingBottom: hasResults ? 20 : 72,
+      // 결과가 없는 랜딩 상태에서는 히어로가 항상 한 화면을 꽉 채우게 해서, 바로 아래
+      // 기능 소개 섹션이 스크롤 없이 같은 화면에 겹쳐 보이는 일이 없게 한다.
+      minHeight: hasResults ? undefined : '100vh',
+      display: hasResults ? undefined : 'flex',
+      flexDirection: hasResults ? undefined : 'column',
+      justifyContent: hasResults ? undefined : 'center',
+      boxSizing: 'border-box',
     }}>
       <section className="mx-auto flex w-full flex-col items-center px-5 lg:px-8" style={{ maxWidth: maxW }}>
         {!hasResults && (
