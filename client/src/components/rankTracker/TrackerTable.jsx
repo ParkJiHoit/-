@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, X, ChevronRight, Star } from 'lucide-react';
+import { Plus, Trash2, X, ChevronRight, Star, RefreshCw } from 'lucide-react';
 import { formatRankStatus } from './trackerFormat';
 
 const SORT_DEFAULT_DIR = { keyword: 'asc', searchVolume: 'desc', rank: 'asc', addedDate: 'desc' };
@@ -31,6 +31,7 @@ export default function TrackerTable({
   mode, rows, groups, sortKey, sortDir, onSortChange,
   selectedIds, onToggleSelect, onToggleSelectAll,
   onRowClick, onMoveItemGroup, onAddBlog, onRemoveBlog, onDeleteKeyword, onBulkDeleteSelected,
+  onRefreshSelected, refreshingSelected,
   onToggleFavorite,
   loading,
 }) {
@@ -98,7 +99,17 @@ export default function TrackerTable({
         }}>
           <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedIds.size}개 선택됨</span>
           <button
+            onClick={() => onRefreshSelected([...selectedIds])}
+            disabled={refreshingSelected}
+            className="mac-btn-ghost mac-btn-sm"
+            style={{ display: 'flex', alignItems: 'center', gap: 5, opacity: refreshingSelected ? 0.6 : 1 }}
+          >
+            <RefreshCw size={12} style={{ animation: refreshingSelected ? 'spin 1s linear infinite' : 'none' }} />
+            선택 갱신
+          </button>
+          <button
             onClick={() => onBulkDeleteSelected([...selectedIds])}
+            disabled={refreshingSelected}
             className="mac-btn-ghost mac-btn-sm"
             style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#FF453A', borderColor: 'rgba(255,69,58,0.3)' }}
           >
