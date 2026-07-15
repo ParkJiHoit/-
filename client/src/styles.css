@@ -55,6 +55,11 @@
 
 html { transition: background 0.2s; }
 
+/* 랜딩 히어로 + 기능 소개 섹션을 한 화면=한 섹션으로 스냅시키는 스크롤 흐름.
+   App.jsx가 키워드/블로그 탭의 "결과 없음" 상태일 때만 html에 이 클래스를 붙인다.
+   스크롤 스냅은 실제 스크롤이 일어나는 요소(html)에 걸어야 동작하므로 여기 건다. */
+html.snap-flow { scroll-snap-type: y mandatory; }
+
 body {
   margin: 0;
   min-width: 320px;
@@ -184,6 +189,59 @@ button, input, select, textarea { font: inherit; }
 
 [data-theme="light"] .mac-input { background: rgba(0, 0, 0, 0.04); }
 [data-theme="light"] .mac-input:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
+
+/* <select> 드롭다운 목록(<option>)은 브라우저가 네이티브 UI로 그려서 배경/글자색이
+   테마 변수를 상속받지 못하고 시스템 기본값(흰 배경)으로 나온다 — 다크 모드에서
+   글자색만 밝은 색을 쓰면 흰 배경에 흰 글자로 안 보이는 문제가 생겨서, 모든
+   select의 옵션 목록에 테마 배경/글자색을 명시적으로 지정한다. */
+select option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* ─── Select (커스텀 셰브런 + 포커스/호버 글로우) ─── */
+.mac-select-wrap { position: relative; }
+.mac-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 10px 34px 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.mac-select:hover  { border-color: var(--text-tertiary); }
+.mac-select:focus  { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25); }
+[data-theme="light"] .mac-select { background: rgba(0, 0, 0, 0.04); }
+[data-theme="light"] .mac-select:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
+.mac-select-chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+}
+.mac-select-wrap:focus-within .mac-select-chevron { transform: translateY(-50%) rotate(180deg); color: var(--accent); }
+
+/* 점선 테두리 파일 업로드 버튼 — 호버 시 살짝 강조 */
+.mac-upload-label {
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.mac-upload-label:hover {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: rgba(10, 132, 255, 0.06);
+}
 
 /* Small input (filters) */
 .mac-input-sm {
@@ -531,6 +589,23 @@ button, input, select, textarea { font: inherit; }
   animation: floatBob 4s ease-in-out infinite;
 }
 
+/* 히어로 하단 "아래로 스크롤" 유도 아이콘 */
+@keyframes scrollHintBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50%       { transform: translateY(8px); opacity: 1; }
+}
+.hero-scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 1;
+  color: var(--text-tertiary);
+  display: flex;
+  pointer-events: none;
+  animation: scrollHintBounce 1.8s ease-in-out infinite;
+}
+
 .mac-fade-in { animation: macFadeIn 0.3s cubic-bezier(0.4,0,0.2,1) both; }
 
 .mac-stagger > *:nth-child(1) { animation: macFadeIn 0.3s 0ms   cubic-bezier(0.4,0,0.2,1) both; }
@@ -539,6 +614,149 @@ button, input, select, textarea { font: inherit; }
 .mac-stagger > *:nth-child(4) { animation: macFadeIn 0.3s 135ms cubic-bezier(0.4,0,0.2,1) both; }
 .mac-stagger > *:nth-child(5) { animation: macFadeIn 0.3s 180ms cubic-bezier(0.4,0,0.2,1) both; }
 .mac-stagger > *:nth-child(6) { animation: macFadeIn 0.3s 225ms cubic-bezier(0.4,0,0.2,1) both; }
+
+/* ─── Feature Showcase (탭별 기능 소개 섹션) ─── */
+.feature-showcase {
+  position: relative;
+  isolation: isolate;
+  /* 배경은 투명하게 둬서 App.jsx의 전역 별 파티클 레이어가 그대로 비쳐 보이게 한다 —
+     구체는 히어로 자기 박스 안에서만 뜨기 때문에 여기까지 넘어올 일이 없다. */
+}
+
+/* 스크롤 스냅 자체는 html.snap-flow(styles.css 상단)가 담당하므로, 여기는 그냥
+   슬라이드들을 감싸는 래퍼일 뿐 자체 스크롤 컨테이너가 아니다. */
+.feature-showcase-scroller {
+  position: relative;
+  z-index: 1;
+}
+
+.feature-showcase-slide {
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  align-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.feature-showcase-slide-inner {
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+}
+.feature-showcase-slide-inner.reverse { flex-direction: row-reverse; }
+
+/* 스크린샷 안의 글자가 잘 보이도록 사진 쪽에 더 넓은 비율을 준다 */
+.feature-showcase-media { flex: 1.3 1 0; min-width: 0; position: relative; }
+.feature-showcase-copy { flex: 1 1 0; min-width: 0; max-width: 480px; }
+
+.feature-showcase-glow {
+  position: absolute;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(70px);
+  z-index: -1;
+  opacity: 0.5;
+}
+
+.feature-showcase-frame {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  box-shadow: 0 30px 70px -20px rgba(0,0,0,0.55);
+}
+.feature-showcase-frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--bg-overlay);
+  border-bottom: 1px solid var(--border);
+}
+.feature-showcase-frame-dot { width: 9px; height: 9px; border-radius: 50%; }
+.feature-showcase-frame img { display: block; width: 100%; height: auto; }
+
+.feature-showcase-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 16px;
+}
+.feature-showcase-heading {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  color: var(--text-primary);
+  margin: 0 0 18px;
+  line-height: 1.28;
+}
+.feature-showcase-desc {
+  font-size: 17px;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin: 0 0 24px;
+}
+.feature-showcase-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.feature-showcase-bullets li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.feature-showcase-bullets svg { flex-shrink: 0; color: var(--accent); width: 17px; height: 17px; }
+
+.feature-showcase-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  /* 슬라이드들이 이제 페이지 전체 스크롤 흐름 위에 있어서, 진행 점은 특정 슬라이드가
+     아니라 화면(뷰포트) 기준으로 항상 같은 자리에 떠 있어야 한다. */
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  z-index: 1000;
+  pointer-events: none;
+}
+.feature-showcase-progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  transition: background 0.3s, transform 0.3s, width 0.3s;
+}
+.feature-showcase-progress-dot.active {
+  background: var(--accent);
+  width: 20px;
+  border-radius: 3px;
+}
+
+@media (max-width: 900px) {
+  .feature-showcase-slide-inner,
+  .feature-showcase-slide-inner.reverse { flex-direction: column; gap: 32px; }
+  .feature-showcase-copy { max-width: none; }
+}
 
 @keyframes authOverlayIn {
   from { opacity: 0; }
