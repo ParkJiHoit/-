@@ -111,7 +111,7 @@ function Slide({ slide, reverse, active, slideRef, index, glowIndex }) {
           <p className="feature-showcase-desc">{slide.description}</p>
           <ul className="feature-showcase-bullets">
             {slide.bullets.map((b) => (
-              <li key={b}><Check size={15} strokeWidth={2.5} />{b}</li>
+              <li key={b}><Check size={17} strokeWidth={2.5} />{b}</li>
             ))}
           </ul>
         </motion.div>
@@ -126,7 +126,11 @@ export default function FeatureShowcaseSection({ tab }) {
   const scrollerRef = useRef(null);
   const slideRefs = useRef([]);
   const visibleSlides = useRef(new Set());
-  const [activeIndex, setActiveIndex] = useState(0);
+  // -1로 시작해야 한다 — 0으로 시작하면 첫 번째 슬라이드는 "activeIndex >= 0"이
+  // 마운트 시점부터 이미 참이 되어, 실제로 화면에 스크롤되어 들어오기도 전에
+  // (아직 히어로 화면에 있을 때) 등장 애니메이션이 먼저 끝나버려서 정작 사용자가
+  // 스크롤해서 보게 될 때는 이미 정적인 최종 상태만 보이는 문제가 있었다.
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
