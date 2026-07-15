@@ -394,25 +394,45 @@ function BlogAuditForm({ onSubmit, loading, dark = true }) {
 }
 
 /* ── Hero / compact wrapper ── */
-function HeroSection({ tab, blogSubTab, hasResults, children }) {
+function HeroSection({ tab, blogSubTab, hasResults, theme, children }) {
   const maxW = tab === 'expansion' ? 1140 : 680;
   return (
     <div className="hero-transition" style={{
       position: 'relative',
+      overflow: hasResults ? undefined : 'hidden',
       background: hasResults
         ? 'transparent'
         : 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(10,132,255,0.09) 0%, transparent 65%)',
       paddingTop: hasResults ? 'calc(var(--nav-offset) + 24px)' : 'calc(var(--nav-offset) + 190px)',
       paddingBottom: hasResults ? 20 : 72,
-      // 결과가 없는 랜딩 상태에서는 히어로가 항상 한 화면을 꽉 채우게 해서, 바로 아래
-      // 기능 소개 섹션이 스크롤 없이 같은 화면에 겹쳐 보이는 일이 없게 한다.
-      minHeight: hasResults ? undefined : '100vh',
+      // 결과가 없는 랜딩 상태에서는 히어로가 정확히 한 화면(100vh)만 차지하게 해서,
+      // 바로 아래 기능 소개 섹션과 절대 겹치지 않고, 화면 단위 스크롤 스냅의
+      // 첫 번째 구간 역할을 하게 한다(App.jsx의 snap-flow 클래스와 짝).
+      height: hasResults ? undefined : '100vh',
       display: hasResults ? undefined : 'flex',
       flexDirection: hasResults ? undefined : 'column',
       justifyContent: hasResults ? undefined : 'center',
       boxSizing: 'border-box',
+      scrollSnapAlign: hasResults ? undefined : 'start',
+      scrollSnapStop: hasResults ? undefined : 'always',
     }}>
-      <section className="mx-auto flex w-full flex-col items-center px-5 lg:px-8" style={{ maxWidth: maxW }}>
+      {/* 구체(와이어프레임)는 히어로 자기 박스 안에서만(fixed가 아니라 absolute로) 떠 있어서
+          스크롤해서 히어로를 벗어나면 같이 사라진다 — 별 파티클은 App.jsx에 한 번만 마운트되는
+          전역 레이어가 페이지 전체에 항상 깔려 있어 여기서는 그리지 않는다(중복 방지). */}
+      {!hasResults && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+          <HeroScene className="absolute inset-0" dark={theme === 'dark'} showSpheres particleCount={0} />
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: theme === 'dark'
+                ? 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)'
+                : 'linear-gradient(to bottom, rgba(0,0,0,0.04) 0%, transparent 30%, transparent 70%, rgba(20,20,25,0.28) 100%)',
+            }}
+          />
+        </div>
+      )}
+      <section className="mx-auto flex w-full flex-col items-center px-5 lg:px-8" style={{ maxWidth: maxW, position: 'relative', zIndex: 1 }}>
         {!hasResults && (
           <div className="mac-fade-in mb-10 text-center">
             <p style={{
@@ -580,6 +600,15 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  // 히어로(결과 없는 랜딩 상태)와 그 아래 기능 소개 섹션을 화면 단위 스크롤 스냅으로
+  // 묶는다 — html에 스크롤 스냅을 걸어야 실제로 페이지 스크롤에 적용되기 때문에,
+  // 랜딩 상태의 키워드/블로그 탭일 때만 켜고 나머지 탭·상태에서는 평소처럼 자유 스크롤.
+  useEffect(() => {
+    const isLandingSnapTab = (activeTab === 'analysis' || activeTab === 'blog') && !hasResults;
+    document.documentElement.classList.toggle('snap-flow', isLandingSnapTab);
+    return () => document.documentElement.classList.remove('snap-flow');
+  }, [activeTab, hasResults]);
 
   useEffect(() => {
     window.localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visibleColumns));
@@ -856,32 +885,17 @@ export default function App() {
           </div>
         </div>
       )}
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-        opacity: hasResults ? 0 : 1, transition: 'opacity 0.6s ease',
-      }}>
-        <HeroScene className="absolute inset-0" dark={theme === 'dark'} showSpheres={activeTab !== 'guide'} />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: theme === 'dark'
-              ? 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)'
-              : 'linear-gradient(to bottom, rgba(0,0,0,0.04) 0%, transparent 30%, transparent 70%, rgba(20,20,25,0.28) 100%)',
-          }}
-        />
+      {/* 별 파티클 전역 배경 — 탭이나 결과 유무와 무관하게 앱 전체에 딱 한 번만 마운트되어
+          계속 같은 캔버스로 떠 있는다. 구체(와이어프레임)는 여기서 그리지 않고 HeroSection
+          자기 박스 안에서만(랜딩 상태일 때만) 별도로 뜨기 때문에, 스크롤해서 히어로를 벗어나
+          다른 섹션으로 넘어가도 파티클 렌더는 절대 끊기지 않고 구체만 자연스럽게 사라진다. */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <HeroScene className="absolute inset-0" dark={theme === 'dark'} showSpheres={false} particleCount={320} intensity={0.75} />
       </div>
       {/* 결과 페이지 배경 */}
       {hasResults && (
         <>
-          {activeTab === 'rank-tracker' ? (
-            // 순위 추적은 표 형태 데이터가 많아 점그리드 대신, 랜딩에 쓰는 HeroScene을
-            // 파티클 수/불투명도/회전 속도를 낮춘 톤다운 버전으로 재사용한다. 페이지 전체에
-            // 고정으로 깔리는 배경이라 하단의 기능 소개 섹션에도 그대로 이어지는데, 거기서는
-            // 구체 없이 파티클만 자연스럽게 이어지길 원해서 와이어프레임은 끈다.
-            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: theme === 'dark' ? 0.5 : 0.35 }}>
-              <HeroScene className="absolute inset-0" dark={theme === 'dark'} particleCount={180} intensity={0.55} showSpheres={false} />
-            </div>
-          ) : (
+          {activeTab === 'rank-tracker' ? null : (
             /* dot grid */
             <div style={{
               position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
@@ -940,12 +954,12 @@ export default function App() {
           <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-10">
             <RankTrackerPage onLoginRequest={() => switchTab('auth')} onGoPricing={() => switchTab('pricing')} />
           </div>
-          <FeatureShowcaseSection tab="rank-tracker" theme={theme} />
+          <FeatureShowcaseSection tab="rank-tracker" />
         </div>
       ) : (
       <>
 
-      <HeroSection tab={activeTab} blogSubTab={blogSubTab} hasResults={hasResults}>
+      <HeroSection tab={activeTab} blogSubTab={blogSubTab} hasResults={hasResults} theme={theme}>
         {activeTab === 'analysis' && (
           <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
             suggestions={analysis?.searchSuggestions || []}
@@ -1012,7 +1026,7 @@ export default function App() {
         )}
       </HeroSection>
 
-      <div className="mx-auto w-full max-w-[1400px] px-5 pb-16 lg:px-10">
+      <div className={`mx-auto w-full max-w-[1400px] px-5 lg:px-10${hasResults ? ' pb-16' : ''}`}>
         {/* 키워드 분석/확장 탭 재검색 로딩 (결과 있을 때만) */}
         {loading && isKeywordTab && activeResult && (
           <div className="mb-5">
@@ -1139,7 +1153,7 @@ export default function App() {
       </div>
 
       {(activeTab === 'analysis' || activeTab === 'blog') && (
-        <FeatureShowcaseSection tab={activeTab} theme={theme} />
+        <FeatureShowcaseSection tab={activeTab} />
       )}
 
       </> )} {/* end pricing conditional */}
