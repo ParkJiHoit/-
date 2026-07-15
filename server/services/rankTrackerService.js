@@ -110,9 +110,10 @@ export async function listTracked(userId) {
     [userId]
   );
   const result = await Promise.all(rows.map(async (row) => {
-    // added_date는 blog_id별 최초 스냅샷일(윈도우 함수로 전체 이력 기준 계산 — LIMIT 20으로
-    // 잘리기 전에 집계되므로 정확함) — 별도 등록일 저장 컬럼이 없어 "처음 추적된 날짜"를
-    // 등록일의 근사치로 보여준다(등록 직후 아직 한 번도 갱신 안 했다면 null).
+    // added_date는 원래 blog_id별 최초 스냅샷일(윈도우 함수로 전체 이력 기준 계산)을 썼는데,
+    // 링크를 등록만 하고 아직 한 번도 갱신 안 했으면 스냅샷 자체가 없어 등록일이 빈 채로
+    // 나온다 — 그 경우엔 tracked_keywords.created_at(실제 등록일)로 대체한다.
+    const registeredDate = row.created_at ? new Date(row.created_at).toISOString().slice(0, 10) : null;
     const { rows: snaps } = await pool.query(
       `SELECT blog_id, rank, status, integrated_exposed, TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at,
               TO_CHAR(MIN(snapshotted_at) OVER (PARTITION BY blog_id), 'YYYY-MM-DD') AS added_date
@@ -120,15 +121,19 @@ export async function listTracked(userId) {
       [row.id]
     );
     const latestByBlog = {};
+    for (const blogId of row.blog_ids || []) {
+      latestByBlog[blogId] = { rank: null, status: null, integratedExposed: null, addedDate: registeredDate };
+    }
+    const seen = new Set();
     for (const s of snaps) {
-      if (!latestByBlog[s.blog_id]) {
-        latestByBlog[s.blog_id] = {
-          rank: s.rank,
-          status: s.status,
-          integratedExposed: row.mode === 'blog' ? s.integrated_exposed : null,
-          addedDate: s.added_date,
-        };
-      }
+      if (seen.has(s.blog_id)) continue;
+      seen.add(s.blog_id);
+      latestByBlog[s.blog_id] = {
+        rank: s.rank,
+        status: s.status,
+        integratedExposed: row.mode === 'blog' ? s.integrated_exposed : null,
+        addedDate: s.added_date || registeredDate,
+      };
     }
     const searchVolume = (row.pc_search != null || row.mobile_search != null)
       ? (row.pc_search || 0) + (row.mobile_search || 0)
