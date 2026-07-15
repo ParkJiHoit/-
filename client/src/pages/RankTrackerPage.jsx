@@ -536,14 +536,16 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     return current;
   };
 
-  const handleRefreshAll = async () => {
-    if (!token || filteredItems.length === 0) return;
+  // 전체 갱신과 "선택 항목만 갱신"이 같은 잡 기반 새로고침 메커니즘을 공유한다 —
+  // 갱신 대상 id 목록만 다르게 넘긴다.
+  const runRefreshJob = async (ids) => {
+    if (!token || !ids.length) return;
     setRefreshingAll(true);
     setFailedJobId(null);
     try {
       const job = await apiFetch(
         '/refresh-jobs',
-        { method: 'POST', body: JSON.stringify({ trackedIds: filteredItems.map(i => i.id) }) },
+        { method: 'POST', body: JSON.stringify({ trackedIds: ids }) },
         token
       );
       const finished = await runJobToCompletion(job);
@@ -564,6 +566,9 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     } catch (e) { setError(e.message); }
     finally { setRefreshingAll(false); }
   };
+
+  const handleRefreshAll = () => runRefreshJob(filteredItems.map(i => i.id));
+  const handleRefreshSelected = (ids) => runRefreshJob(ids);
 
   const handleRetryFailed = async () => {
     if (!token || !failedJobId) return;
@@ -811,6 +816,8 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         onRemoveBlog={handleRemoveBlog}
         onDeleteKeyword={handleDelete}
         onBulkDeleteSelected={handleBulkDelete}
+        onRefreshSelected={handleRefreshSelected}
+        refreshingSelected={refreshingAll}
         loading={loading}
       />
 
