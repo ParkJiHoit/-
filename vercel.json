@@ -10,5 +10,8 @@
       "memory": 512,
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/jobs/refresh-ranks", "schedule": "0 19 * * *" }
+  ]
 }
