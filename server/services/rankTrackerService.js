@@ -1,5 +1,5 @@
 import { getPool } from '../db/index.js';
-import { fetchBlogRankings, fetchPostPublishedDate } from './blogRankingService.js';
+import { fetchBlogRankings } from './blogRankingService.js';
 import { fetchKeywordVolume } from './naverKeywordService.js';
 import { diffRankChanges, notifyRankChanges } from './notificationService.js';
 
@@ -416,14 +416,9 @@ export async function refreshRanks(userId, trackedId) {
       return { storedKey, hit, isRankedWithinTop5, postDate: hit?.publishedDate || null };
     });
 
-    // 검색결과에서 발행일을 못 얻었으면(상위 10위 밖) 블로그 RSS로 보강한다 —
-    // RSS에도 없으면(오래된 글) null로 남고 내보내기 쪽에서 등록일로 대체된다.
-    await Promise.all(prelim.map(async (p) => {
-      if (p.postDate) return;
-      const { blogId, logNo } = parsePostKeyString(p.storedKey);
-      p.postDate = await fetchPostPublishedDate(blogId, logNo);
-    }));
-
+    // 검색결과에서 발행일을 못 얻으면(상위 10위 밖) RSS 보강 없이 null로 남기고,
+    // 내보내기 쪽에서 등록일로 대체한다 — 링크 개수만큼 네이버에 동시 요청이
+    // 나가는 걸 막기 위해 의도적으로 보강을 하지 않는다.
     for (const p of prelim) {
       upserts.push({
         blog_id: p.storedKey,
