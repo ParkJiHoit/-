@@ -354,15 +354,18 @@ export async function fetchBlogRankings(keyword, tab = 'blog', { skipVisitors = 
 
   const promise = (async () => {
     let scraped = [];
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    // 네이버 응답 지연/일시적 차단으로 실패했을 때 곧바로 재시도하면 같은 이유로
+    // 또 실패할 확률이 높다 — 시도 사이에 점점 늘어나는 대기(500ms, 1000ms)를 둬서
+    // 일시적인 문제가 가라앉을 시간을 준다. 시도 횟수도 2회 → 3회로 늘림.
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         scraped = await scrapeNaverTab(keyword, tab, scanLimit);
         if (scraped.length) break;
         console.warn(`[${tab}-rankings] attempt ${attempt}: 0 results for "${keyword}"`);
       } catch (err) {
         console.error(`[${tab}-rankings] attempt ${attempt} failed: ${err.message}`);
-        if (attempt === 2) return [];
       }
+      if (attempt < 3) await new Promise(r => setTimeout(r, 500 * attempt));
     }
     if (!scraped.length) return [];
 
