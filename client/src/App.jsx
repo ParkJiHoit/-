@@ -14,6 +14,7 @@ import KeywordCardList from './components/KeywordCardList';
 import KeywordTableB from './components/KeywordTableB';
 import KeywordCardListAB from './components/KeywordCardListAB';
 import ChatWidget from './components/ChatWidget';
+import FeatureShowcaseSection from './components/FeatureShowcaseSection';
 import HeroScene from './components/HeroScene';
 import Navbar from './components/Navbar';
 import PricingPage from './components/PricingPage';
@@ -867,9 +868,11 @@ export default function App() {
         <>
           {activeTab === 'rank-tracker' ? (
             // 순위 추적은 표 형태 데이터가 많아 점그리드 대신, 랜딩에 쓰는 HeroScene을
-            // 파티클 수/불투명도/회전 속도를 낮춘 톤다운 버전으로 재사용한다.
+            // 파티클 수/불투명도/회전 속도를 낮춘 톤다운 버전으로 재사용한다. 페이지 전체에
+            // 고정으로 깔리는 배경이라 하단의 기능 소개 섹션에도 그대로 이어지는데, 거기서는
+            // 구체 없이 파티클만 자연스럽게 이어지길 원해서 와이어프레임은 끈다.
             <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: theme === 'dark' ? 0.5 : 0.35 }}>
-              <HeroScene className="absolute inset-0" dark={theme === 'dark'} particleCount={180} intensity={0.55} />
+              <HeroScene className="absolute inset-0" dark={theme === 'dark'} particleCount={180} intensity={0.55} showSpheres={false} />
             </div>
           ) : (
             /* dot grid */
@@ -930,6 +933,7 @@ export default function App() {
           <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-10">
             <RankTrackerPage onLoginRequest={() => switchTab('auth')} onGoPricing={() => switchTab('pricing')} />
           </div>
+          <FeatureShowcaseSection tab="rank-tracker" theme={theme} />
         </div>
       ) : (
       <>
@@ -1126,6 +1130,10 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {(activeTab === 'analysis' || activeTab === 'blog') && (
+        <FeatureShowcaseSection tab={activeTab} theme={theme} />
+      )}
 
       </> )} {/* end pricing conditional */}
 
