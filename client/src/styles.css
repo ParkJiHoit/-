@@ -55,6 +55,11 @@
 
 html { transition: background 0.2s; }
 
+/* 랜딩 히어로 + 기능 소개 섹션을 한 화면=한 섹션으로 스냅시키는 스크롤 흐름.
+   App.jsx가 키워드/블로그 탭의 "결과 없음" 상태일 때만 html에 이 클래스를 붙인다.
+   스크롤 스냅은 실제 스크롤이 일어나는 요소(html)에 걸어야 동작하므로 여기 건다. */
+html.snap-flow { scroll-snap-type: y mandatory; }
+
 body {
   margin: 0;
   min-width: 320px;
@@ -544,15 +549,8 @@ button, input, select, textarea { font: inherit; }
 .feature-showcase {
   position: relative;
   isolation: isolate;
-  /* 뒤에 깔린 히어로 배경(구체 등)이 절대 비쳐 보이지 않도록 항상 불투명한 바탕을 깐다 */
-  background: var(--bg-base);
-}
-
-.feature-showcase-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+  /* 배경은 투명하게 둬서 App.jsx의 전역 별 파티클 레이어가 그대로 비쳐 보이게 한다 —
+     구체는 히어로 자기 박스 안에서만 뜨기 때문에 여기까지 넘어올 일이 없다. */
 }
 
 .feature-showcase-intro {
@@ -562,16 +560,12 @@ button, input, select, textarea { font: inherit; }
   padding: 0 24px;
 }
 
+/* 스크롤 스냅 자체는 html.snap-flow(styles.css 상단)가 담당하므로, 여기는 그냥
+   슬라이드들을 감싸는 래퍼일 뿐 자체 스크롤 컨테이너가 아니다. */
 .feature-showcase-scroller {
   position: relative;
   z-index: 1;
-  height: 100vh;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
 }
-.feature-showcase-scroller::-webkit-scrollbar { display: none; }
 
 .feature-showcase-slide {
   height: 100vh;
@@ -672,11 +666,13 @@ button, input, select, textarea { font: inherit; }
   display: flex;
   justify-content: center;
   gap: 8px;
-  position: absolute;
+  /* 슬라이드들이 이제 페이지 전체 스크롤 흐름 위에 있어서, 진행 점은 특정 슬라이드가
+     아니라 화면(뷰포트) 기준으로 항상 같은 자리에 떠 있어야 한다. */
+  position: fixed;
   left: 0;
   right: 0;
   bottom: 28px;
-  z-index: 2;
+  z-index: 1000;
   pointer-events: none;
 }
 .feature-showcase-progress-dot {

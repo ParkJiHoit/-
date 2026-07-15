@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
-import HeroScene from './HeroScene';
 
 import keywordOverview from '../assets/showcase/keyword-overview.png';
 import keywordCluster from '../assets/showcase/keyword-cluster.png';
@@ -145,16 +144,18 @@ function Slide({ slide, reverse, active, slideRef, index, glowIndex }) {
   );
 }
 
-export default function FeatureShowcaseSection({ tab, theme = 'dark' }) {
+export default function FeatureShowcaseSection({ tab }) {
   const content = CONTENT[tab];
+  const containerRef = useRef(null);
   const scrollerRef = useRef(null);
   const slideRefs = useRef([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [inView, setInView] = useState(false);
 
   useEffect(() => {
-    const root = scrollerRef.current;
-    if (!root) return;
-    const observer = new IntersectionObserver(
+    // 슬라이드들이 이제 히어로와 같은 전역(html) 스크롤 스냅 시퀀스에 속하기 때문에,
+    // 별도의 스크롤 컨테이너가 아니라 뷰포트 자체를 기준으로 관찰한다.
+    const slideObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
@@ -163,28 +164,29 @@ export default function FeatureShowcaseSection({ tab, theme = 'dark' }) {
           }
         });
       },
-      { root, threshold: [0.5] }
+      { root: null, threshold: [0.5] }
     );
-    slideRefs.current.forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
+    slideRefs.current.forEach((el) => el && slideObserver.observe(el));
+
+    // 컨테이너 전체가 화면에 조금이라도 걸쳐 있는 동안에만 진행 점을 띄운다
+    // (히어로 화면일 때는 아직 안 보이므로 숨겨져 있어야 한다).
+    const containerObserver = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { root: null, threshold: 0 }
+    );
+    if (containerRef.current) containerObserver.observe(containerRef.current);
+
+    return () => { slideObserver.disconnect(); containerObserver.disconnect(); };
   }, [tab]);
 
   if (!content) return null;
 
   // 인트로(0번) + 기능 슬라이드들을 하나의 스냅 시퀀스로 묶는다 — 화면 하나에
-  // 섹션 하나만 보이도록, 히어로 다음부터 끝까지 전부 같은 스크롤 컨테이너 안에 둔다.
+  // 섹션 하나만 보이도록, 히어로 다음부터 끝까지 전부 같은 스크롤 스냅 흐름 안에 둔다.
   const totalSlides = content.slides.length + 1;
 
   return (
-    <div className="feature-showcase">
-      <div className="feature-showcase-bg">
-        {/* 순위 추적 탭은 페이지 전체에 고정 파티클 배경이 이미 깔려 있어(App.jsx) 여기서
-            또 캔버스를 띄우지 않고 그 위에 자연스럽게 이어지게 둔다. */}
-        {tab !== 'rank-tracker' && (
-          <HeroScene dark={theme === 'dark'} showSpheres={false} particleCount={260} intensity={0.65} />
-        )}
-      </div>
-
+    <div className="feature-showcase" ref={containerRef}>
       <div className="feature-showcase-scroller" ref={scrollerRef}>
         <IntroSlide
           title={content.title}
@@ -206,11 +208,13 @@ export default function FeatureShowcaseSection({ tab, theme = 'dark' }) {
         ))}
       </div>
 
-      <div className="feature-showcase-progress">
-        {Array.from({ length: totalSlides }).map((_, i) => (
-          <span key={i} className={`feature-showcase-progress-dot${i === activeIndex ? ' active' : ''}`} />
-        ))}
-      </div>
+      {inView && (
+        <div className="feature-showcase-progress">
+          {Array.from({ length: totalSlides }).map((_, i) => (
+            <span key={i} className={`feature-showcase-progress-dot${i === activeIndex ? ' active' : ''}`} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
