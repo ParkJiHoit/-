@@ -88,8 +88,26 @@ function ScreenshotFrame({ src, alt }) {
 
 const GLOW_COLORS = ['#0A84FF', '#BF5AF2', '#30D158'];
 
-function Slide({ slide, reverse, active, slideRef, index }) {
-  const glowColor = GLOW_COLORS[index % GLOW_COLORS.length];
+// 첫 화면 — 탭 타이틀만 한 화면 꽉 채워서 보여주는 인트로 슬라이드
+function IntroSlide({ title, subtitle, active, slideRef, index }) {
+  return (
+    <div className="feature-showcase-slide" ref={slideRef} data-slide-index={index}>
+      <motion.div
+        className="feature-showcase-intro"
+        initial={{ opacity: 0, y: 24 }}
+        animate={active ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <p className="feature-showcase-eyebrow" style={{ justifyContent: 'center' }}>기능 소개</p>
+        <h2 className="feature-showcase-heading" style={{ fontSize: 40 }}>{title}</h2>
+        <p className="feature-showcase-desc" style={{ maxWidth: 520, margin: '0 auto', fontSize: 16 }}>{subtitle}</p>
+      </motion.div>
+    </div>
+  );
+}
+
+function Slide({ slide, reverse, active, slideRef, index, glowIndex }) {
+  const glowColor = GLOW_COLORS[glowIndex % GLOW_COLORS.length];
   return (
     <div className="feature-showcase-slide" ref={slideRef} data-slide-index={index}>
       <div className={`feature-showcase-slide-inner${reverse ? ' reverse' : ''}`}>
@@ -153,6 +171,10 @@ export default function FeatureShowcaseSection({ tab, theme = 'dark' }) {
 
   if (!content) return null;
 
+  // 인트로(0번) + 기능 슬라이드들을 하나의 스냅 시퀀스로 묶는다 — 화면 하나에
+  // 섹션 하나만 보이도록, 히어로 다음부터 끝까지 전부 같은 스크롤 컨테이너 안에 둔다.
+  const totalSlides = content.slides.length + 1;
+
   return (
     <div className="feature-showcase">
       <div className="feature-showcase-bg">
@@ -163,28 +185,30 @@ export default function FeatureShowcaseSection({ tab, theme = 'dark' }) {
         )}
       </div>
 
-      <div className="feature-showcase-intro">
-        <p className="feature-showcase-eyebrow" style={{ justifyContent: 'center' }}>기능 소개</p>
-        <h2 className="feature-showcase-heading" style={{ fontSize: 34 }}>{content.title}</h2>
-        <p className="feature-showcase-desc" style={{ maxWidth: 520, margin: '0 auto' }}>{content.subtitle}</p>
-      </div>
-
       <div className="feature-showcase-scroller" ref={scrollerRef}>
+        <IntroSlide
+          title={content.title}
+          subtitle={content.subtitle}
+          active={activeIndex >= 0}
+          index={0}
+          slideRef={(el) => (slideRefs.current[0] = el)}
+        />
         {content.slides.map((slide, i) => (
           <Slide
             key={slide.eyebrow}
             slide={slide}
             reverse={i % 2 === 1}
-            active={activeIndex >= i}
-            index={i}
-            slideRef={(el) => (slideRefs.current[i] = el)}
+            active={activeIndex >= i + 1}
+            index={i + 1}
+            glowIndex={i}
+            slideRef={(el) => (slideRefs.current[i + 1] = el)}
           />
         ))}
       </div>
 
       <div className="feature-showcase-progress">
-        {content.slides.map((slide, i) => (
-          <span key={slide.eyebrow} className={`feature-showcase-progress-dot${i === activeIndex ? ' active' : ''}`} />
+        {Array.from({ length: totalSlides }).map((_, i) => (
+          <span key={i} className={`feature-showcase-progress-dot${i === activeIndex ? ' active' : ''}`} />
         ))}
       </div>
     </div>
