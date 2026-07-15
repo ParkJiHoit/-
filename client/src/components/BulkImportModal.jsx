@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx-js-style';
-import { X, Upload } from 'lucide-react';
+import { X, Upload, ChevronDown } from 'lucide-react';
 
 export default function BulkImportModal({ token, groups: trackerGroups, defaultGroupId, onClose, onImported }) {
   const [text, setText] = useState('');
@@ -76,7 +76,8 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div style={{ fontSize: 18, fontWeight: 700 }}>대량 등록 (CSV/엑셀)</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}>
+          <button onClick={onClose} className="mac-icon-btn mac-icon-btn-danger mac-icon-btn-x"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 6, display: 'flex' }}>
             <X size={18} />
           </button>
         </div>
@@ -87,7 +88,7 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
               "키워드"와 "URL" 두 열로 된 CSV/엑셀 파일을 업로드하거나, 엑셀에서 복사한 내용을 아래에 붙여넣으세요.
               헤더 이름은 자유롭게(키워드/검색어, url/링크 등) 써도 자동으로 인식됩니다.
             </p>
-            <label style={{
+            <label className="mac-upload-label" style={{
               display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
               padding: '10px 14px', borderRadius: 9, border: '1px dashed var(--border-strong)',
               color: 'var(--text-secondary)', fontSize: 13, marginBottom: 12, width: 'fit-content',
@@ -101,38 +102,30 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
             </label>
             <div style={{ marginBottom: 12 }}>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 5 }}>등록할 그룹 (선택)</label>
-              <select
-                value={groupId} onChange={e => setGroupId(e.target.value)}
-                style={{
-                  width: '100%', padding: '9px 12px', borderRadius: 9, boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)',
-                  color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none', cursor: 'pointer',
-                }}
-              >
-                <option value="">그룹 없음</option>
-                {(trackerGroups || []).map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
-              </select>
+              <div className="mac-select-wrap">
+                <select
+                  value={groupId} onChange={e => setGroupId(e.target.value)}
+                  className="mac-select"
+                >
+                  <option value="">그룹 없음</option>
+                  {(trackerGroups || []).map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
+                </select>
+                <ChevronDown size={15} className="mac-select-chevron" />
+              </div>
             </div>
             <textarea
               value={text} onChange={e => setText(e.target.value)}
               placeholder={'키워드\tURL\n강남맛집\thttps://blog.naver.com/abc/111'}
               rows={10}
-              style={{
-                width: '100%', padding: '10px 12px', borderRadius: 9, boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-strong)',
-                color: 'var(--text-primary)', fontSize: 12, fontFamily: 'monospace', outline: 'none', resize: 'vertical',
-              }}
+              className="mac-input"
+              style={{ fontSize: 12, fontFamily: 'monospace', resize: 'vertical' }}
             />
             {error && <p style={{ margin: '10px 0 0', fontSize: 12, color: '#FF453A', fontWeight: 500 }}>{error}</p>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-              <button type="button" onClick={onClose} style={{
-                padding: '9px 16px', borderRadius: 9, border: '1px solid var(--border-strong)',
-                background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-              }}>취소</button>
-              <button type="button" onClick={handlePreview} disabled={loading} style={{
-                padding: '9px 20px', borderRadius: 9, border: 'none',
-                background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-              }}>{loading ? '분석 중…' : '미리보기'}</button>
+              <button type="button" onClick={onClose} className="mac-btn mac-btn-ghost">취소</button>
+              <button type="button" onClick={handlePreview} disabled={loading} className="mac-btn">
+                {loading ? '분석 중…' : '미리보기'}
+              </button>
             </div>
           </>
         ) : (
@@ -199,14 +192,10 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
             </div>
             {error && <p style={{ margin: '10px 0 0', fontSize: 12, color: '#FF453A', fontWeight: 500 }}>{error}</p>}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-              <button type="button" onClick={() => setPreview(null)} style={{
-                padding: '9px 16px', borderRadius: 9, border: '1px solid var(--border-strong)',
-                background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-              }}>다시 입력</button>
-              <button type="button" onClick={handleConfirm} disabled={loading || !preview.groups.length} style={{
-                padding: '9px 20px', borderRadius: 9, border: 'none',
-                background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-              }}>{loading ? '등록 중…' : `${preview.groups.length}개 등록하기`}</button>
+              <button type="button" onClick={() => setPreview(null)} className="mac-btn mac-btn-ghost">다시 입력</button>
+              <button type="button" onClick={handleConfirm} disabled={loading || !preview.groups.length} className="mac-btn">
+                {loading ? '등록 중…' : `${preview.groups.length}개 등록하기`}
+              </button>
             </div>
           </>
         )}
