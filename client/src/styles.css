@@ -540,6 +540,173 @@ button, input, select, textarea { font: inherit; }
 .mac-stagger > *:nth-child(5) { animation: macFadeIn 0.3s 180ms cubic-bezier(0.4,0,0.2,1) both; }
 .mac-stagger > *:nth-child(6) { animation: macFadeIn 0.3s 225ms cubic-bezier(0.4,0,0.2,1) both; }
 
+/* ─── Feature Showcase (탭별 기능 소개 섹션) ─── */
+.feature-showcase {
+  position: relative;
+  margin-top: 56px;
+  border-radius: 28px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.feature-showcase-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.feature-showcase-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, var(--bg-base) 0%, transparent 8%, transparent 92%, var(--bg-base) 100%);
+}
+
+.feature-showcase-intro {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 88px 24px 40px;
+}
+
+.feature-showcase-scroller {
+  position: relative;
+  z-index: 1;
+  height: 82vh;
+  min-height: 540px;
+  max-height: 700px;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+.feature-showcase-scroller::-webkit-scrollbar { display: none; }
+
+.feature-showcase-slide {
+  height: 100%;
+  min-height: 540px;
+  max-height: 700px;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  display: flex;
+  align-items: center;
+  padding: 24px;
+}
+
+.feature-showcase-slide-inner {
+  display: flex;
+  align-items: center;
+  gap: 64px;
+  max-width: 1240px;
+  margin: 0 auto;
+  width: 100%;
+}
+.feature-showcase-slide-inner.reverse { flex-direction: row-reverse; }
+
+.feature-showcase-media { flex: 1 1 0; min-width: 0; position: relative; }
+.feature-showcase-copy { flex: 1 1 0; min-width: 0; max-width: 460px; }
+
+.feature-showcase-glow {
+  position: absolute;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(70px);
+  z-index: -1;
+  opacity: 0.5;
+}
+
+.feature-showcase-frame {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  box-shadow: 0 30px 70px -20px rgba(0,0,0,0.55);
+}
+.feature-showcase-frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--bg-overlay);
+  border-bottom: 1px solid var(--border);
+}
+.feature-showcase-frame-dot { width: 9px; height: 9px; border-radius: 50%; }
+.feature-showcase-frame img { display: block; width: 100%; height: auto; }
+
+.feature-showcase-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+.feature-showcase-heading {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: var(--text-primary);
+  margin: 0 0 14px;
+  line-height: 1.3;
+}
+.feature-showcase-desc {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0 0 20px;
+}
+.feature-showcase-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.feature-showcase-bullets li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.feature-showcase-bullets svg { flex-shrink: 0; color: var(--accent); }
+
+.feature-showcase-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0 0;
+  position: relative;
+  z-index: 1;
+}
+.feature-showcase-progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  transition: background 0.3s, transform 0.3s, width 0.3s;
+}
+.feature-showcase-progress-dot.active {
+  background: var(--accent);
+  width: 20px;
+  border-radius: 3px;
+}
+
+@media (max-width: 900px) {
+  .feature-showcase-slide-inner,
+  .feature-showcase-slide-inner.reverse { flex-direction: column; gap: 32px; }
+  .feature-showcase-copy { max-width: none; }
+}
+
 @keyframes authOverlayIn {
   from { opacity: 0; }
   to   { opacity: 1; }
