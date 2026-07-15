@@ -4,6 +4,9 @@ import { refreshRanks } from './rankTrackerService.js';
 const CHUNK_SIZE = 5;
 const ITEM_DELAY_MS = 700;
 const CHUNK_TIME_BUDGET_MS = 20000;
+// "전체 갱신"을 같은 날 여러 번 눌러도 방금 갱신한 항목까지 처음부터 다시 훑지
+// 않도록, skipFresh가 true면 이 시간 내에 이미 갱신된 항목은 건너뛴다.
+const SKIP_FRESH_COOLDOWN_HOURS = 4;
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -13,25 +16,34 @@ function isDone(job) {
   return job.status === 'completed' || job.status === 'failed';
 }
 
-export async function createRefreshJob(userId, trackedIds = null) {
+export async function createRefreshJob(userId, trackedIds = null, skipFresh = false) {
   const pool = getPool();
   if (!pool) throw Object.assign(new Error('DB가 설정되지 않았습니다.'), { status: 503 });
+
+  const freshnessClause = skipFresh
+    ? `AND (last_refreshed_at IS NULL OR last_refreshed_at < NOW() - make_interval(hours => ${SKIP_FRESH_COOLDOWN_HOURS}))`
+    : '';
 
   let ids;
   if (!trackedIds || !trackedIds.length) {
     const { rows } = await pool.query(
-      `SELECT id FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL`,
+      `SELECT id FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL ${freshnessClause}`,
       [userId]
     );
     ids = rows.map(r => r.id);
   } else {
     const { rows } = await pool.query(
-      `SELECT id FROM tracked_keywords WHERE id = ANY($1) AND user_id = $2 AND deleted_at IS NULL`,
+      `SELECT id FROM tracked_keywords WHERE id = ANY($1) AND user_id = $2 AND deleted_at IS NULL ${freshnessClause}`,
       [trackedIds, userId]
     );
     ids = rows.map(r => r.id);
   }
-  if (!ids.length) throw Object.assign(new Error('갱신할 추적 항목이 없습니다.'), { status: 400 });
+  if (!ids.length) {
+    const message = skipFresh
+      ? `모두 최근 ${SKIP_FRESH_COOLDOWN_HOURS}시간 내에 갱신된 항목입니다.`
+      : '갱신할 추적 항목이 없습니다.';
+    throw Object.assign(new Error(message), { status: 400 });
+  }
 
   const { rows: jobRows } = await pool.query(
     `INSERT INTO refresh_jobs (user_id, status, total_count)

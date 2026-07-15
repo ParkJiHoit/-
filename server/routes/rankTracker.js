@@ -284,8 +284,8 @@ router.post('/bulk-import/confirm', requirePremium, async (req, res, next) => {
 
 router.post('/refresh-jobs', requirePremium, async (req, res, next) => {
   try {
-    const { trackedIds } = req.body || {};
-    const job = await createRefreshJob(req.userId, Array.isArray(trackedIds) ? trackedIds : null);
+    const { trackedIds, skipFresh } = req.body || {};
+    const job = await createRefreshJob(req.userId, Array.isArray(trackedIds) ? trackedIds : null, !!skipFresh);
     res.status(201).json(job);
   } catch (e) { next(e); }
 });
