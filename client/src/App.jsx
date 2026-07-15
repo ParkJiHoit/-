@@ -1,4 +1,4 @@
-﻿import { Download, Loader2, Moon, Sun, Search } from 'lucide-react';
+﻿import { Download, Loader2, Moon, Sun, Search, ChevronDown } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx-js-style';
 import { useAuth } from './AuthContext';
@@ -422,12 +422,15 @@ function HeroSection({ tab, blogSubTab, hasResults, theme, children }) {
       {!hasResults && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
           <HeroScene className="absolute inset-0" dark={theme === 'dark'} showSpheres particleCount={0} />
+          {/* 네브바 쪽만 살짝 어둡게 — 예전엔 페이지 전체에 걸리는 배경이라 아래쪽도
+              어둡게 페이드시켰지만, 지금은 히어로 박스 안으로 한정된 배경이라 아래쪽까지
+              어둡히면 바로 다음 섹션과 밝기가 어긋나 보인다. 그래서 위쪽만 남긴다. */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
               background: theme === 'dark'
-                ? 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.5) 100%)'
-                : 'linear-gradient(to bottom, rgba(0,0,0,0.04) 0%, transparent 30%, transparent 70%, rgba(20,20,25,0.28) 100%)',
+                ? 'linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 30%)'
+                : 'linear-gradient(to bottom, rgba(0,0,0,0.04) 0%, transparent 30%)',
             }}
           />
         </div>
@@ -487,6 +490,13 @@ function HeroSection({ tab, blogSubTab, hasResults, theme, children }) {
         )}
         {children}
       </section>
+      {/* 아래로 더 볼 거리(기능 소개 섹션)가 있는 탭에서만, 결과 없는 랜딩 화면일 때
+          스크롤을 유도하는 애니메이션 아이콘을 히어로 하단에 띄운다. */}
+      {!hasResults && (tab === 'analysis' || tab === 'blog') && (
+        <div className="hero-scroll-hint" aria-hidden="true">
+          <ChevronDown size={22} strokeWidth={2.25} />
+        </div>
+      )}
     </div>
   );
 }

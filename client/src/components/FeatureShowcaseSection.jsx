@@ -11,8 +11,6 @@ import rankTable from '../assets/showcase/rank-table.png';
 
 const CONTENT = {
   analysis: {
-    title: '키워드 분석, 이렇게 씁니다',
-    subtitle: '기준 키워드 하나로 검색량부터 의도 분류까지 한 화면에서 확인하세요',
     slides: [
       {
         eyebrow: '검색량 & 효율 인사이트',
@@ -31,8 +29,6 @@ const CONTENT = {
     ],
   },
   blog: {
-    title: '블로그 분석, 이렇게 씁니다',
-    subtitle: '상위 노출 포스팅 벤치마킹부터 내 블로그 등급 진단까지',
     slides: [
       {
         eyebrow: '블로그 구조 분석',
@@ -51,8 +47,6 @@ const CONTENT = {
     ],
   },
   'rank-tracker': {
-    title: '순위 추적, 이렇게 씁니다',
-    subtitle: '등록한 키워드가 오늘 몇 위인지, 놓치지 않고 확인하세요',
     slides: [
       {
         eyebrow: '추적 현황 한눈에',
@@ -86,24 +80,6 @@ function ScreenshotFrame({ src, alt }) {
 }
 
 const GLOW_COLORS = ['#0A84FF', '#BF5AF2', '#30D158'];
-
-// 첫 화면 — 탭 타이틀만 한 화면 꽉 채워서 보여주는 인트로 슬라이드
-function IntroSlide({ title, subtitle, active, slideRef, index }) {
-  return (
-    <div className="feature-showcase-slide" ref={slideRef} data-slide-index={index}>
-      <motion.div
-        className="feature-showcase-intro"
-        initial={{ opacity: 0, y: 24 }}
-        animate={active ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <p className="feature-showcase-eyebrow" style={{ justifyContent: 'center' }}>기능 소개</p>
-        <h2 className="feature-showcase-heading" style={{ fontSize: 40 }}>{title}</h2>
-        <p className="feature-showcase-desc" style={{ maxWidth: 520, margin: '0 auto', fontSize: 16 }}>{subtitle}</p>
-      </motion.div>
-    </div>
-  );
-}
 
 function Slide({ slide, reverse, active, slideRef, index, glowIndex }) {
   const glowColor = GLOW_COLORS[glowIndex % GLOW_COLORS.length];
@@ -149,61 +125,54 @@ export default function FeatureShowcaseSection({ tab }) {
   const containerRef = useRef(null);
   const scrollerRef = useRef(null);
   const slideRefs = useRef([]);
+  const visibleSlides = useRef(new Set());
   const [activeIndex, setActiveIndex] = useState(0);
   const [inView, setInView] = useState(false);
 
   useEffect(() => {
+    visibleSlides.current = new Set();
     // 슬라이드들이 이제 히어로와 같은 전역(html) 스크롤 스냅 시퀀스에 속하기 때문에,
-    // 별도의 스크롤 컨테이너가 아니라 뷰포트 자체를 기준으로 관찰한다.
+    // 별도의 스크롤 컨테이너가 아니라 뷰포트 자체를 기준으로 관찰한다. 진행 점은
+    // "지금 화면에 절반 이상 걸쳐 있는 슬라이드가 하나라도 있는가"를 Set으로 누적
+    // 추적해서 판단한다 — 관찰자 콜백은 한 번에 바뀐 엔트리만 주기 때문에, 매번
+    // 전체 슬라이드 목록을 다시 훑지 않고도 정확한 현재 상태를 유지할 수 있다.
     const slideObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-            const idx = Number(entry.target.dataset.slideIndex);
+          const idx = Number(entry.target.dataset.slideIndex);
+          const visible = entry.isIntersecting && entry.intersectionRatio > 0.5;
+          if (visible) {
+            visibleSlides.current.add(idx);
             setActiveIndex(idx);
+          } else {
+            visibleSlides.current.delete(idx);
           }
         });
+        setInView(visibleSlides.current.size > 0);
       },
       { root: null, threshold: [0.5] }
     );
     slideRefs.current.forEach((el) => el && slideObserver.observe(el));
 
-    // 컨테이너 전체가 화면에 조금이라도 걸쳐 있는 동안에만 진행 점을 띄운다
-    // (히어로 화면일 때는 아직 안 보이므로 숨겨져 있어야 한다).
-    const containerObserver = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
-      { root: null, threshold: 0 }
-    );
-    if (containerRef.current) containerObserver.observe(containerRef.current);
-
-    return () => { slideObserver.disconnect(); containerObserver.disconnect(); };
+    return () => slideObserver.disconnect();
   }, [tab]);
 
   if (!content) return null;
 
-  // 인트로(0번) + 기능 슬라이드들을 하나의 스냅 시퀀스로 묶는다 — 화면 하나에
-  // 섹션 하나만 보이도록, 히어로 다음부터 끝까지 전부 같은 스크롤 스냅 흐름 안에 둔다.
-  const totalSlides = content.slides.length + 1;
+  const totalSlides = content.slides.length;
 
   return (
     <div className="feature-showcase" ref={containerRef}>
       <div className="feature-showcase-scroller" ref={scrollerRef}>
-        <IntroSlide
-          title={content.title}
-          subtitle={content.subtitle}
-          active={activeIndex >= 0}
-          index={0}
-          slideRef={(el) => (slideRefs.current[0] = el)}
-        />
         {content.slides.map((slide, i) => (
           <Slide
             key={slide.eyebrow}
             slide={slide}
             reverse={i % 2 === 1}
-            active={activeIndex >= i + 1}
-            index={i + 1}
+            active={activeIndex >= i}
+            index={i}
             glowIndex={i}
-            slideRef={(el) => (slideRefs.current[i + 1] = el)}
+            slideRef={(el) => (slideRefs.current[i] = el)}
           />
         ))}
       </div>

@@ -536,6 +536,23 @@ button, input, select, textarea { font: inherit; }
   animation: floatBob 4s ease-in-out infinite;
 }
 
+/* 히어로 하단 "아래로 스크롤" 유도 아이콘 */
+@keyframes scrollHintBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50%       { transform: translateY(8px); opacity: 1; }
+}
+.hero-scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 1;
+  color: var(--text-tertiary);
+  display: flex;
+  pointer-events: none;
+  animation: scrollHintBounce 1.8s ease-in-out infinite;
+}
+
 .mac-fade-in { animation: macFadeIn 0.3s cubic-bezier(0.4,0,0.2,1) both; }
 
 .mac-stagger > *:nth-child(1) { animation: macFadeIn 0.3s 0ms   cubic-bezier(0.4,0,0.2,1) both; }
@@ -551,13 +568,6 @@ button, input, select, textarea { font: inherit; }
   isolation: isolate;
   /* 배경은 투명하게 둬서 App.jsx의 전역 별 파티클 레이어가 그대로 비쳐 보이게 한다 —
      구체는 히어로 자기 박스 안에서만 뜨기 때문에 여기까지 넘어올 일이 없다. */
-}
-
-.feature-showcase-intro {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: 0 24px;
 }
 
 /* 스크롤 스냅 자체는 html.snap-flow(styles.css 상단)가 담당하므로, 여기는 그냥
