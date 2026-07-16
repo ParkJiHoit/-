@@ -537,7 +537,11 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   };
 
   // 전체 갱신과 "선택 항목만 갱신"이 같은 잡 기반 새로고침 메커니즘을 공유한다 —
-  // 갱신 대상 id 목록만 다르게 넘긴다.
+  // 갱신 대상 id 목록만 다르게 넘긴다. 잡이 끝났는데 실패 항목이 있으면, 사람이
+  // "재시도" 버튼을 누르길 기다리지 않고 그 실패 항목들만 바로 한 번 더 자동으로
+  // 돌린다 — 네트워크 지연/일시적 차단처럼 재시도하면 풀리는 경우가 많아서다.
+  // 그래도 남은 실패가 있으면 그때는 failedJobId를 세팅해 수동 재시도 버튼을 띄운다
+  // (무한 자동 재시도로 계속 네이버에 요청을 쏘는 걸 막기 위해 자동 재시도는 딱 1번만).
   const runRefreshJob = async (ids, { skipFresh = false } = {}) => {
     if (!token || !ids.length) return;
     setRefreshingAll(true);
@@ -548,7 +552,12 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         { method: 'POST', body: JSON.stringify({ trackedIds: ids, skipFresh }) },
         token
       );
-      const finished = await runJobToCompletion(job);
+      let finished = await runJobToCompletion(job);
+
+      if (finished.failed_count > 0) {
+        const retryJob = await apiFetch(`/refresh-jobs/${finished.id}/retry-failed`, { method: 'POST' }, token).catch(() => null);
+        if (retryJob) finished = await runJobToCompletion(retryJob);
+      }
       if (finished.failed_count > 0) setFailedJobId(finished.id);
 
       const listData = await apiFetch('', {}, token).catch(() => null);
