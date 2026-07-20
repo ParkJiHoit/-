@@ -818,6 +818,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         onBulkDeleteSelected={handleBulkDelete}
         onRefreshSelected={handleRefreshSelected}
         refreshingSelected={refreshingAll}
+        isGroupSelected={!!selectedGroupId}
         loading={loading}
       />
 
