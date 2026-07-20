@@ -112,17 +112,26 @@ export async function listTracked(userId) {
   const result = await Promise.all(rows.map(async (row) => {
     // added_date는 원래 blog_id별 최초 스냅샷일(윈도우 함수로 전체 이력 기준 계산)을 썼는데,
     // 링크를 등록만 하고 아직 한 번도 갱신 안 했으면 스냅샷 자체가 없어 등록일이 빈 채로
-    // 나온다 — 그 경우엔 tracked_keywords.created_at(실제 등록일)로 대체한다.
+    // 나온다 — 그 경우엔 tracked_blog_links.added_at(링크별 실제 추가일)로 대체한다.
+    // (tracked_keywords.created_at은 키워드 최초 등록일일 뿐이라, 나중에 추가된 링크에
+    // 쓰면 날짜가 틀린다 — 예: 키워드는 7/7에 만들었지만 링크는 오늘 추가한 경우.)
     const registeredDate = row.created_at ? new Date(row.created_at).toISOString().slice(0, 10) : null;
-    const { rows: snaps } = await pool.query(
-      `SELECT blog_id, rank, status, integrated_exposed, TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at,
-              TO_CHAR(MIN(snapshotted_at) OVER (PARTITION BY blog_id), 'YYYY-MM-DD') AS added_date
-       FROM rank_snapshots WHERE tracked_id = $1 ORDER BY snapshotted_at DESC LIMIT 20`,
-      [row.id]
-    );
+    const [{ rows: snaps }, { rows: linkAdds }] = await Promise.all([
+      pool.query(
+        `SELECT blog_id, rank, status, integrated_exposed, TO_CHAR(snapshotted_at, 'YYYY-MM-DD') AS snapshotted_at,
+                TO_CHAR(MIN(snapshotted_at) OVER (PARTITION BY blog_id), 'YYYY-MM-DD') AS added_date
+         FROM rank_snapshots WHERE tracked_id = $1 ORDER BY snapshotted_at DESC LIMIT 20`,
+        [row.id]
+      ),
+      pool.query(
+        `SELECT blog_id, TO_CHAR(added_at, 'YYYY-MM-DD') AS added_date FROM tracked_blog_links WHERE tracked_id = $1`,
+        [row.id]
+      ),
+    ]);
+    const linkAddedByBlog = Object.fromEntries(linkAdds.map(l => [l.blog_id, l.added_date]));
     const latestByBlog = {};
     for (const blogId of row.blog_ids || []) {
-      latestByBlog[blogId] = { rank: null, status: null, integratedExposed: null, addedDate: registeredDate };
+      latestByBlog[blogId] = { rank: null, status: null, integratedExposed: null, addedDate: linkAddedByBlog[blogId] || registeredDate };
     }
     const seen = new Set();
     for (const s of snaps) {
@@ -132,7 +141,10 @@ export async function listTracked(userId) {
         rank: s.rank,
         status: s.status,
         integratedExposed: row.mode === 'blog' ? s.integrated_exposed : null,
-        addedDate: s.added_date || registeredDate,
+        // tracked_blog_links.added_at(실제 등록 시점)이 최우선 — 스냅샷 최초일(added_date)은
+        // "언제 처음 확인됐는지"일 뿐이라, 등록은 며칠 전인데 첫 갱신이 늦게 일어난 경우
+        // 등록일을 늦은 날짜로 잘못 보여줄 수 있다.
+        addedDate: linkAddedByBlog[s.blog_id] || s.added_date || registeredDate,
       };
     }
     const searchVolume = (row.pc_search != null || row.mobile_search != null)
@@ -141,6 +153,20 @@ export async function listTracked(userId) {
     return { ...row, latestRanks: latestByBlog, searchVolume };
   }));
   return result;
+}
+
+// tracked_keywords.blog_ids는 단순 배열이라 "이 링크가 언제 추가됐는지"는 담지
+// 못한다 — tracked_blog_links에 링크 단위로 별도 기록한다. 이미 있던 blog_id는
+// ON CONFLICT DO NOTHING으로 원래 added_at을 그대로 유지하고, 새로 추가된
+// blog_id만 지금 시각으로 새로 기록된다.
+async function recordBlogLinkAdditions(pool, trackedId, blogIds) {
+  if (!blogIds.length) return;
+  const values = blogIds.map((_, i) => `($1, $${i + 2})`).join(', ');
+  await pool.query(
+    `INSERT INTO tracked_blog_links (tracked_id, blog_id) VALUES ${values}
+     ON CONFLICT (tracked_id, blog_id) DO NOTHING`,
+    [trackedId, ...blogIds]
+  );
 }
 
 export async function createTracked(userId, keyword, mode, blogUrls = [], groupId = null) {
@@ -161,6 +187,7 @@ export async function createTracked(userId, keyword, mode, blogUrls = [], groupI
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
     [userId, trimmedKeyword, mode, blogIds, groupId, searchVolume?.pcSearch ?? null, searchVolume?.mobileSearch ?? null]
   );
+  await recordBlogLinkAdditions(pool, rows[0].id, blogIds);
   return rows[0];
 }
 
@@ -188,6 +215,7 @@ export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], 
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
     [userId, trimmedKeyword, mode, newIds, groupId, searchVolume?.pcSearch ?? null, searchVolume?.mobileSearch ?? null]
   );
+  await recordBlogLinkAdditions(pool, rows[0].id, rows[0].blog_ids);
   return rows[0];
 }
 
@@ -224,6 +252,7 @@ export async function removeTrackedBlogUrl(userId, trackedId, blogId) {
     [blogId, trackedId, userId]
   );
   if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
+  await pool.query(`DELETE FROM tracked_blog_links WHERE tracked_id = $1 AND blog_id = $2`, [trackedId, blogId]);
   return rows[0];
 }
 

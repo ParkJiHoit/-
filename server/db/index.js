@@ -135,6 +135,25 @@ export async function initDb() {
   `);
   console.log('[DB] rank_snapshots.status 컬럼 준비 완료');
   await p.query(`
+    -- tracked_keywords.blog_ids(TEXT[])는 각 링크가 "언제" 추가됐는지는 담지 못한다
+    -- (배열이라 개별 원소에 타임스탬프를 못 붙임) — 그래서 기존 키워드에 링크를 나중에
+    -- 추가해도 등록일이 키워드 최초 생성일로 잘못 표시되는 문제가 있었다. 이 테이블이
+    -- 링크 단위의 실제 추가 시점을 별도로 기록한다.
+    CREATE TABLE IF NOT EXISTS tracked_blog_links (
+      tracked_id INTEGER     NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,
+      blog_id    TEXT        NOT NULL,
+      added_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (tracked_id, blog_id)
+    );
+    -- 기존에 이미 등록돼 있던 링크는 정확한 추가 시점을 알 수 없으니, 차선책으로
+    -- 키워드 생성일을 채워둔다(테이블 도입 이전 데이터에 한해서만 근사치).
+    INSERT INTO tracked_blog_links (tracked_id, blog_id, added_at)
+    SELECT tk.id, b.blog_id, tk.created_at
+    FROM tracked_keywords tk, unnest(tk.blog_ids) AS b(blog_id)
+    ON CONFLICT (tracked_id, blog_id) DO NOTHING;
+  `);
+  console.log('[DB] tracked_blog_links 테이블 준비 완료');
+  await p.query(`
     CREATE TABLE IF NOT EXISTS refresh_jobs (
       id              SERIAL PRIMARY KEY,
       user_id         UUID        NOT NULL,
