@@ -20,8 +20,23 @@ export async function createRefreshJob(userId, trackedIds = null, skipFresh = fa
   const pool = getPool();
   if (!pool) throw Object.assign(new Error('DB가 설정되지 않았습니다.'), { status: 503 });
 
+  // 직전 갱신이 조회 실패로 끝난 항목은 last_refreshed_at이 방금 갱신된 것처럼
+  // 찍혀 있어도(실패든 성공이든 무조건 갱신 시각을 기록하므로) 쿨다운과 무관하게
+  // 항상 다시 시도 대상에 포함시킨다 — 그렇지 않으면 "전체 갱신"을 반복 클릭해도
+  // 조회 실패 항목만 계속 쿨다운에 가려 아예 재시도되지 않는다.
   const freshnessClause = skipFresh
-    ? `AND (last_refreshed_at IS NULL OR last_refreshed_at < NOW() - make_interval(hours => ${SKIP_FRESH_COOLDOWN_HOURS}))`
+    ? `AND (
+        last_refreshed_at IS NULL
+        OR last_refreshed_at < NOW() - make_interval(hours => ${SKIP_FRESH_COOLDOWN_HOURS})
+        OR EXISTS (
+          SELECT 1 FROM rank_snapshots rs
+          WHERE rs.tracked_id = tracked_keywords.id
+            AND rs.status = 'fetch_failed'
+            AND rs.snapshotted_at = (
+              SELECT MAX(rs2.snapshotted_at) FROM rank_snapshots rs2 WHERE rs2.tracked_id = tracked_keywords.id
+            )
+        )
+      )`
     : '';
 
   let ids;
@@ -89,7 +104,14 @@ export async function processNextChunk(userId, jobId) {
     if (Date.now() - chunkStartedAt > CHUNK_TIME_BUDGET_MS) break;
     const item = items[i];
     try {
-      await refreshRanks(userId, item.tracked_id);
+      const result = await refreshRanks(userId, item.tracked_id);
+      // refreshRanks는 "조회 실패"를 예외로 던지지 않고 { fetchFailed: true }로
+      // 정상 반환한다 — 여기서 걸러주지 않으면 잡/재시도 메커니즘이 이 항목을
+      // 그냥 "완료"로 취급해버려서 자동 재시도도, 수동 재시도 버튼도 절대 이 항목을
+      // 다시 시도하지 않게 된다.
+      if (result.fetchFailed) {
+        throw new Error('조회 실패 (검색 결과를 가져오지 못했습니다)');
+      }
       await pool.query(
         `UPDATE refresh_job_items SET status = 'done', processed_at = NOW() WHERE id = $1`,
         [item.id]
