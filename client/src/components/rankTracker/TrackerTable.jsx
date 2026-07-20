@@ -22,6 +22,22 @@ function earliestAddedDate(item) {
   return dates.length ? dates.sort()[0] : null;
 }
 
+// "안정화됨" 분류는 링크 단위 등록일 기준으로 판단한다 — 키워드 자체는 오래됐어도
+// 그 안에 방금 추가한 링크가 하나라도 있으면(=가장 최근 링크가 기준일 이내면)
+// 아직 안정화되지 않은 것으로 취급해 접히지 않게 한다.
+function mostRecentAddedDate(item) {
+  const dates = Object.values(item.latestRanks || {}).map(r => r.addedDate).filter(Boolean);
+  return dates.length ? dates.sort().at(-1) : null;
+}
+
+function itemAgeDays(item, mode) {
+  if (mode === 'blog') {
+    const latest = mostRecentAddedDate(item);
+    if (latest) return daysSince(latest);
+  }
+  return daysSince(item.created_at);
+}
+
 // "2026-07-10" -> "26-07-10"
 function formatShortDate(dateStr) {
   return dateStr ? dateStr.slice(2) : null;
@@ -96,8 +112,8 @@ export default function TrackerTable({
 
   // 특정 그룹을 보고 있을 때만 등록 14일 경과 항목을 "안정화됨" 섹션으로 접어서 분리한다
   // (전체 그룹 보기에선 지금까지와 동일하게 한 목록으로 보여준다).
-  const recentItems = isGroupSelected ? sortedItems.filter(i => daysSince(i.created_at) < STABILIZED_AFTER_DAYS) : sortedItems;
-  const stabilizedItems = isGroupSelected ? sortedItems.filter(i => daysSince(i.created_at) >= STABILIZED_AFTER_DAYS) : [];
+  const recentItems = isGroupSelected ? sortedItems.filter(i => itemAgeDays(i, mode) < STABILIZED_AFTER_DAYS) : sortedItems;
+  const stabilizedItems = isGroupSelected ? sortedItems.filter(i => itemAgeDays(i, mode) >= STABILIZED_AFTER_DAYS) : [];
 
   const flatRows = buildFlatRows(recentItems);
   const stabilizedFlatRows = buildFlatRows(stabilizedItems);
