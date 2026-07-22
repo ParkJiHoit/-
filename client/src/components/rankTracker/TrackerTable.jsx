@@ -1,8 +1,16 @@
 import { useState } from 'react';
-import { Plus, Trash2, X, ChevronRight, Star, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, X, ChevronRight, ChevronDown, Star, RefreshCw } from 'lucide-react';
 import { formatRankStatus } from './trackerFormat';
 
 const SORT_DEFAULT_DIR = { keyword: 'asc', searchVolume: 'desc', rank: 'asc', addedDate: 'desc' };
+// 신규 포스팅은 통상 1~2주 안에 순위가 크게 출렁이다 안정되는 편이라, 등록 14일이
+// 지나면 "안정화됨"으로 보고 그룹 뷰에서 접어둔다 — 삭제/일시정지가 아니라 화면 정리용.
+const STABILIZED_AFTER_DAYS = 14;
+
+function daysSince(dateStr) {
+  if (!dateStr) return 0;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
 
 function bestRank(item) {
   const ranks = Object.values(item.latestRanks || {}).filter(r => r.rank != null).map(r => r.rank);
@@ -12,6 +20,22 @@ function bestRank(item) {
 function earliestAddedDate(item) {
   const dates = Object.values(item.latestRanks || {}).map(r => r.addedDate).filter(Boolean);
   return dates.length ? dates.sort()[0] : null;
+}
+
+// "안정화됨" 분류는 링크 단위 등록일 기준으로 판단한다 — 키워드 자체는 오래됐어도
+// 그 안에 방금 추가한 링크가 하나라도 있으면(=가장 최근 링크가 기준일 이내면)
+// 아직 안정화되지 않은 것으로 취급해 접히지 않게 한다.
+function mostRecentAddedDate(item) {
+  const dates = Object.values(item.latestRanks || {}).map(r => r.addedDate).filter(Boolean);
+  return dates.length ? dates.sort().at(-1) : null;
+}
+
+function itemAgeDays(item, mode) {
+  if (mode === 'blog') {
+    const latest = mostRecentAddedDate(item);
+    if (latest) return daysSince(latest);
+  }
+  return daysSince(item.created_at);
 }
 
 // "2026-07-10" -> "26-07-10"
@@ -33,9 +57,11 @@ export default function TrackerTable({
   onRowClick, onMoveItemGroup, onAddBlog, onRemoveBlog, onDeleteKeyword, onBulkDeleteSelected,
   onRefreshSelected, refreshingSelected,
   onToggleFavorite,
+  isGroupSelected,
   loading,
 }) {
   const [expanded, setExpanded] = useState(new Set());
+  const [showStabilized, setShowStabilized] = useState(false);
   const toggleExpand = (id) => {
     setExpanded(prev => {
       const next = new Set(prev);
@@ -68,18 +94,29 @@ export default function TrackerTable({
   // 즐겨찾기/일반 그룹 내부의 상대 순서는 위에서 계산한 정렬 결과 그대로 유지된다).
   const sortedItems = [...sortedByKey].sort((a, b) => (b.is_favorite ? 1 : 0) - (a.is_favorite ? 1 : 0));
 
-  const flatRows = [];
-  for (const item of sortedItems) {
-    const blogIds = mode === 'blog' ? (item.blog_ids || []) : [];
-    if (!blogIds.length) {
-      flatRows.push({ item, blogId: null, isFirst: true, isOpen: false, hiddenCount: 0 });
-    } else {
-      const isOpen = blogIds.length > 1 && expanded.has(item.id);
-      const visibleIds = blogIds.length > 1 && !isOpen ? blogIds.slice(0, 1) : blogIds;
-      const hiddenCount = blogIds.length - visibleIds.length;
-      visibleIds.forEach((blogId, i) => flatRows.push({ item, blogId, isFirst: i === 0, isOpen, hiddenCount }));
+  const buildFlatRows = (items) => {
+    const out = [];
+    for (const item of items) {
+      const blogIds = mode === 'blog' ? (item.blog_ids || []) : [];
+      if (!blogIds.length) {
+        out.push({ item, blogId: null, isFirst: true, isOpen: false, hiddenCount: 0 });
+      } else {
+        const isOpen = blogIds.length > 1 && expanded.has(item.id);
+        const visibleIds = blogIds.length > 1 && !isOpen ? blogIds.slice(0, 1) : blogIds;
+        const hiddenCount = blogIds.length - visibleIds.length;
+        visibleIds.forEach((blogId, i) => out.push({ item, blogId, isFirst: i === 0, isOpen, hiddenCount }));
+      }
     }
-  }
+    return out;
+  };
+
+  // 특정 그룹을 보고 있을 때만 등록 14일 경과 항목을 "안정화됨" 섹션으로 접어서 분리한다
+  // (전체 그룹 보기에선 지금까지와 동일하게 한 목록으로 보여준다).
+  const recentItems = isGroupSelected ? sortedItems.filter(i => itemAgeDays(i, mode) < STABILIZED_AFTER_DAYS) : sortedItems;
+  const stabilizedItems = isGroupSelected ? sortedItems.filter(i => itemAgeDays(i, mode) >= STABILIZED_AFTER_DAYS) : [];
+
+  const flatRows = buildFlatRows(recentItems);
+  const stabilizedFlatRows = buildFlatRows(stabilizedItems);
 
   const allSelected = rows.length > 0 && rows.every(r => selectedIds.has(r.id));
 
@@ -153,14 +190,40 @@ export default function TrackerTable({
           </tr>
         </thead>
         <tbody>
-          {flatRows.map(({ item, blogId, isFirst, isOpen, hiddenCount }, i) => {
-            const entry = blogId ? item.latestRanks?.[blogId] ?? null : null;
-            const totalBlogCount = mode === 'blog' ? (item.blog_ids || []).length : 0;
-            const { label, color } = formatRankStatus(entry?.rank ?? null, entry?.status ?? null);
-            const best = bestRank(item);
-            const allLabel = best != null ? `최고 ${best}위` : '기록 없음';
-            const allColor = best != null && best <= 5 ? '#30D158' : 'var(--text-tertiary)';
-            return (
+          {flatRows.map((row, i) => renderRow(row, i))}
+          {isGroupSelected && stabilizedItems.length > 0 && (
+            <tr>
+              <td colSpan={mode === 'blog' ? 8 : 5} style={{ padding: 0, border: 'none' }}>
+                <button
+                  onClick={() => setShowStabilized(v => !v)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                    padding: '8px 12px', background: 'rgba(255,255,255,0.02)', border: 'none',
+                    borderTop: '1px solid var(--border)', color: 'var(--text-tertiary)',
+                    fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+                  }}
+                >
+                  <ChevronDown size={13} style={{ transform: showStabilized ? 'none' : 'rotate(-90deg)' }} />
+                  안정화됨 (등록 {STABILIZED_AFTER_DAYS}일 경과) · {stabilizedItems.length}개
+                </button>
+              </td>
+            </tr>
+          )}
+          {isGroupSelected && showStabilized && stabilizedFlatRows.map((row, i) => renderRow(row, i))}
+        </tbody>
+      </table>
+      </div>
+    </div>
+  );
+
+  function renderRow({ item, blogId, isFirst, isOpen, hiddenCount }, i) {
+    const entry = blogId ? item.latestRanks?.[blogId] ?? null : null;
+    const totalBlogCount = mode === 'blog' ? (item.blog_ids || []).length : 0;
+    const { label, color } = formatRankStatus(entry?.rank ?? null, entry?.status ?? null);
+    const best = bestRank(item);
+    const allLabel = best != null ? `최고 ${best}위` : '기록 없음';
+    const allColor = best != null && best <= 5 ? '#30D158' : 'var(--text-tertiary)';
+    return (
               <tr
                 key={`${item.id}-${blogId ?? 'x'}-${i}`}
                 onClick={() => onRowClick(item)}
@@ -286,11 +349,6 @@ export default function TrackerTable({
                   </div>
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      </div>
-    </div>
-  );
+    );
+  }
 }
