@@ -210,6 +210,16 @@ export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], 
              ELSE ARRAY(SELECT DISTINCT unnest(tracked_keywords.blog_ids || EXCLUDED.blog_ids))
            END,
        deleted_at = NULL,
+       -- last_refreshed_at은 키워드 하나에 하나만 있다(포스팅별이 아님). 방금 새
+       -- 포스팅 URL을 추가했는데 이 키워드가 조금 전에 갱신된 적이 있으면, 그 새
+       -- 포스팅은 실제로는 한 번도 조회된 적이 없는데도 "전체 갱신"의 4시간 쿨다운에
+       -- 걸려 계속 건너뛰어진다 — 새로 추가되는 URL이 있을 때만 NULL로 되돌려서
+       -- 다음 "전체 갱신"이 반드시 이 키워드를 다시 훑도록 한다.
+       last_refreshed_at = CASE
+             WHEN tracked_keywords.deleted_at IS NOT NULL THEN NULL
+             WHEN NOT (EXCLUDED.blog_ids <@ tracked_keywords.blog_ids) THEN NULL
+             ELSE tracked_keywords.last_refreshed_at
+           END,
        pc_search = COALESCE(tracked_keywords.pc_search, EXCLUDED.pc_search),
        mobile_search = COALESCE(tracked_keywords.mobile_search, EXCLUDED.mobile_search)
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
