@@ -33,6 +33,20 @@ function volumeTier(volume) {
   return 'low';
 }
 
+// 링크가 여러 개인 키워드는 변동사항 목록에 같은 키워드가 여러 줄로 반복된다
+// (블로그 링크 단위 변동이라서). id(트래킹 항목)로 묶어서 한 줄 + 배지 여러 개로
+// 보여준다 — 텍스트가 같다고 묶으면 "전체 그룹" 공유에서 다른 그룹의 동일
+// 키워드까지 잘못 합쳐질 수 있어 반드시 id로 묶는다.
+function groupChangesById(list) {
+  const order = [];
+  const byId = new Map();
+  for (const c of list) {
+    if (!byId.has(c.id)) { byId.set(c.id, []); order.push(c.id); }
+    byId.get(c.id).push(c);
+  }
+  return order.map(id => byId.get(id));
+}
+
 export default function SharedReportPage({ token }) {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -201,18 +215,25 @@ export default function SharedReportPage({ token }) {
                           {list.length === 0 ? (
                             <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>변동 없음</p>
                           ) : (
-                            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                              {list.map((c, i) => (
-                                <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {groupChangesById(list).map((group, i) => (
+                                <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                   <span style={{
                                     fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
                                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                   }}>
-                                    {c.keyword}
+                                    {group[0].keyword}
+                                    {group.length > 1 && (
+                                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 700, marginLeft: 4 }}>×{group.length}</span>
+                                    )}
                                   </span>
-                                  <span className="mac-badge mac-badge-green" style={{ flexShrink: 0, fontSize: 11 }}>
-                                    {c.type === 'new_top5' ? `NEW ${c.toRank}위` : `${c.fromRank}→${c.toRank}위`}
-                                  </span>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                    {group.map((c, j) => (
+                                      <span key={j} className="mac-badge mac-badge-green" style={{ fontSize: 11 }}>
+                                        {c.type === 'new_top5' ? `NEW ${c.toRank}위` : `${c.fromRank}→${c.toRank}위`}
+                                      </span>
+                                    ))}
+                                  </div>
                                 </li>
                               ))}
                             </ul>
@@ -231,18 +252,25 @@ export default function SharedReportPage({ token }) {
                   {filteredIntegratedChanges.length === 0 ? (
                     <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>변동 없음</p>
                   ) : (
-                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {filteredIntegratedChanges.map((c, i) => (
-                        <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {groupChangesById(filteredIntegratedChanges).map((group, i) => (
+                        <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <span style={{
                             fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           }}>
-                            {c.keyword}
+                            {group[0].keyword}
+                            {group.length > 1 && (
+                              <span style={{ color: 'var(--text-tertiary)', fontWeight: 700, marginLeft: 4 }}>×{group.length}</span>
+                            )}
                           </span>
-                          <span className={`mac-badge ${c.type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ flexShrink: 0, fontSize: 11 }}>
-                            {c.type === 'gained' ? '노출 시작' : '노출 중단'}
-                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                            {group.map((c, j) => (
+                              <span key={j} className={`mac-badge ${c.type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ fontSize: 11 }}>
+                                {c.type === 'gained' ? '노출 시작' : '노출 중단'}
+                              </span>
+                            ))}
+                          </div>
                         </li>
                       ))}
                     </ul>
