@@ -47,6 +47,19 @@ function groupChangesById(list) {
   return order.map(id => byId.get(id));
 }
 
+// 통합검색 노출 변동사항은 링크마다 텍스트가 "노출 시작"/"노출 중단" 둘 중
+// 하나뿐이라, 링크 수만큼 같은 배지를 반복하면 "노출 시작 노출 시작 노출 시작"처럼
+// 지저분해진다. 같은 타입끼리는 배지 하나로 합치고 "×N"으로 개수만 표시한다.
+function summarizeByType(group) {
+  const order = [];
+  const counts = new Map();
+  for (const c of group) {
+    if (!counts.has(c.type)) { counts.set(c.type, 0); order.push(c.type); }
+    counts.set(c.type, counts.get(c.type) + 1);
+  }
+  return order.map(type => ({ type, count: counts.get(type) }));
+}
+
 export default function SharedReportPage({ token }) {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -230,7 +243,7 @@ export default function SharedReportPage({ token }) {
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                                     {group.map((c, j) => (
                                       <span key={j} className="mac-badge mac-badge-green" style={{ fontSize: 11 }}>
-                                        {c.type === 'new_top5' ? `NEW ${c.toRank}위` : `${c.fromRank}→${c.toRank}위`}
+                                        {c.type === 'new_top5' ? '미노출' : `${c.fromRank}위`} → {c.toRank}위
                                       </span>
                                     ))}
                                   </div>
@@ -260,14 +273,11 @@ export default function SharedReportPage({ token }) {
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                           }}>
                             {group[0].keyword}
-                            {group.length > 1 && (
-                              <span style={{ color: 'var(--text-tertiary)', fontWeight: 700, marginLeft: 4 }}>×{group.length}</span>
-                            )}
                           </span>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                            {group.map((c, j) => (
-                              <span key={j} className={`mac-badge ${c.type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ fontSize: 11 }}>
-                                {c.type === 'gained' ? '노출 시작' : '노출 중단'}
+                            {summarizeByType(group).map(({ type, count }) => (
+                              <span key={type} className={`mac-badge ${type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ fontSize: 11 }}>
+                                {type === 'gained' ? '노출 시작' : '노출 중단'}{count > 1 && ` ×${count}`}
                               </span>
                             ))}
                           </div>
