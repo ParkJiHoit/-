@@ -15,28 +15,31 @@ function DonutTooltip({ active, payload }) {
 }
 
 // KPI 카드 자리(TrackerStatCards의 "추적 키워드" 슬롯)에 들어가는 노출 현황
-// 미니 도넛 — recharts로 그려서 부드러운 호버 상호작용을 제공한다.
+// 도넛 — recharts로 그려서 부드러운 호버 상호작용을 제공한다. 다른 KPI 카드와
+// 같은 높이(compact minHeight 200)를 채우도록 도넛을 가운데에 크게 배치하고
+// 범례는 아래에 한 줄로 감싼다.
 export default function ExposureDonutCard({ total, segments, compact = true }) {
   const filtered = segments.filter(s => s.value > 0);
   const data = filtered.map(s => ({ ...s, total }));
+  const donutSize = compact ? 108 : 76;
 
   return (
     <article className="mac-card" style={{
-      padding: compact ? '12px 14px' : '18px 20px', minHeight: compact ? 96 : 154,
-      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 6,
+      padding: compact ? '16px 18px' : '18px 20px', minHeight: compact ? 200 : 154,
+      display: 'flex', flexDirection: 'column', gap: 10,
       background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.07) 0%, transparent 60%)',
       borderTop: '1px solid rgba(10,132,255,0.25)',
     }}>
-      <span style={{ fontSize: compact ? 10.5 : 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+      <span style={{ fontSize: compact ? 11 : 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
         노출 현황
       </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minHeight: 0 }}>
-        <div style={{ width: compact ? 56 : 76, height: compact ? 56 : 76, flexShrink: 0, position: 'relative' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+        <div style={{ width: donutSize, height: donutSize, position: 'relative' }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={data} dataKey="value" nameKey="label"
-                innerRadius="58%" outerRadius="100%" paddingAngle={data.length > 1 ? 3 : 0}
+                innerRadius="62%" outerRadius="100%" paddingAngle={data.length > 1 ? 3 : 0}
                 stroke="none" startAngle={90} endAngle={-270} isAnimationActive={false}
               >
                 {data.map((s, i) => <Cell key={s.key ?? i} fill={s.color} />)}
@@ -46,22 +49,20 @@ export default function ExposureDonutCard({ total, segments, compact = true }) {
           </ResponsiveContainer>
           <div style={{
             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: compact ? 13 : 17, fontWeight: 800, color: 'var(--text-primary)', pointerEvents: 'none',
+            fontSize: compact ? 20 : 17, fontWeight: 800, color: 'var(--text-primary)', pointerEvents: 'none',
           }}>
             {total}
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
-          {filtered.map(s => (
-            <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: compact ? 10.5 : 12 }}>
-              <span style={{ width: 6, height: 6, borderRadius: 2, background: s.color, flexShrink: 0 }} />
-              <span style={{ color: 'var(--text-tertiary)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {s.label}
-              </span>
-              <span style={{ color: 'var(--text-primary)', fontWeight: 700, flexShrink: 0 }}>{s.value}</span>
-            </div>
-          ))}
-        </div>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '3px 12px' }}>
+        {filtered.map(s => (
+          <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: compact ? 11 : 12 }}>
+            <span style={{ width: 6, height: 6, borderRadius: 2, background: s.color, flexShrink: 0 }} />
+            <span style={{ color: 'var(--text-tertiary)' }}>{s.label}</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{s.value}</span>
+          </div>
+        ))}
       </div>
     </article>
   );

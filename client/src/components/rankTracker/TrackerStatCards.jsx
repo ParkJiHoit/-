@@ -4,37 +4,35 @@ function StatCard({ label, value, total, color, icon: Icon, sub, compact }) {
   const pct = total ? Math.round((value / total) * 100) : null;
   return (
     <article className="mac-card" style={{
-      padding: compact ? '14px 16px' : '20px 22px 20px', minHeight: compact ? 96 : 154,
-      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: compact ? 8 : 14,
+      padding: compact ? '16px 18px' : '20px 22px 20px', minHeight: compact ? 200 : 154,
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14,
       background: `radial-gradient(ellipse at top left, ${color}14 0%, transparent 60%)`,
       borderTop: `1px solid ${color}30`,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: compact ? 10.5 : 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: compact ? 11 : 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
           {label}
         </span>
-        {!compact && (
-          <div style={{
-            width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-            background: color + '18', border: `1px solid ${color}35`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon size={17} style={{ color }} />
-          </div>
-        )}
+        <div style={{
+          width: compact ? 30 : 34, height: compact ? 30 : 34, borderRadius: compact ? 9 : 10, flexShrink: 0,
+          background: color + '18', border: `1px solid ${color}35`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon size={compact ? 15 : 17} style={{ color }} />
+        </div>
       </div>
-      <p style={{ margin: 0, fontSize: compact ? 24 : 38, fontWeight: 800, letterSpacing: '-1px', fontFamily: "'Space Grotesk', sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>
+      <p style={{ margin: 0, fontSize: compact ? 34 : 38, fontWeight: 800, letterSpacing: '-1px', fontFamily: "'Space Grotesk', sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>
         {value}
-        {total != null && <span style={{ fontSize: compact ? 12 : 17, color: 'var(--text-tertiary)', fontWeight: 600 }}>/{total}</span>}
-        {pct !== null && <span style={{ fontSize: compact ? 12 : 16, color, fontWeight: 700, marginLeft: compact ? 6 : 9 }}>{pct}%</span>}
+        {total != null && <span style={{ fontSize: compact ? 15 : 17, color: 'var(--text-tertiary)', fontWeight: 600 }}>/{total}</span>}
+        {pct !== null && <span style={{ fontSize: compact ? 15 : 16, color, fontWeight: 700, marginLeft: 9 }}>{pct}%</span>}
       </p>
-      {!compact && (pct !== null ? (
+      {pct !== null ? (
         <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
           <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2, transition: 'width 0.7s cubic-bezier(0.34,1.2,0.64,1)' }} />
         </div>
       ) : sub != null && (
         <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-secondary)' }}>{sub}</p>
-      ))}
+      )}
     </article>
   );
 }
