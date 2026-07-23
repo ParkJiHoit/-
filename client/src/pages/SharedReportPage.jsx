@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TrendingUp, Radio } from 'lucide-react';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
-import RankBarChart from '../components/rankTracker/RankBarChart';
+import ExposureDonutCard from '../components/rankTracker/ExposureDonutCard';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
-import DonutCard from '../components/DonutCard';
 import logoLight from '../assets/logo-light.png';
 import logoDark from '../assets/logo-dark.png';
 
@@ -90,17 +89,15 @@ export default function SharedReportPage({ token }) {
     return buckets;
   }, [filteredChanges, searchVolumeById]);
 
-  // 링크를 하나씩 나열하는 대신 한눈에 스캔할 수 있도록 도넛/막대 차트로 요약한다.
-  // all 모드(전체 순위 스냅샷)는 "우리가 관리하는 링크"라는 개념이 없어 이 요약을 건너뛴다.
-  const performanceSummary = useMemo(() => {
+  // KPI 카드의 "추적 키워드" 자리를 대신할 노출 현황 도넛. all 모드(전체 순위
+  // 스냅샷)는 "우리가 관리하는 링크"라는 개념이 없어 이 요약을 건너뛴다.
+  const exposureSummary = useMemo(() => {
     if (!filteredItems.length || filteredItems[0]?.mode !== 'blog') return null;
     let top3 = 0, midTier = 0, notExposed = 0, fetchFailed = 0;
-    let hasBarRows = false;
     for (const item of filteredItems) {
       if (item.mode !== 'blog') continue;
       for (const blogId of item.blog_ids || []) {
         const entry = item.latestRanks?.[blogId];
-        if (entry?.rank != null) hasBarRows = true;
         if (!entry) { notExposed++; continue; }
         if (entry.status === 'fetch_failed') fetchFailed++;
         else if (entry.status === 'ranked' && entry.rank != null && entry.rank <= 3) top3++;
@@ -111,7 +108,6 @@ export default function SharedReportPage({ token }) {
     const total = top3 + midTier + notExposed + fetchFailed;
     if (!total) return null;
     return {
-      hasBarRows,
       total,
       segments: [
         { key: 'top3', label: '상위 3위', color: '#30D158', value: top3 },
@@ -169,19 +165,15 @@ export default function SharedReportPage({ token }) {
             </div>
 
             <div style={{ margin: '20px 0' }}>
-              <TrackerStatCards mode={mode} filteredItems={filteredItems} compact />
+              <TrackerStatCards
+                mode={mode}
+                filteredItems={filteredItems}
+                compact
+                donutSlot={exposureSummary && (
+                  <ExposureDonutCard total={exposureSummary.total} segments={exposureSummary.segments} compact />
+                )}
+              />
             </div>
-
-            {performanceSummary && (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: performanceSummary.hasBarRows ? 'minmax(0,1fr) minmax(0,2fr)' : 'minmax(0,420px)',
-                gap: 12, margin: '0 0 20px', alignItems: 'stretch',
-              }}>
-                <DonutCard title="노출 현황" total={performanceSummary.total} segments={performanceSummary.segments} />
-                {performanceSummary.hasBarRows && <RankBarChart items={filteredItems} />}
-              </div>
-            )}
 
             {filteredItems.length > 0 && (
               <div style={{
