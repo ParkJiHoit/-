@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Radio } from 'lucide-react';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
 import logoLight from '../assets/logo-light.png';
@@ -16,6 +16,20 @@ function rankBadgeClass(status, rank) {
 function earliestAddedDate(item) {
   const dates = Object.values(item.latestRanks || {}).map(r => r.addedDate).filter(Boolean);
   return dates.length ? dates.sort().at(-1) : null; // 링크 여러 개면 "가장 최근에 추가된 링크" 기준으로 정렬
+}
+
+// 순위 변동사항을 검색량 구간별로 나눠 보여주기 위한 3단 분류. 정확한 검색량
+// 데이터가 없는 항목(searchVolume == null)은 "낮음" 칸으로 취급한다.
+const VOLUME_TIERS = [
+  { key: 'high', label: '검색량 높음' },
+  { key: 'mid', label: '검색량 중간' },
+  { key: 'low', label: '검색량 낮음' },
+];
+function volumeTier(volume) {
+  if (volume == null) return 'low';
+  if (volume >= 1000) return 'high';
+  if (volume >= 100) return 'mid';
+  return 'low';
 }
 
 export default function SharedReportPage({ token }) {
@@ -50,12 +64,29 @@ export default function SharedReportPage({ token }) {
     });
   }, [report, selectedGroupId]);
 
+  // 변동사항은 keyword 텍스트가 아니라 트래킹 항목 id로 범위를 맞춘다 — "전체 그룹"
+  // 공유에서는 서로 다른 그룹에 같은 키워드가 존재할 수 있어 텍스트 매칭은 부정확하다.
+  const idsInScope = useMemo(() => new Set(filteredItems.map(i => i.id)), [filteredItems]);
+
   const filteredChanges = useMemo(() => {
     if (!report) return [];
-    if (!selectedGroupId) return report.changes;
-    const keywordsInScope = new Set(filteredItems.map(i => i.keyword));
-    return report.changes.filter(c => keywordsInScope.has(c.keyword));
-  }, [report, selectedGroupId, filteredItems]);
+    return report.changes.filter(c => idsInScope.has(c.id));
+  }, [report, idsInScope]);
+
+  const filteredIntegratedChanges = useMemo(() => {
+    if (!report) return [];
+    return (report.integratedChanges || []).filter(c => idsInScope.has(c.id));
+  }, [report, idsInScope]);
+
+  const searchVolumeById = useMemo(() => new Map(filteredItems.map(i => [i.id, i.searchVolume])), [filteredItems]);
+
+  const rankChangesByTier = useMemo(() => {
+    const buckets = { high: [], mid: [], low: [] };
+    for (const c of filteredChanges) {
+      buckets[volumeTier(searchVolumeById.get(c.id))].push(c);
+    }
+    return buckets;
+  }, [filteredChanges, searchVolumeById]);
 
   const mode = filteredItems[0]?.mode || 'blog';
   const showGroupSwitcher = !!report && report.groups.length > 0;
@@ -107,22 +138,75 @@ export default function SharedReportPage({ token }) {
               <TrackerStatCards mode={mode} filteredItems={filteredItems} compact />
             </div>
 
-            {filteredChanges.length > 0 && (
-              <div className="mac-card" style={{ padding: '16px 20px', margin: '0 0 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                  <TrendingUp size={15} style={{ color: '#30D158' }} />
-                  주요 변동사항
-                </div>
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {filteredChanges.map((c, i) => (
-                    <li key={i} style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                      {c.type === 'new_top5' ? '📈 5위 이내 신규 진입: ' : '📈 '}
-                      <b style={{ color: 'var(--text-primary)' }}>{c.keyword}</b>
-                      {c.type === 'improved' && <> {c.fromRank}위 → <b style={{ color: '#30D158' }}>{c.toRank}위</b></>}
-                      {c.type === 'new_top5' && <> (<b style={{ color: '#30D158' }}>{c.toRank}위</b>)</>}
-                    </li>
-                  ))}
-                </ul>
+            {(filteredChanges.length > 0 || filteredIntegratedChanges.length > 0) && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: filteredChanges.length > 0 && filteredIntegratedChanges.length > 0 ? '3fr 2fr' : '1fr',
+                gap: 12, margin: '0 0 20px', alignItems: 'stretch',
+              }}>
+                {filteredChanges.length > 0 && (
+                  <div className="mac-card" style={{ padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                      <TrendingUp size={15} style={{ color: '#30D158' }} />
+                      순위 변동사항
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                      {VOLUME_TIERS.map(tier => {
+                        const list = rankChangesByTier[tier.key];
+                        return (
+                          <div key={tier.key}>
+                            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                              {tier.label}
+                            </div>
+                            {list.length === 0 ? (
+                              <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>변동 없음</p>
+                            ) : (
+                              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                {list.map((c, i) => (
+                                  <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                                    <span style={{
+                                      fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
+                                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                    }}>
+                                      {c.keyword}
+                                    </span>
+                                    <span className="mac-badge mac-badge-green" style={{ flexShrink: 0, fontSize: 11 }}>
+                                      {c.type === 'new_top5' ? `NEW ${c.toRank}위` : `${c.fromRank}→${c.toRank}위`}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {filteredIntegratedChanges.length > 0 && (
+                  <div className="mac-card" style={{ padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                      <Radio size={15} style={{ color: '#5E5CE6' }} />
+                      통합검색 노출 변동사항
+                    </div>
+                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {filteredIntegratedChanges.map((c, i) => (
+                        <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                          <span style={{
+                            fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            {c.keyword}
+                          </span>
+                          <span className={`mac-badge ${c.type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ flexShrink: 0, fontSize: 11 }}>
+                            {c.type === 'gained' ? '노출 시작' : '노출 중단'}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 

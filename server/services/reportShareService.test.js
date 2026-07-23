@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { filterItemsByCutoff, computeRankChanges } from './reportShareService.js';
+import { filterItemsByCutoff, computeRankChanges, computeIntegratedChanges } from './reportShareService.js';
 
 test('filterItemsByCutoff: blog 모드는 링크별 addedDate 기준으로 컷오프 이전 링크를 제외한다', () => {
   const items = [
@@ -73,4 +73,45 @@ test('computeRankChanges: 최대 6개까지만 반환한다', () => {
     keyword: `K${i}`, blogId: `b${i}/1`, fromRank: null, fromStatus: 'not_in_top5', toRank: 3, toStatus: 'ranked',
   }));
   assert.equal(computeRankChanges(pairs).length, 6);
+});
+
+test('computeRankChanges: id(트래킹 항목 id)를 그대로 통과시킨다', () => {
+  const pairs = [
+    { id: 42, keyword: 'A', blogId: 'blog1/1', fromRank: null, fromStatus: 'not_in_top5', toRank: 4, toStatus: 'ranked' },
+  ];
+  const result = computeRankChanges(pairs);
+  assert.equal(result[0].id, 42);
+});
+
+test('computeIntegratedChanges: 통검 미노출 -> 노출이면 gained로 표시', () => {
+  const pairs = [
+    { id: 1, keyword: 'A', blogId: 'blog1/1', fromIntegratedExposed: false, toIntegratedExposed: true },
+  ];
+  const result = computeIntegratedChanges(pairs);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].type, 'gained');
+});
+
+test('computeIntegratedChanges: 통검 노출 -> 미노출이면 lost로 표시', () => {
+  const pairs = [
+    { id: 1, keyword: 'A', blogId: 'blog1/1', fromIntegratedExposed: true, toIntegratedExposed: false },
+  ];
+  const result = computeIntegratedChanges(pairs);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].type, 'lost');
+});
+
+test('computeIntegratedChanges: 노출 여부가 그대로면 변동사항에서 제외한다', () => {
+  const pairs = [
+    { id: 1, keyword: 'A', blogId: 'blog1/1', fromIntegratedExposed: true, toIntegratedExposed: true },
+    { id: 2, keyword: 'B', blogId: 'blog2/1', fromIntegratedExposed: null, toIntegratedExposed: null },
+  ];
+  assert.equal(computeIntegratedChanges(pairs).length, 0);
+});
+
+test('computeIntegratedChanges: 최대 6개까지만 반환한다', () => {
+  const pairs = Array.from({ length: 10 }, (_, i) => ({
+    id: i, keyword: `K${i}`, blogId: `b${i}/1`, fromIntegratedExposed: false, toIntegratedExposed: true,
+  }));
+  assert.equal(computeIntegratedChanges(pairs).length, 6);
 });
