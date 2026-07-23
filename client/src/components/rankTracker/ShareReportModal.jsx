@@ -8,8 +8,10 @@ export default function ShareReportModal({ token, groupId, groupName, onClose })
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
-  const API = `/api/rank-tracker/groups/${groupId}/share`;
+  const isAllGroups = groupId == null;
+  const API = isAllGroups ? '/api/rank-tracker/share' : `/api/rank-tracker/groups/${groupId}/share`;
   const shareUrl = shareToken ? `${window.location.origin}/?report=${shareToken}` : '';
+  const displayName = isAllGroups ? '전체 그룹' : groupName;
 
   useEffect(() => {
     (async () => {
@@ -80,8 +82,8 @@ export default function ShareReportModal({ token, groupId, groupName, onClose })
         ) : (
           <>
             <p style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.7, marginTop: 0 }}>
-              <b>{groupName}</b> 그룹의 순위 데이터를 로그인 없이 볼 수 있는 읽기전용 링크입니다.
-              클라이언트에게 공유하면 편집 없이 순위만 확인할 수 있어요.
+              <b>{displayName}</b>{isAllGroups ? '의 모든 그룹' : ''} 순위 데이터를 로그인 없이 볼 수 있는 읽기전용 링크입니다.
+              클라이언트에게 공유하면 편집 없이 순위만 확인할 수 있어요. 최근 14일 이내 등록된 링크만 표시됩니다.
             </p>
 
             {shareToken ? (
