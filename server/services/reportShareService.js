@@ -91,10 +91,12 @@ export function filterItemsByCutoff(items, cutoffDate) {
 const NEW_TOP5_THRESHOLD = 5;
 const IMPROVED_THRESHOLD = 3;
 const MAX_CHANGES = 6;
+const MAX_INTEGRATED_CHANGES = 6;
 
 // 리포트에 포함된 각 링크의 "가장 오래된 스냅샷"과 "가장 최신 스냅샷"을 비교해
 // 눈에 띄는 변화(신규 5위 이내 진입, 3계단 이상 상승)만 추려낸다. 전부 나열하면
-// 오히려 안 읽히므로 의미 있는 변화만 최대 6개까지 반환한다.
+// 오히려 안 읽히므로 의미 있는 변화만 최대 6개까지 반환한다. id(트래킹 항목 id)는
+// 클라이언트가 검색량 등 items 쪽 정보와 다시 매칭할 수 있도록 그대로 통과시킨다.
 export function computeRankChanges(snapshotPairs) {
   const changes = [];
   for (const p of snapshotPairs) {
@@ -102,12 +104,25 @@ export function computeRankChanges(snapshotPairs) {
     const isRanked = p.toStatus === 'ranked' && p.toRank != null;
     if (!isRanked) continue;
     if (!wasRanked && p.toRank <= NEW_TOP5_THRESHOLD) {
-      changes.push({ keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type: 'new_top5' });
+      changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type: 'new_top5' });
     } else if (wasRanked && p.fromRank - p.toRank >= IMPROVED_THRESHOLD) {
-      changes.push({ keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type: 'improved' });
+      changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type: 'improved' });
     }
   }
   return changes.slice(0, MAX_CHANGES);
+}
+
+// 순위와 별개로 "통합검색(블로그 collection) 노출 여부"가 바뀐 링크만 추려낸다.
+// all 모드는 integrated_exposed가 항상 null이라 자연히 제외된다(같음 취급 → 스킵).
+export function computeIntegratedChanges(snapshotPairs) {
+  const changes = [];
+  for (const p of snapshotPairs) {
+    const wasExposed = p.fromIntegratedExposed === true;
+    const isExposed = p.toIntegratedExposed === true;
+    if (wasExposed === isExposed) continue;
+    changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, type: isExposed ? 'gained' : 'lost' });
+  }
+  return changes.slice(0, MAX_INTEGRATED_CHANGES);
 }
 
 async function fetchGroupNames(pool, userId) {
@@ -118,21 +133,22 @@ async function fetchGroupNames(pool, userId) {
   return rows;
 }
 
-// 리포트에 포함된(=컷오프를 통과한) 각 링크의 최초/최신 순위를 비교해 변동사항을 만든다.
-// items는 filterItemsByCutoff를 통과한 뒤의 목록 — 즉 이미 "이 리포트에 보일" 링크만 담고 있다.
+// 리포트에 포함된(=컷오프를 통과한) 각 링크의 최초/최신 순위·통검 노출 여부를 비교해
+// 변동사항을 만든다. items는 filterItemsByCutoff를 통과한 뒤의 목록 — 즉 이미
+// "이 리포트에 보일" 링크만 담고 있다.
 async function fetchChanges(pool, items) {
   const trackedIds = [...new Set(items.map((i) => i.id))];
-  if (!trackedIds.length) return [];
+  if (!trackedIds.length) return { changes: [], integratedChanges: [] };
 
   const [{ rows: earliest }, { rows: latest }] = await Promise.all([
     pool.query(
-      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status
+      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed
        FROM rank_snapshots WHERE tracked_id = ANY($1)
        ORDER BY tracked_id, blog_id, snapshotted_at ASC`,
       [trackedIds]
     ),
     pool.query(
-      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status
+      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed
        FROM rank_snapshots WHERE tracked_id = ANY($1)
        ORDER BY tracked_id, blog_id, snapshotted_at DESC`,
       [trackedIds]
@@ -151,15 +167,18 @@ async function fetchChanges(pool, items) {
     const to = latestByKey.get(key);
     if (!to) continue;
     pairs.push({
+      id: trackedId,
       keyword: keywordById.get(trackedId) ?? '',
       blogId,
       fromRank: from?.rank ?? null,
       fromStatus: from?.status ?? null,
       toRank: to.rank,
       toStatus: to.status,
+      fromIntegratedExposed: from?.integrated_exposed ?? null,
+      toIntegratedExposed: to.integrated_exposed,
     });
   }
-  return computeRankChanges(pairs);
+  return { changes: computeRankChanges(pairs), integratedChanges: computeIntegratedChanges(pairs) };
 }
 
 // 로그인 없이 접근 가능한 공개 리포트 — 계정 정보는 절대 노출하지 않고, 이미 엑셀
@@ -194,10 +213,10 @@ export async function getPublicReport(token) {
     searchVolume: i.searchVolume,
   }));
 
-  const [groups, changes] = await Promise.all([
+  const [groups, { changes, integratedChanges }] = await Promise.all([
     groupId == null ? fetchGroupNames(pool, userId) : Promise.resolve([]),
     fetchChanges(pool, items),
   ]);
 
-  return { groupName: groupId == null ? null : groupName, groups, items, changes };
+  return { groupName: groupId == null ? null : groupName, groups, items, changes, integratedChanges };
 }
