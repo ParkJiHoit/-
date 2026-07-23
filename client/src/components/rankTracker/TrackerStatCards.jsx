@@ -39,7 +39,7 @@ function StatCard({ label, value, total, color, icon: Icon, sub, compact }) {
   );
 }
 
-export default function TrackerStatCards({ mode, filteredItems, compact = false }) {
+export default function TrackerStatCards({ mode, filteredItems, compact = false, donutSlot = null }) {
   const keywordCount = filteredItems.length;
 
   if (mode === 'all') {
@@ -65,8 +65,10 @@ export default function TrackerStatCards({ mode, filteredItems, compact = false 
 
   return (
     <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: compact ? 8 : 10 }}>
-      <StatCard label="추적 키워드" value={keywordCount} total={null} color="#8E8E93" icon={Target}
-        sub={distinctGroups.size > 0 ? `그룹 ${distinctGroups.size}개에 분산` : '그룹 미지정'} compact={compact} />
+      {donutSlot ?? (
+        <StatCard label="추적 키워드" value={keywordCount} total={null} color="#8E8E93" icon={Target}
+          sub={distinctGroups.size > 0 ? `그룹 ${distinctGroups.size}개에 분산` : '그룹 미지정'} compact={compact} />
+      )}
       <StatCard label="추적 링크" value={linkCount} total={null} color="#0A84FF" icon={Link2}
         sub={`키워드당 평균 ${avgLinks}개`} compact={compact} />
       <StatCard label="5위 내 노출" value={top5LinkCount} total={linkCount} color="#30D158" icon={Trophy} sub={null} compact={compact} />
