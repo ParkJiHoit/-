@@ -110,4 +110,94 @@ export function computeRankChanges(snapshotPairs) {
   return changes.slice(0, MAX_CHANGES);
 }
 
-// 로그인 없이 접근 가능한 공개 리포트 데이터는 Task 3에서 구현한다(getPublicReport).
+async function fetchGroupNames(pool, userId) {
+  const { rows } = await pool.query(
+    `SELECT id, name FROM tracker_groups WHERE user_id = $1 ORDER BY name ASC`,
+    [userId]
+  );
+  return rows;
+}
+
+// 리포트에 포함된(=컷오프를 통과한) 각 링크의 최초/최신 순위를 비교해 변동사항을 만든다.
+// items는 filterItemsByCutoff를 통과한 뒤의 목록 — 즉 이미 "이 리포트에 보일" 링크만 담고 있다.
+async function fetchChanges(pool, items) {
+  const trackedIds = [...new Set(items.map((i) => i.id))];
+  if (!trackedIds.length) return [];
+
+  const [{ rows: earliest }, { rows: latest }] = await Promise.all([
+    pool.query(
+      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status
+       FROM rank_snapshots WHERE tracked_id = ANY($1)
+       ORDER BY tracked_id, blog_id, snapshotted_at ASC`,
+      [trackedIds]
+    ),
+    pool.query(
+      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status
+       FROM rank_snapshots WHERE tracked_id = ANY($1)
+       ORDER BY tracked_id, blog_id, snapshotted_at DESC`,
+      [trackedIds]
+    ),
+  ]);
+
+  const earliestByKey = new Map(earliest.map((r) => [`${r.tracked_id}:${r.blog_id}`, r]));
+  const latestByKey = new Map(latest.map((r) => [`${r.tracked_id}:${r.blog_id}`, r]));
+  const keywordById = new Map(items.map((i) => [i.id, i.keyword]));
+
+  const pairs = [];
+  for (const key of latestByKey.keys()) {
+    const [trackedIdStr, blogId] = key.split(':');
+    const trackedId = Number(trackedIdStr);
+    const from = earliestByKey.get(key);
+    const to = latestByKey.get(key);
+    if (!to) continue;
+    pairs.push({
+      keyword: keywordById.get(trackedId) ?? '',
+      blogId,
+      fromRank: from?.rank ?? null,
+      fromStatus: from?.status ?? null,
+      toRank: to.rank,
+      toStatus: to.status,
+    });
+  }
+  return computeRankChanges(pairs);
+}
+
+// 로그인 없이 접근 가능한 공개 리포트 — 계정 정보는 절대 노출하지 않고, 이미 엑셀
+// 내보내기로도 공유 가능한 수준(키워드·블로그·순위)의 데이터만 반환한다.
+// group_id가 NULL인 공유(전체 그룹)는 groups 배열을 채워서 내려주고, 그룹 전용
+// 공유는 groups를 빈 배열로 둬서 클라이언트가 다른 그룹의 존재 자체를 모르게 한다.
+export async function getPublicReport(token) {
+  const pool = getPool();
+  if (!pool) return null;
+  const { rows } = await pool.query(
+    `SELECT rs.user_id, rs.group_id, rs.created_at, tg.name AS group_name
+     FROM report_shares rs
+     LEFT JOIN tracker_groups tg ON tg.id = rs.group_id
+     WHERE rs.token = $1 AND rs.revoked_at IS NULL`,
+    [token]
+  );
+  if (!rows.length) return null;
+  const { user_id: userId, group_id: groupId, created_at: sharedAt, group_name: groupName } = rows[0];
+
+  const cutoffDate = new Date(new Date(sharedAt).getTime() - 14 * 24 * 60 * 60 * 1000)
+    .toISOString().slice(0, 10);
+
+  const all = await listTracked(userId);
+  const scoped = groupId == null ? all : all.filter((i) => i.group_id === groupId);
+  const items = filterItemsByCutoff(scoped, cutoffDate).map((i) => ({
+    id: i.id,
+    keyword: i.keyword,
+    mode: i.mode,
+    blog_ids: i.blog_ids,
+    group_id: i.group_id,
+    latestRanks: i.latestRanks,
+    searchVolume: i.searchVolume,
+  }));
+
+  const [groups, changes] = await Promise.all([
+    groupId == null ? fetchGroupNames(pool, userId) : Promise.resolve([]),
+    fetchChanges(pool, items),
+  ]);
+
+  return { groupName: groupId == null ? null : groupName, groups, items, changes };
+}
