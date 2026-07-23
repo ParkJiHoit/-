@@ -138,58 +138,62 @@ export default function SharedReportPage({ token }) {
               <TrackerStatCards mode={mode} filteredItems={filteredItems} compact />
             </div>
 
-            {(filteredChanges.length > 0 || filteredIntegratedChanges.length > 0) && (
+            {filteredItems.length > 0 && (
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: filteredChanges.length > 0 && filteredIntegratedChanges.length > 0 ? '3fr 2fr' : '1fr',
+                display: 'grid', gridTemplateColumns: '3fr 2fr',
                 gap: 12, margin: '0 0 20px', alignItems: 'stretch',
               }}>
-                {filteredChanges.length > 0 && (
-                  <div className="mac-card" style={{ padding: '16px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                      <TrendingUp size={15} style={{ color: '#30D158' }} />
-                      순위 변동사항
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-                      {VOLUME_TIERS.map(tier => {
-                        const list = rankChangesByTier[tier.key];
-                        return (
-                          <div key={tier.key}>
-                            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--text-tertiary)', marginBottom: 8 }}>
-                              {tier.label}
-                            </div>
-                            {list.length === 0 ? (
-                              <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>변동 없음</p>
-                            ) : (
-                              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                {list.map((c, i) => (
-                                  <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                                    <span style={{
-                                      fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
-                                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                    }}>
-                                      {c.keyword}
-                                    </span>
-                                    <span className="mac-badge mac-badge-green" style={{ flexShrink: 0, fontSize: 11 }}>
-                                      {c.type === 'new_top5' ? `NEW ${c.toRank}위` : `${c.fromRank}→${c.toRank}위`}
-                                    </span>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+                <div className="mac-card" style={{ padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <TrendingUp size={15} style={{ color: '#30D158' }} />
+                    순위 변동사항
                   </div>
-                )}
+                  <div style={{ display: 'flex' }}>
+                    {VOLUME_TIERS.map((tier, idx) => {
+                      const list = rankChangesByTier[tier.key];
+                      return (
+                        <div key={tier.key} style={{
+                          flex: 1, minWidth: 0,
+                          borderLeft: idx > 0 ? '1px solid var(--border)' : 'none',
+                          paddingLeft: idx > 0 ? 16 : 0,
+                          marginLeft: idx > 0 ? 16 : 0,
+                        }}>
+                          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                            {tier.label}
+                          </div>
+                          {list.length === 0 ? (
+                            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>변동 없음</p>
+                          ) : (
+                            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {list.map((c, i) => (
+                                <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                                  <span style={{
+                                    fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
+                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                  }}>
+                                    {c.keyword}
+                                  </span>
+                                  <span className="mac-badge mac-badge-green" style={{ flexShrink: 0, fontSize: 11 }}>
+                                    {c.type === 'new_top5' ? `NEW ${c.toRank}위` : `${c.fromRank}→${c.toRank}위`}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                {filteredIntegratedChanges.length > 0 && (
-                  <div className="mac-card" style={{ padding: '16px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                      <Radio size={15} style={{ color: '#5E5CE6' }} />
-                      통합검색 노출 변동사항
-                    </div>
+                <div className="mac-card" style={{ padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <Radio size={15} style={{ color: '#5E5CE6' }} />
+                    통합검색 노출 변동사항
+                  </div>
+                  {filteredIntegratedChanges.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>변동 없음</p>
+                  ) : (
                     <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {filteredIntegratedChanges.map((c, i) => (
                         <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
@@ -205,8 +209,8 @@ export default function SharedReportPage({ token }) {
                         </li>
                       ))}
                     </ul>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
 
