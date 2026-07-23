@@ -353,4 +353,25 @@ router.delete('/groups/:groupId/share', requirePremium, async (req, res, next) =
   } catch (e) { next(e); }
 });
 
+router.get('/share', requirePremium, async (req, res, next) => {
+  try {
+    const share = await getShareForGroup(req.userId, null);
+    res.json(share || { token: null });
+  } catch (e) { next(e); }
+});
+
+router.post('/share', requirePremium, async (req, res, next) => {
+  try {
+    const share = await createShareForGroup(req.userId, null);
+    res.json(share);
+  } catch (e) { next(e); }
+});
+
+router.delete('/share', requirePremium, async (req, res, next) => {
+  try {
+    await revokeShareForGroup(req.userId, null);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 export default router;

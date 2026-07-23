@@ -860,11 +860,11 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         />
       )}
 
-      {showShareModal && selectedGroupId && (
+      {showShareModal && (
         <ShareReportModal
           token={token}
-          groupId={selectedGroupId}
-          groupName={groups.find(g => String(g.id) === selectedGroupId)?.name || '그룹'}
+          groupId={selectedGroupId || null}
+          groupName={selectedGroupId ? (groups.find(g => String(g.id) === selectedGroupId)?.name || '그룹') : null}
           onClose={() => setShowShareModal(false)}
         />
       )}

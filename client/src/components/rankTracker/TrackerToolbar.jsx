@@ -40,11 +40,16 @@ export default function TrackerToolbar({
           <button onClick={onDeleteGroup} title="그룹 삭제" className="mac-btn-ghost mac-btn-sm" style={{ display: 'flex', padding: 6, color: '#FF453A' }}>
             <Trash2 size={12} />
           </button>
-          <button onClick={onOpenShareModal} title="이 그룹 리포트 공유" className="mac-btn-ghost mac-btn-sm" style={{ display: 'flex', padding: 6 }}>
-            <Share2 size={12} />
-          </button>
         </>
       )}
+      <button
+        onClick={onOpenShareModal}
+        title={selectedGroupId ? '이 그룹 리포트 공유' : '전체 그룹 리포트 공유'}
+        className="mac-btn-ghost mac-btn-sm"
+        style={{ display: 'flex', padding: 6 }}
+      >
+        <Share2 size={12} />
+      </button>
       <input
         value={searchQuery}
         onChange={e => onSearchChange(e.target.value)}
