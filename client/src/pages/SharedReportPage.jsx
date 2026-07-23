@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { TrendingUp, Radio } from 'lucide-react';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import ExposureDonutCard from '../components/rankTracker/ExposureDonutCard';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
+import { cardEntranceVariants } from '../utils/motionVariants';
 import logoLight from '../assets/logo-light.png';
 import logoDark from '../assets/logo-dark.png';
 
@@ -197,7 +199,7 @@ export default function SharedReportPage({ token }) {
                 filteredItems={filteredItems}
                 compact
                 donutSlot={exposureSummary && (
-                  <ExposureDonutCard total={exposureSummary.total} segments={exposureSummary.segments} compact />
+                  <ExposureDonutCard total={exposureSummary.total} segments={exposureSummary.segments} compact index={0} />
                 )}
               />
             </div>
@@ -207,7 +209,10 @@ export default function SharedReportPage({ token }) {
                 display: 'grid', gridTemplateColumns: '3fr 2fr',
                 gap: 12, margin: '0 0 20px', alignItems: 'stretch',
               }}>
-                <div className="mac-card" style={{ padding: '16px 20px' }}>
+                <motion.div
+                  className="mac-card" style={{ padding: '16px 20px' }}
+                  custom={4} variants={cardEntranceVariants} initial="hidden" animate="show"
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                     <TrendingUp size={15} style={{ color: '#30D158' }} />
                     순위 변동사항
@@ -255,9 +260,12 @@ export default function SharedReportPage({ token }) {
                       );
                     })}
                   </div>
-                </div>
+                </motion.div>
 
-                <div className="mac-card" style={{ padding: '16px 20px' }}>
+                <motion.div
+                  className="mac-card" style={{ padding: '16px 20px' }}
+                  custom={5} variants={cardEntranceVariants} initial="hidden" animate="show"
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                     <Radio size={15} style={{ color: '#5E5CE6' }} />
                     통합검색 노출 변동사항
@@ -285,7 +293,7 @@ export default function SharedReportPage({ token }) {
                       ))}
                     </ul>
                   )}
-                </div>
+                </motion.div>
               </div>
             )}
 
@@ -294,7 +302,10 @@ export default function SharedReportPage({ token }) {
                 최근 14일 이내 등록된 추적 항목이 없습니다.
               </div>
             ) : (
-              <div style={{ borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
+              <motion.div
+                style={{ borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}
+                custom={6} variants={cardEntranceVariants} initial="hidden" animate="show"
+              >
                 <table className="mac-table" style={{ tableLayout: 'fixed' }}>
                   <thead>
                     <tr>
@@ -331,7 +342,7 @@ export default function SharedReportPage({ token }) {
                     })}
                   </tbody>
                 </table>
-              </div>
+              </motion.div>
             )}
           </>
         )}
