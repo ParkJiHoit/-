@@ -207,15 +207,17 @@ export async function initDb() {
     -- 클라이언트에게 링크만 공유하면 로그인 없이 볼 수 있는 읽기전용 그룹 리포트.
     -- 토큰은 추측 불가능한 무작위 문자열이며, 유출돼도 그 그룹의 순위 데이터만
     -- 노출되고(엑셀 내보내기와 동일한 수준) 계정 정보나 다른 그룹은 보이지 않는다.
+    -- group_id가 NULL이면 "전체 그룹" 공유를 의미한다.
     CREATE TABLE IF NOT EXISTS report_shares (
       id          SERIAL PRIMARY KEY,
       token       TEXT        NOT NULL UNIQUE,
       user_id     UUID        NOT NULL,
-      group_id    INTEGER     NOT NULL REFERENCES tracker_groups(id) ON DELETE CASCADE,
+      group_id    INTEGER     REFERENCES tracker_groups(id) ON DELETE CASCADE,
       created_at  TIMESTAMPTZ DEFAULT NOW(),
       revoked_at  TIMESTAMPTZ,
       UNIQUE (user_id, group_id)
     );
+    ALTER TABLE report_shares ALTER COLUMN group_id DROP NOT NULL;
     CREATE INDEX IF NOT EXISTS idx_rs_token ON report_shares (token);
   `);
   console.log('[DB] report_shares 테이블 준비 완료');
