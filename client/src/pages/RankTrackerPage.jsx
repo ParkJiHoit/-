@@ -7,10 +7,41 @@ import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import TrackerToolbar from '../components/rankTracker/TrackerToolbar';
 import TrackerTable from '../components/rankTracker/TrackerTable';
 import TrackerDetailDrawer from '../components/rankTracker/TrackerDetailDrawer';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 
 function getKSTToday() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+// 항목 하나(키워드)에 조회실패 상태인 링크가 하나라도 있는지 — "조회실패만 보기"
+// 필터와 갱신 완료 토스트 둘 다 이 기준으로 판단한다.
+function hasFetchFailedLink(item) {
+  if (item.mode === 'blog') {
+    return (item.blog_ids || []).some(id => item.latestRanks?.[id]?.status === 'fetch_failed');
+  }
+  return Object.values(item.latestRanks || {}).some(r => r.status === 'fetch_failed');
+}
+
+// 갱신이 끝났는데 조회실패가 남아있으면 뜨는 클릭 가능한 토스트 — 클릭하면
+// 바로 "조회실패만 보기" 필터를 켜서 어떤 항목이 실패했는지 보여준다.
+function FailedToast({ count, onView, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 5000);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div
+      className="mac-toast"
+      onClick={onView}
+      style={{
+        pointerEvents: 'auto', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+        border: '1px solid rgba(255,69,58,0.35)',
+      }}
+    >
+      <AlertTriangle size={14} style={{ color: '#FF453A', flexShrink: 0 }} />
+      조회실패 {count}건 발생 · 클릭해서 보기
+    </div>
+  );
 }
 
 // exceljs는 8자리 ARGB(FF + 6자리 RGB) 헥스를 쓴다. 모든 데이터 셀에 옅은 회색 테두리를
@@ -404,6 +435,8 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [premiumOnly, setPremiumOnly] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [failedOnly, setFailedOnly] = useState(false);
+  const [failedToastCount, setFailedToastCount] = useState(null);
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
 
@@ -558,7 +591,10 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         const retryJob = await apiFetch(`/refresh-jobs/${finished.id}/retry-failed`, { method: 'POST' }, token).catch(() => null);
         if (retryJob) finished = await runJobToCompletion(retryJob);
       }
-      if (finished.failed_count > 0) setFailedJobId(finished.id);
+      if (finished.failed_count > 0) {
+        setFailedJobId(finished.id);
+        setFailedToastCount(finished.failed_count);
+      }
 
       const listData = await apiFetch('', {}, token).catch(() => null);
       if (listData) {
@@ -586,6 +622,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
       const job = await apiFetch(`/refresh-jobs/${failedJobId}/retry-failed`, { method: 'POST' }, token);
       const finished = await runJobToCompletion(job);
       setFailedJobId(finished.failed_count > 0 ? finished.id : null);
+      if (finished.failed_count > 0) setFailedToastCount(finished.failed_count);
       const listData = await apiFetch('', {}, token).catch(() => null);
       if (listData) setItems(listData);
     } catch (e) { setError(e.message); }
@@ -643,10 +680,14 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     });
   };
 
-  const filteredItems = items.filter(i =>
+  const scopedItems = items.filter(i =>
     i.mode === mode &&
-    (!selectedGroupId || String(i.group_id ?? '') === selectedGroupId) &&
-    (!searchQuery.trim() || i.keyword.toLowerCase().includes(searchQuery.trim().toLowerCase()))
+    (!selectedGroupId || String(i.group_id ?? '') === selectedGroupId)
+  );
+  const failedCount = scopedItems.filter(hasFetchFailedLink).length;
+  const filteredItems = scopedItems.filter(i =>
+    (!searchQuery.trim() || i.keyword.toLowerCase().includes(searchQuery.trim().toLowerCase())) &&
+    (!failedOnly || hasFetchFailedLink(i))
   );
 
   const handleExport = async () => {
@@ -795,6 +836,9 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         onDeleteGroup={handleDeleteGroup}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        failedOnly={failedOnly}
+        onToggleFailedOnly={() => setFailedOnly(v => !v)}
+        failedCount={failedCount}
         filteredItems={filteredItems}
         refreshingAll={refreshingAll}
         refreshAllProgress={refreshAllProgress}
@@ -876,6 +920,14 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
           defaultGroupId={selectedGroupId}
           onClose={() => setShowBulkModal(false)}
           onImported={async () => { setShowBulkModal(false); await loadItems(); }}
+        />
+      )}
+
+      {failedToastCount != null && (
+        <FailedToast
+          count={failedToastCount}
+          onView={() => { setFailedOnly(true); setFailedToastCount(null); }}
+          onDone={() => setFailedToastCount(null)}
         />
       )}
 
