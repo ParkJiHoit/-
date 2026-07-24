@@ -9,12 +9,14 @@ const pending = new Map();
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-// axios/native http(s) 기본 에이전트는 keep-alive가 꺼져 있어 요청마다 TCP+TLS 핸드셰이크를
-// 새로 맺는다. 배치 갱신 한 번에 같은 호스트(search.naver.com 등)로 수십 번씩 요청하므로,
-// 커넥션을 재사용하는 keep-alive 에이전트를 공유해서 그 핸드셰이크 비용을 없앤다 —
-// 스크래핑 로직/결과는 전혀 바뀌지 않는 순수 연결 레벨 최적화.
-const keepAliveHttpsAgent = new https.Agent({ keepAlive: true, maxSockets: 20 });
-const keepAliveHttpAgent = new http.Agent({ keepAlive: true, maxSockets: 20 });
+// 한때 요청마다의 TCP+TLS 핸드셰이크 비용을 아끼려고 프로세스 전역 keep-alive
+// 에이전트를 공유해봤지만(maxSockets:20), 이 서버는 Vercel 서버리스 함수
+// 하나로 떠 있어 그 에이전트가 콜드 스타트 때 한 번 만들어진 뒤 인스턴스가
+// 살아있는 동안 계속 재사용된다. 요청 사이 유휴 시간에 네이버/중간 네트워크가
+// 그 TCP 커넥션을 조용히 끊어버리면 Node는 모른 채 죽은 소켓을 계속 재사용하려다
+// 실패하고, 재시도도 같은 죽은 커넥션 풀을 다시 쓰니 몇 번을 재시도해도 계속
+// 실패한다 — "조회실패가 갑자기 급증하고 재시도해도 똑같이 실패" 증상의 원인이었다.
+// 매 요청마다 새 연결을 맺도록 되돌린다(핸드셰이크 비용보다 신뢰성이 우선).
 
 const TAB_CONFIG = {
   blog: { ssc: 'tab.blog.all', domains: ['blog.naver.com'] },
@@ -110,10 +112,8 @@ function isValidNaverUrl(url, domains) {
 function followRedirect(url, domains, maxRedirects = 6) {
   return new Promise((resolve) => {
     try {
-      const isHttps = url.startsWith('https');
-      const mod = isHttps ? https : http;
-      const agent = isHttps ? keepAliveHttpsAgent : keepAliveHttpAgent;
-      const req = mod.get(url, { headers: { 'User-Agent': UA }, timeout: 5000, agent }, (res) => {
+      const mod = url.startsWith('https') ? https : http;
+      const req = mod.get(url, { headers: { 'User-Agent': UA }, timeout: 5000 }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && maxRedirects > 0) {
           const loc = res.headers.location;
           const next = loc.startsWith('http') ? loc : new URL(loc, url).href;
@@ -146,7 +146,6 @@ async function scrapeNaverTab(keyword, tab = 'blog', limit = 10) {
       'Referer': 'https://www.naver.com',
     },
     timeout: 10000,
-    httpsAgent: keepAliveHttpsAgent,
   });
 
   const $ = cheerio.load(res.data);
@@ -263,7 +262,6 @@ async function fetchDailyVisitors(blogId) {
       params: { blogId },
       headers: { 'User-Agent': UA, Referer: `https://blog.naver.com/${blogId}` },
       timeout: 5000,
-      httpsAgent: keepAliveHttpsAgent,
     });
     const counts = [...String(res.data).matchAll(/cnt="(\d+)"/g)]
       .map(m => parseInt(m[1], 10))
