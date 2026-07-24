@@ -1,9 +1,10 @@
-import { RefreshCw, Plus, Trash2, Download, Pencil, Bell, Share2 } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Download, Pencil, Bell, Share2, AlertTriangle } from 'lucide-react';
 import { formatKSTDateTime } from './trackerFormat';
 
 export default function TrackerToolbar({
   mode, groups, selectedGroupId, onGroupChange, onCreateGroup, onRenameGroup, onDeleteGroup,
   searchQuery, onSearchChange,
+  failedOnly, onToggleFailedOnly, failedCount,
   filteredItems,
   refreshingAll, refreshAllProgress, onRefreshAll,
   failedJobId, onRetryFailed,
@@ -60,6 +61,22 @@ export default function TrackerToolbar({
           color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none',
         }}
       />
+      {(failedCount > 0 || failedOnly) && (
+        <button
+          onClick={onToggleFailedOnly}
+          title="조회실패만 보기"
+          className="mac-btn-ghost mac-btn-sm"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            color: failedOnly ? '#FF453A' : 'var(--text-secondary)',
+            borderColor: failedOnly ? 'rgba(255,69,58,0.4)' : undefined,
+            background: failedOnly ? 'rgba(255,69,58,0.12)' : undefined,
+          }}
+        >
+          <AlertTriangle size={12} />
+          조회실패만{failedCount > 0 && ` (${failedCount})`}
+        </button>
+      )}
       <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
         {lastRefreshed ? `최근 갱신: ${formatKSTDateTime(lastRefreshed)}` : '아직 갱신 내역 없음'}
       </span>
