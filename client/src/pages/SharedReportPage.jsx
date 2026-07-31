@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Radio } from 'lucide-react';
+import { TrendingUp, Radio, Search } from 'lucide-react';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import ExposureDonutCard from '../components/rankTracker/ExposureDonutCard';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
@@ -67,6 +67,7 @@ export default function SharedReportPage({ token }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState(''); // '' = 전체
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -87,12 +88,14 @@ export default function SharedReportPage({ token }) {
     const scoped = !selectedGroupId
       ? report.items
       : report.items.filter(i => String(i.group_id ?? '') === selectedGroupId);
-    return [...scoped].sort((a, b) => {
+    const q = searchQuery.trim().toLowerCase();
+    const searched = q ? scoped.filter(i => i.keyword.toLowerCase().includes(q)) : scoped;
+    return [...searched].sort((a, b) => {
       const ad = earliestAddedDate(a) || '';
       const bd = earliestAddedDate(b) || '';
       return bd.localeCompare(ad); // 최신이 위로
     });
-  }, [report, selectedGroupId]);
+  }, [report, selectedGroupId, searchQuery]);
 
   // 변동사항은 keyword 텍스트가 아니라 트래킹 항목 id로 범위를 맞춘다 — "전체 그룹"
   // 공유에서는 서로 다른 그룹에 같은 키워드가 존재할 수 있어 텍스트 매칭은 부정확하다.
@@ -177,20 +180,36 @@ export default function SharedReportPage({ token }) {
                   추적 키워드 {filteredItems.length}개 · 최근 14일 이내 등록된 링크만 표시 · 읽기 전용 공유 리포트
                 </p>
               </div>
-              {showGroupSwitcher && (
-                <select
-                  value={selectedGroupId}
-                  onChange={e => setSelectedGroupId(e.target.value)}
-                  style={{
-                    height: 34, padding: '0 10px', borderRadius: 8,
-                    background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
-                    color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
-                  }}
-                >
-                  <option value="">전체 그룹</option>
-                  {report.groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
-                </select>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ position: 'relative' }}>
+                  <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="키워드 검색"
+                    style={{
+                      height: 34, width: 160, padding: '0 10px 0 30px', borderRadius: 8,
+                      background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+                      color: 'var(--text-primary)', fontSize: 13, outline: 'none',
+                    }}
+                  />
+                </div>
+                {showGroupSwitcher && (
+                  <select
+                    value={selectedGroupId}
+                    onChange={e => setSelectedGroupId(e.target.value)}
+                    style={{
+                      height: 34, padding: '0 10px', borderRadius: 8,
+                      background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+                      color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <option value="">전체 그룹</option>
+                    {report.groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
+                  </select>
+                )}
+              </div>
             </div>
 
             <div style={{ margin: '20px 0' }}>
@@ -299,7 +318,9 @@ export default function SharedReportPage({ token }) {
 
             {filteredItems.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-tertiary)', fontSize: 13 }}>
-                최근 14일 이내 등록된 추적 항목이 없습니다.
+                {searchQuery.trim()
+                  ? '검색 결과가 없습니다.'
+                  : '최근 14일 이내 등록된 추적 항목이 없습니다.'}
               </div>
             ) : (
               <motion.div
