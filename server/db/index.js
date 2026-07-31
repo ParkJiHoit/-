@@ -110,6 +110,11 @@ export async function initDb() {
     ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS mobile_search INTEGER;
     -- 즐겨찾기 — 체크하면 목록 상단에 고정되고, Slack 알림에서도 강조 표시된다.
     ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN NOT NULL DEFAULT FALSE;
+    -- 안정화 — 순위가 안정된 항목을 사람이 직접(범위 선택 후 일괄) 표시해두면
+    -- "전체 갱신"에서 제외된다. 삭제가 아니라 추적만 잠시 멈추는 것이라 기록은
+    -- 그대로 남고, 선택 갱신/수동 재시도 등 명시적으로 지정한 경우에는 여전히
+    -- 갱신 대상이 된다(전체 갱신에서만 자동으로 건너뛴다).
+    ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS is_stabilized BOOLEAN NOT NULL DEFAULT FALSE;
     CREATE TABLE IF NOT EXISTS rank_snapshots (
       id             SERIAL PRIMARY KEY,
       tracked_id     INTEGER     NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,
