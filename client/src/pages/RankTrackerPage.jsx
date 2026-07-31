@@ -671,6 +671,20 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     } catch (e) { setError(e.message); }
   };
 
+  // 삭제가 아니라 플래그만 바꾸는 것이라 낙관적으로 먼저 반영하고, 실패하면 되돌린다.
+  const handleSetStabilized = async (ids, stabilized) => {
+    if (!token || !ids.length) return;
+    const prevItems = items;
+    setItems(prev => prev.map(i => ids.includes(i.id) ? { ...i, is_stabilized: stabilized } : i));
+    try {
+      await apiFetch('/bulk-stabilize', { method: 'POST', body: JSON.stringify({ ids, stabilized }) }, token);
+      setSelectedIds(prev => { const next = new Set(prev); ids.forEach(id => next.delete(id)); return next; });
+    } catch (e) {
+      setItems(prevItems);
+      setError(e.message);
+    }
+  };
+
   const handleToggleSelectAll = () => {
     setSelectedIds(prev => {
       const allSelected = filteredItems.length > 0 && filteredItems.every(i => prev.has(i.id));
@@ -867,6 +881,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         onRemoveBlog={handleRemoveBlog}
         onDeleteKeyword={handleDelete}
         onBulkDeleteSelected={handleBulkDelete}
+        onSetStabilizedSelected={handleSetStabilized}
         onRefreshSelected={handleRefreshSelected}
         refreshingSelected={refreshingAll}
         isGroupSelected={!!selectedGroupId}

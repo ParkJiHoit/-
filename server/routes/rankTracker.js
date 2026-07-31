@@ -5,6 +5,7 @@ import {
   getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup, setFavorite,
   listGroups, createGroup, renameGroup, deleteGroup, exportSnapshots,
   extractPostKey, postKeyToString, backfillSearchVolumeChunk, getDashboardSummary,
+  setStabilizedBulk,
 } from '../services/rankTrackerService.js';
 import { parseBulkImportText, groupParsedRows, normalizeKeyword } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
@@ -118,6 +119,17 @@ router.post('/bulk-delete', async (req, res, next) => {
     }
     const deleted = await deleteTrackedBulk(req.userId, ids.map(Number));
     res.json({ deleted });
+  } catch (e) { next(e); }
+});
+
+router.post('/bulk-stabilize', async (req, res, next) => {
+  try {
+    const { ids, stabilized } = req.body || {};
+    if (!Array.isArray(ids) || !ids.length) {
+      return res.status(400).json({ message: '안정화 처리할 항목을 선택해 주세요.' });
+    }
+    const updated = await setStabilizedBulk(req.userId, ids.map(Number), !!stabilized);
+    res.json({ updated });
   } catch (e) { next(e); }
 });
 

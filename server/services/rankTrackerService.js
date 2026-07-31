@@ -104,7 +104,7 @@ export async function backfillSearchVolumeChunk(userId) {
 export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search, is_favorite
+    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search, is_favorite, is_stabilized
      FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL
      ORDER BY is_favorite DESC, created_at DESC`,
     [userId]
@@ -249,6 +249,18 @@ export async function setFavorite(userId, trackedId, isFavorite) {
   );
   if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
   return rows[0];
+}
+
+// 범위 선택한 여러 항목을 한 번에 안정화(순위추적 제외) 처리하거나 되돌린다.
+// 삭제가 아니라 플래그만 바꾸는 것이라 순위 기록은 그대로 남는다.
+export async function setStabilizedBulk(userId, trackedIds, isStabilized) {
+  const pool = getPool();
+  const { rowCount } = await pool.query(
+    `UPDATE tracked_keywords SET is_stabilized = $1
+     WHERE id = ANY($2) AND user_id = $3 AND deleted_at IS NULL`,
+    [isStabilized, trackedIds, userId]
+  );
+  return rowCount;
 }
 
 // 키워드 전체가 아니라 등록된 블로그 하나만 추적 목록에서 뺀다. 순위 기록은

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, X, ChevronRight, ChevronDown, Star, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, X, ChevronRight, ChevronDown, Star, RefreshCw, PauseCircle, PlayCircle } from 'lucide-react';
 import { formatRankStatus } from './trackerFormat';
 
 const SORT_DEFAULT_DIR = { keyword: 'asc', searchVolume: 'desc', rank: 'asc', addedDate: 'desc' };
@@ -55,6 +55,7 @@ export default function TrackerTable({
   mode, rows, groups, sortKey, sortDir, onSortChange,
   selectedIds, onToggleSelect, onToggleSelectAll,
   onRowClick, onMoveItemGroup, onAddBlog, onRemoveBlog, onDeleteKeyword, onBulkDeleteSelected,
+  onSetStabilizedSelected,
   onRefreshSelected, refreshingSelected,
   onToggleFavorite,
   isGroupSelected,
@@ -110,10 +111,16 @@ export default function TrackerTable({
     return out;
   };
 
-  // 특정 그룹을 보고 있을 때만 등록 14일 경과 항목을 "안정화됨" 섹션으로 접어서 분리한다
-  // (전체 그룹 보기에선 지금까지와 동일하게 한 목록으로 보여준다).
-  const recentItems = isGroupSelected ? sortedItems.filter(i => itemAgeDays(i, mode) < STABILIZED_AFTER_DAYS) : sortedItems;
-  const stabilizedItems = isGroupSelected ? sortedItems.filter(i => itemAgeDays(i, mode) >= STABILIZED_AFTER_DAYS) : [];
+  // 특정 그룹을 보고 있을 때만 "안정화됨" 섹션으로 접어서 분리한다(전체 그룹 보기에선
+  // 지금까지와 동일하게 한 목록으로 보여준다). 등록 14일 경과(자동, 화면 정리용)뿐 아니라
+  // 사람이 범위 선택해서 수동으로 표시한 is_stabilized 항목도 함께 이 섹션에 모은다 —
+  // 다만 실제 "전체 갱신" 제외는 is_stabilized만 영향을 준다(서버 쪽 로직).
+  const recentItems = isGroupSelected
+    ? sortedItems.filter(i => !i.is_stabilized && itemAgeDays(i, mode) < STABILIZED_AFTER_DAYS)
+    : sortedItems;
+  const stabilizedItems = isGroupSelected
+    ? sortedItems.filter(i => i.is_stabilized || itemAgeDays(i, mode) >= STABILIZED_AFTER_DAYS)
+    : [];
 
   const flatRows = buildFlatRows(recentItems);
   const stabilizedFlatRows = buildFlatRows(stabilizedItems);
@@ -144,6 +151,28 @@ export default function TrackerTable({
             <RefreshCw size={12} style={{ animation: refreshingSelected ? 'spin 1s linear infinite' : 'none' }} />
             선택 갱신
           </button>
+          {onSetStabilizedSelected && (
+            <>
+              <button
+                onClick={() => onSetStabilizedSelected([...selectedIds], true)}
+                disabled={refreshingSelected}
+                title="선택한 항목을 안정화 처리해 전체 갱신에서 제외합니다"
+                className="mac-btn-ghost mac-btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+              >
+                <PauseCircle size={12} /> 안정화 처리
+              </button>
+              <button
+                onClick={() => onSetStabilizedSelected([...selectedIds], false)}
+                disabled={refreshingSelected}
+                title="선택한 항목의 안정화를 해제해 다시 전체 갱신 대상에 포함합니다"
+                className="mac-btn-ghost mac-btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+              >
+                <PlayCircle size={12} /> 안정화 해제
+              </button>
+            </>
+          )}
           <button
             onClick={() => onBulkDeleteSelected([...selectedIds])}
             disabled={refreshingSelected}
@@ -276,6 +305,11 @@ export default function TrackerTable({
                       <span style={{ color: 'var(--accent)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1 1 0', minWidth: 0 }}>
                         {item.keyword}
                       </span>
+                      {item.is_stabilized && (
+                        <span title="수동으로 안정화 처리됨 (전체 갱신 제외)" style={{ display: 'flex', flexShrink: 0, color: 'var(--text-tertiary)' }}>
+                          <PauseCircle size={13} />
+                        </span>
+                      )}
                       <select
                         value={String(item.group_id ?? '')}
                         onClick={e => e.stopPropagation()}

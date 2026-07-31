@@ -41,8 +41,12 @@ export async function createRefreshJob(userId, trackedIds = null, skipFresh = fa
 
   let ids;
   if (!trackedIds || !trackedIds.length) {
+    // trackedIds를 명시하지 않은 "전체 갱신"에서만 안정화(is_stabilized) 항목을
+    // 자동으로 건너뛴다 — 선택 갱신·재시도처럼 항목을 직접 지정한 경우는 사람이
+    // 의도적으로 고른 것이므로 안정화 여부와 무관하게 그대로 갱신한다.
     const { rows } = await pool.query(
-      `SELECT id FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL ${freshnessClause}`,
+      `SELECT id FROM tracked_keywords
+       WHERE user_id = $1 AND deleted_at IS NULL AND is_stabilized = FALSE ${freshnessClause}`,
       [userId]
     );
     ids = rows.map(r => r.id);
