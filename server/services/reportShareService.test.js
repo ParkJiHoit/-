@@ -68,11 +68,21 @@ test('computeRankChanges: 최신 상태가 순위권 밖이면 변동사항에�
   assert.equal(computeRankChanges(pairs).length, 0);
 });
 
-test('computeRankChanges: 최대 6개까지만 반환한다', () => {
-  const pairs = Array.from({ length: 10 }, (_, i) => ({
+test('computeRankChanges: 최대 12개까지만 반환한다', () => {
+  const pairs = Array.from({ length: 15 }, (_, i) => ({
     keyword: `K${i}`, blogId: `b${i}/1`, fromRank: null, fromStatus: 'not_in_top5', toRank: 3, toStatus: 'ranked',
   }));
-  assert.equal(computeRankChanges(pairs).length, 6);
+  assert.equal(computeRankChanges(pairs).length, 12);
+});
+
+test('computeRankChanges: 임팩트(신규 5위 진입 > 상승폭 큰 순) 순으로 정렬한다', () => {
+  const pairs = [
+    { keyword: 'small-improve', blogId: 'b1/1', fromRank: 8, fromStatus: 'ranked', toRank: 5, toStatus: 'ranked' }, // 3계단
+    { keyword: 'new-top5', blogId: 'b2/1', fromRank: null, fromStatus: 'not_in_top5', toRank: 4, toStatus: 'ranked' }, // 신규 진입
+    { keyword: 'big-improve', blogId: 'b3/1', fromRank: 9, fromStatus: 'ranked', toRank: 1, toStatus: 'ranked' }, // 8계단
+  ];
+  const result = computeRankChanges(pairs);
+  assert.deepEqual(result.map(c => c.keyword), ['new-top5', 'big-improve', 'small-improve']);
 });
 
 test('computeRankChanges: id(트래킹 항목 id)를 그대로 통과시킨다', () => {
@@ -109,9 +119,18 @@ test('computeIntegratedChanges: 노출 여부가 그대로면 변동사항에서
   assert.equal(computeIntegratedChanges(pairs).length, 0);
 });
 
-test('computeIntegratedChanges: 최대 6개까지만 반환한다', () => {
-  const pairs = Array.from({ length: 10 }, (_, i) => ({
+test('computeIntegratedChanges: 최대 12개까지만 반환한다', () => {
+  const pairs = Array.from({ length: 15 }, (_, i) => ({
     id: i, keyword: `K${i}`, blogId: `b${i}/1`, fromIntegratedExposed: false, toIntegratedExposed: true,
   }));
-  assert.equal(computeIntegratedChanges(pairs).length, 6);
+  assert.equal(computeIntegratedChanges(pairs).length, 12);
+});
+
+test('computeIntegratedChanges: 노출 시작(gained)이 노출 중단(lost)보다 먼저 오도록 정렬한다', () => {
+  const pairs = [
+    { id: 1, keyword: 'lost-first', blogId: 'b1/1', fromIntegratedExposed: true, toIntegratedExposed: false },
+    { id: 2, keyword: 'gained-second', blogId: 'b2/1', fromIntegratedExposed: false, toIntegratedExposed: true },
+  ];
+  const result = computeIntegratedChanges(pairs);
+  assert.deepEqual(result.map(c => c.keyword), ['gained-second', 'lost-first']);
 });

@@ -90,13 +90,22 @@ export function filterItemsByCutoff(items, cutoffDate) {
 
 const NEW_TOP5_THRESHOLD = 5;
 const IMPROVED_THRESHOLD = 3;
-const MAX_CHANGES = 6;
-const MAX_INTEGRATED_CHANGES = 6;
+const MAX_CHANGES = 12;
+const MAX_INTEGRATED_CHANGES = 12;
+
+// 신규 5위 진입은 항상 "몇 계단 올랐는지"보다 임팩트가 크다고 보고, improved보다
+// 항상 높은 점수를 준다(위 계단 수는 최대 9 안팎이라 1000대 점수면 절대 안 겹친다).
+// new_top5끼리는 순위가 좋을수록(1위에 가까울수록), improved끼리는 상승폭이
+// 클수록 위로 오도록 정렬해 카드 상단에 가장 눈에 띄는 변화가 먼저 보이게 한다.
+function changeImpact(c) {
+  return c.type === 'new_top5' ? 1000 - c.toRank : c.fromRank - c.toRank;
+}
 
 // 리포트에 포함된 각 링크의 "가장 오래된 스냅샷"과 "가장 최신 스냅샷"을 비교해
 // 눈에 띄는 변화(신규 5위 이내 진입, 3계단 이상 상승)만 추려낸다. 전부 나열하면
-// 오히려 안 읽히므로 의미 있는 변화만 최대 6개까지 반환한다. id(트래킹 항목 id)는
-// 클라이언트가 검색량 등 items 쪽 정보와 다시 매칭할 수 있도록 그대로 통과시킨다.
+// 오히려 안 읽히므로 의미 있는 변화만 임팩트 순으로 최대 12개까지 반환한다.
+// id(트래킹 항목 id)는 클라이언트가 검색량 등 items 쪽 정보와 다시 매칭할 수
+// 있도록 그대로 통과시킨다.
 export function computeRankChanges(snapshotPairs) {
   const changes = [];
   for (const p of snapshotPairs) {
@@ -109,11 +118,13 @@ export function computeRankChanges(snapshotPairs) {
       changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type: 'improved' });
     }
   }
+  changes.sort((a, b) => changeImpact(b) - changeImpact(a));
   return changes.slice(0, MAX_CHANGES);
 }
 
 // 순위와 별개로 "통합검색(블로그 collection) 노출 여부"가 바뀐 링크만 추려낸다.
 // all 모드는 integrated_exposed가 항상 null이라 자연히 제외된다(같음 취급 → 스킵).
+// "노출 시작"(좋은 소식)이 "노출 중단"보다 먼저 보이도록 gained를 앞에 정렬한다.
 export function computeIntegratedChanges(snapshotPairs) {
   const changes = [];
   for (const p of snapshotPairs) {
@@ -122,6 +133,7 @@ export function computeIntegratedChanges(snapshotPairs) {
     if (wasExposed === isExposed) continue;
     changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, type: isExposed ? 'gained' : 'lost' });
   }
+  changes.sort((a, b) => (a.type === 'gained' ? 0 : 1) - (b.type === 'gained' ? 0 : 1));
   return changes.slice(0, MAX_INTEGRATED_CHANGES);
 }
 

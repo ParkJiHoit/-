@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Radio, Search } from 'lucide-react';
+import { TrendingUp, Radio, Search, ArrowUp, Sparkles, ChevronDown, Flame } from 'lucide-react';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import ExposureDonutCard from '../components/rankTracker/ExposureDonutCard';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
@@ -68,6 +68,7 @@ export default function SharedReportPage({ token }) {
   const [error, setError] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState(''); // '' = 전체
   const [searchQuery, setSearchQuery] = useState('');
+  const [tableOpen, setTableOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -121,6 +122,15 @@ export default function SharedReportPage({ token }) {
     return buckets;
   }, [filteredChanges, searchVolumeById]);
 
+  // 아래 변동사항 카드들을 다시 훑지 않아도 성과가 한눈에 들어오도록, 카드 위에
+  // 큼직한 숫자 요약(헤드라인)을 따로 뽑아둔다.
+  const changeHeadline = useMemo(() => {
+    const newTop5Count = filteredChanges.filter(c => c.type === 'new_top5').length;
+    const improvedCount = filteredChanges.length - newTop5Count;
+    const gainedCount = filteredIntegratedChanges.filter(c => c.type === 'gained').length;
+    return { newTop5Count, improvedCount, gainedCount };
+  }, [filteredChanges, filteredIntegratedChanges]);
+
   // KPI 카드의 "추적 키워드" 자리를 대신할 노출 현황 도넛. all 모드(전체 순위
   // 스냅샷)는 "우리가 관리하는 링크"라는 개념이 없어 이 요약을 건너뛴다.
   const exposureSummary = useMemo(() => {
@@ -149,6 +159,9 @@ export default function SharedReportPage({ token }) {
       ],
     };
   }, [filteredItems]);
+
+  // 검색 중일 때는 표를 찾아볼 이유가 생긴 것이므로 접힘 상태와 무관하게 펼쳐서 보여준다.
+  const tableExpanded = tableOpen || !!searchQuery.trim();
 
   const mode = filteredItems[0]?.mode || 'blog';
   const showGroupSwitcher = !!report && report.groups.length > 0;
@@ -224,16 +237,51 @@ export default function SharedReportPage({ token }) {
             </div>
 
             {filteredItems.length > 0 && (
+              <>
+                <motion.div
+                  className="mac-card"
+                  style={{ display: 'flex', flexWrap: 'wrap', gap: 24, padding: '18px 24px', margin: '0 0 12px' }}
+                  custom={3} variants={cardEntranceVariants} initial="hidden" animate="show"
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(48,209,88,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <ArrowUp size={17} style={{ color: '#30D158' }} />
+                    </span>
+                    <div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{changeHeadline.improvedCount}건</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>순위 상승</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,159,10,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Sparkles size={17} style={{ color: '#FF9F0A' }} />
+                    </span>
+                    <div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{changeHeadline.newTop5Count}건</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>신규 TOP5 진입</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(94,92,230,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Radio size={17} style={{ color: '#5E5CE6' }} />
+                    </span>
+                    <div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{changeHeadline.gainedCount}건</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>통합검색 노출 시작</div>
+                    </div>
+                  </div>
+                </motion.div>
+
               <div style={{
                 display: 'grid', gridTemplateColumns: '3fr 2fr',
                 gap: 12, margin: '0 0 20px', alignItems: 'stretch',
               }}>
                 <motion.div
-                  className="mac-card" style={{ padding: '16px 20px' }}
+                  className="mac-card" style={{ padding: '22px 26px' }}
                   custom={4} variants={cardEntranceVariants} initial="hidden" animate="show"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    <TrendingUp size={15} style={{ color: '#30D158' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <TrendingUp size={18} style={{ color: '#30D158' }} />
                     순위 변동사항
                   </div>
                   <div style={{ display: 'flex' }}>
@@ -243,30 +291,38 @@ export default function SharedReportPage({ token }) {
                         <div key={tier.key} style={{
                           flex: 1, minWidth: 0,
                           borderLeft: idx > 0 ? '1px solid var(--border)' : 'none',
-                          paddingLeft: idx > 0 ? 16 : 0,
-                          marginLeft: idx > 0 ? 16 : 0,
+                          paddingLeft: idx > 0 ? 18 : 0,
+                          marginLeft: idx > 0 ? 18 : 0,
                         }}>
-                          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--text-tertiary)', marginBottom: 10 }}>
                             {tier.label}
                           </div>
                           {list.length === 0 ? (
-                            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>변동 없음</p>
+                            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
                           ) : (
-                            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
                               {groupChangesById(list).map((group, i) => (
-                                <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                <li key={i} style={{
+                                  display: 'flex', flexDirection: 'column', gap: 5,
+                                  padding: i === 0 ? '8px 10px' : 0,
+                                  borderRadius: i === 0 ? 8 : 0,
+                                  background: i === 0 ? 'rgba(48,209,88,0.08)' : 'transparent',
+                                  border: i === 0 ? '1px solid rgba(48,209,88,0.22)' : 'none',
+                                }}>
                                   <span style={{
-                                    fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
+                                    fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
                                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                    display: 'flex', alignItems: 'center', gap: 4,
                                   }}>
+                                    {i === 0 && <Flame size={12} style={{ color: '#FF9F0A', flexShrink: 0 }} />}
                                     {group[0].keyword}
                                     {group.length > 1 && (
-                                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 700, marginLeft: 4 }}>×{group.length}</span>
+                                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>×{group.length}</span>
                                     )}
                                   </span>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                                     {group.map((c, j) => (
-                                      <span key={j} className="mac-badge mac-badge-green" style={{ fontSize: 11 }}>
+                                      <span key={j} className="mac-badge mac-badge-green" style={{ fontSize: 12 }}>
                                         {c.type === 'new_top5' ? '미노출' : `${c.fromRank}위`} → {c.toRank}위
                                       </span>
                                     ))}
@@ -282,28 +338,36 @@ export default function SharedReportPage({ token }) {
                 </motion.div>
 
                 <motion.div
-                  className="mac-card" style={{ padding: '16px 20px' }}
+                  className="mac-card" style={{ padding: '22px 26px' }}
                   custom={5} variants={cardEntranceVariants} initial="hidden" animate="show"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-                    <Radio size={15} style={{ color: '#5E5CE6' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <Radio size={18} style={{ color: '#5E5CE6' }} />
                     통합검색 노출 변동사항
                   </div>
                   {filteredIntegratedChanges.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>변동 없음</p>
+                    <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
                   ) : (
-                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {groupChangesById(filteredIntegratedChanges).map((group, i) => (
-                        <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <li key={i} style={{
+                          display: 'flex', flexDirection: 'column', gap: 5,
+                          padding: i === 0 ? '8px 10px' : 0,
+                          borderRadius: i === 0 ? 8 : 0,
+                          background: i === 0 ? 'rgba(94,92,230,0.08)' : 'transparent',
+                          border: i === 0 ? '1px solid rgba(94,92,230,0.22)' : 'none',
+                        }}>
                           <span style={{
-                            fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)',
+                            fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            display: 'flex', alignItems: 'center', gap: 4,
                           }}>
+                            {i === 0 && <Flame size={12} style={{ color: '#FF9F0A', flexShrink: 0 }} />}
                             {group[0].keyword}
                           </span>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                             {summarizeByType(group).map(({ type, count }) => (
-                              <span key={type} className={`mac-badge ${type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ fontSize: 11 }}>
+                              <span key={type} className={`mac-badge ${type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ fontSize: 12 }}>
                                 {type === 'gained' ? '노출 시작' : '노출 중단'}{count > 1 && ` ×${count}`}
                               </span>
                             ))}
@@ -314,6 +378,7 @@ export default function SharedReportPage({ token }) {
                   )}
                 </motion.div>
               </div>
+              </>
             )}
 
             {filteredItems.length === 0 ? (
@@ -323,10 +388,21 @@ export default function SharedReportPage({ token }) {
                   : '최근 14일 이내 등록된 추적 항목이 없습니다.'}
               </div>
             ) : (
-              <motion.div
-                style={{ borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}
-                custom={6} variants={cardEntranceVariants} initial="hidden" animate="show"
-              >
+              <motion.div custom={6} variants={cardEntranceVariants} initial="hidden" animate="show">
+                <button
+                  onClick={() => setTableOpen(v => !v)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                    padding: '10px 14px', background: 'var(--bg-overlay)', border: '1px solid var(--border)',
+                    borderRadius: tableExpanded ? '10px 10px 0 0' : 10,
+                    color: 'var(--text-secondary)', fontSize: 12.5, fontWeight: 600, fontFamily: 'inherit',
+                  }}
+                >
+                  <ChevronDown size={14} style={{ transform: tableExpanded ? 'none' : 'rotate(-90deg)' }} />
+                  상세 데이터 보기 ({filteredItems.length}개)
+                </button>
+                {tableExpanded && (
+                <div style={{ borderRadius: '0 0 10px 10px', border: '1px solid var(--border)', borderTop: 'none', overflow: 'hidden' }}>
                 <table className="mac-table" style={{ tableLayout: 'fixed' }}>
                   <thead>
                     <tr>
@@ -363,6 +439,8 @@ export default function SharedReportPage({ token }) {
                     })}
                   </tbody>
                 </table>
+                </div>
+                )}
               </motion.div>
             )}
           </>
