@@ -203,9 +203,9 @@ export default function SharedReportPage({ token }) {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="키워드 검색"
+                    className="report-glass-pill"
                     style={{
-                      height: 34, width: 160, padding: '0 10px 0 30px', borderRadius: 8,
-                      background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+                      height: 34, width: 160, padding: '0 10px 0 30px',
                       color: 'var(--text-primary)', fontSize: 13, outline: 'none',
                     }}
                   />
@@ -214,9 +214,9 @@ export default function SharedReportPage({ token }) {
                   <select
                     value={selectedGroupId}
                     onChange={e => setSelectedGroupId(e.target.value)}
+                    className="report-glass-pill"
                     style={{
-                      height: 34, padding: '0 10px', borderRadius: 8,
-                      background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+                      height: 34, padding: '0 10px',
                       color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
                     }}
                   >
