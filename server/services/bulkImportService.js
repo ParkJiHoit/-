@@ -1,3 +1,5 @@
+import { normalizeKeywordSpacing } from './rankTrackerService.js';
+
 const KEYWORD_HEADER_HINTS = ['키워드', 'keyword', '검색어', 'kw'];
 const URL_HEADER_HINTS = ['url', '링크', 'link', '주소'];
 
@@ -86,9 +88,9 @@ export function parseBulkImportText(text) {
       // 같은 줄에 키워드가 함께 있으면 그 키워드를 쓰고, 없으면 이전 줄에서
       // 대기 중이던 키워드와 짝을 맞춘다(별도 줄 형식).
       if (remainder) {
-        rows.push({ rowNumber, keyword: remainder, url: urlToken });
+        rows.push({ rowNumber, keyword: normalizeKeywordSpacing(remainder), url: urlToken });
       } else if (pendingKeyword) {
-        rows.push({ rowNumber: pendingRowNumber, keyword: pendingKeyword, url: urlToken });
+        rows.push({ rowNumber: pendingRowNumber, keyword: normalizeKeywordSpacing(pendingKeyword), url: urlToken });
       } else {
         errors.push({ rowNumber, reason: '키워드가 비어 있습니다.', raw: line });
       }

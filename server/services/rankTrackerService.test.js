@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractPostKey, postKeyToString, parsePostKeyString, findMatchingRank, computeAverageCtr } from './rankTrackerService.js';
+import { extractPostKey, postKeyToString, parsePostKeyString, findMatchingRank, computeAverageCtr, normalizeKeywordSpacing } from './rankTrackerService.js';
 
 test('blog.naver.com/{id}/{logNo} 형식에서 blogId와 logNo를 추출한다', () => {
   const key = extractPostKey('https://blog.naver.com/myblog123/223456789');
@@ -65,4 +65,17 @@ test('computeAverageCtr: 한쪽만 있으면 그 값을 그대로 반환', () =>
 
 test('computeAverageCtr: 둘 다 없으면 null', () => {
   assert.equal(computeAverageCtr(null, null), null);
+});
+
+test('normalizeKeywordSpacing: 앞뒤 공백을 제거한다', () => {
+  assert.equal(normalizeKeywordSpacing('  핸드폰대리점 창업  '), '핸드폰대리점 창업');
+});
+
+test('normalizeKeywordSpacing: 연속된 공백을 하나로 줄인다', () => {
+  assert.equal(normalizeKeywordSpacing('핸드폰대리점   창업'), '핸드폰대리점 창업');
+});
+
+test('normalizeKeywordSpacing: 한 칸짜리 내부 공백은 그대로 보존한다(네이버가 다른 검색어로 취급하므로)', () => {
+  assert.equal(normalizeKeywordSpacing('핸드폰대리점 창업'), '핸드폰대리점 창업');
+  assert.equal(normalizeKeywordSpacing('핸드폰대리점창업'), '핸드폰대리점창업');
 });

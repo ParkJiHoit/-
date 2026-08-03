@@ -3,6 +3,14 @@ import { fetchBlogRankings } from './blogRankingService.js';
 import { fetchKeywordVolume } from './naverKeywordService.js';
 import { diffRankChanges, notifyRankChanges } from './notificationService.js';
 
+// 앞뒤 공백 제거 + 연속 공백을 하나로 줄인다("핸드폰대리점  창업" -> "핸드폰대리점 창업").
+// 내부 공백 자체는 지우지 않는다 — 네이버는 "핸드폰대리점 창업"과 "핸드폰대리점창업"을
+// 서로 다른 검색어로 취급해 순위가 달라지므로, 실수로 생긴 이중 공백/끝 공백만 정리하고
+// 사람이 의도한 한 칸 띄어쓰기는 그대로 보존한다.
+export function normalizeKeywordSpacing(keyword) {
+  return String(keyword || '').trim().replace(/\s+/g, ' ');
+}
+
 // 키워드 등록 시 딱 한 번만 월간 검색량을 조회한다 — 이미 저장된 값이 있으면(재등록/URL
 // 추가 포함) 다시 조회하지 않는다. 조회 실패는 등록 자체를 막지 않도록 null로 흡수한다.
 async function getOrFetchSearchVolume(pool, userId, keyword, mode, groupId) {
@@ -196,7 +204,7 @@ async function recordBlogLinkAdditions(pool, trackedId, blogIds) {
 
 export async function createTracked(userId, keyword, mode, blogUrls = [], groupId = null) {
   const pool = getPool();
-  const trimmedKeyword = keyword.trim();
+  const trimmedKeyword = normalizeKeywordSpacing(keyword);
   const blogIds = blogUrls
     .map(u => { const k = extractPostKey(u); return k ? postKeyToString(k) : null; })
     .filter(Boolean);
@@ -220,7 +228,7 @@ export async function createTracked(userId, keyword, mode, blogUrls = [], groupI
 
 export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], groupId = null) {
   const pool = getPool();
-  const trimmedKeyword = keyword.trim();
+  const trimmedKeyword = normalizeKeywordSpacing(keyword);
   const newIds = newUrls
     .map(u => { const k = extractPostKey(u); return k ? postKeyToString(k) : null; })
     .filter(Boolean);
