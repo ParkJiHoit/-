@@ -466,7 +466,7 @@ async function fetchNaverAutoComplete(keyword) {
   }
 }
 
-// DB 갱신 job용 — 단일 키워드의 이번달 검색량만 가져옴
+// DB 갱신 job용 — 단일 키워드의 이번달 검색량·평균 CTR을 가져옴(등록 시 딱 한 번만 호출됨).
 export async function fetchKeywordVolume(keyword) {
   const rows = await fetchNaverKeywordTool(keyword);
   const clean = normalizeText(keyword);
@@ -475,6 +475,8 @@ export async function fetchKeywordVolume(keyword) {
   return {
     pcSearch:     parseNaverNumber(row.monthlyPcQcCnt),
     mobileSearch: parseNaverNumber(row.monthlyMobileQcCnt),
+    pcCtr:        round(parseNaverNumber(row.monthlyAvePcCtr), 1),
+    mobileCtr:    round(parseNaverNumber(row.monthlyAveMobileCtr), 1),
   };
 }
 

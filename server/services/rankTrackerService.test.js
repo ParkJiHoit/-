@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractPostKey, postKeyToString, parsePostKeyString, findMatchingRank } from './rankTrackerService.js';
+import { extractPostKey, postKeyToString, parsePostKeyString, findMatchingRank, computeAverageCtr } from './rankTrackerService.js';
 
 test('blog.naver.com/{id}/{logNo} 형식에서 blogId와 logNo를 추출한다', () => {
   const key = extractPostKey('https://blog.naver.com/myblog123/223456789');
@@ -52,4 +52,17 @@ test('findMatchingRank: logNo가 없으면(레거시) blogId만으로 첫 매칭
     { rank: 2, blogId: 'myblog123', logNo: '222' },
   ];
   assert.equal(findMatchingRank(rankings, 'myblog123').rank, 1);
+});
+
+test('computeAverageCtr: PC/모바일 둘 다 있으면 단순 평균', () => {
+  assert.equal(computeAverageCtr(2, 4), 3);
+});
+
+test('computeAverageCtr: 한쪽만 있으면 그 값을 그대로 반환', () => {
+  assert.equal(computeAverageCtr(null, 4), 4);
+  assert.equal(computeAverageCtr(2, null), 2);
+});
+
+test('computeAverageCtr: 둘 다 없으면 null', () => {
+  assert.equal(computeAverageCtr(null, null), null);
 });

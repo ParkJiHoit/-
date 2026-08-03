@@ -223,6 +223,7 @@ export async function getPublicReport(token) {
     group_id: i.group_id,
     latestRanks: i.latestRanks,
     searchVolume: i.searchVolume,
+    averageCtr: i.averageCtr,
   }));
 
   const [groups, { changes, integratedChanges }] = await Promise.all([

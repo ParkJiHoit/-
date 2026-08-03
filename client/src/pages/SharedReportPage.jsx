@@ -21,18 +21,13 @@ function earliestAddedDate(item) {
   return dates.length ? dates.sort().at(-1) : null; // 링크 여러 개면 "가장 최근에 추가된 링크" 기준으로 정렬
 }
 
-// 순위 변동사항을 검색량 구간별로 나눠 보여주기 위한 3단 분류. 정확한 검색량
-// 데이터가 없는 항목(searchVolume == null)은 "낮음" 칸으로 취급한다.
-const VOLUME_TIERS = [
-  { key: 'high', label: '검색량 높음' },
-  { key: 'mid', label: '검색량 중간' },
-  { key: 'low', label: '검색량 낮음' },
-];
-function volumeTier(volume) {
-  if (volume == null) return 'low';
-  if (volume >= 1000) return 'high';
-  if (volume >= 100) return 'mid';
-  return 'low';
+// 검색량·CTR을 "검색량 1,200 · CTR 2.3%" 형태의 부가 정보 한 줄로 합친다.
+// 둘 다 없으면 아예 표시하지 않는다(등록 전 이 기능이 없던 옛 키워드는 값이 없을 수 있음).
+function formatVolumeCtr(searchVolume, averageCtr) {
+  const parts = [];
+  if (searchVolume != null) parts.push(`검색량 ${searchVolume.toLocaleString()}`);
+  if (averageCtr != null) parts.push(`CTR ${averageCtr}%`);
+  return parts.join(' · ');
 }
 
 // 링크가 여러 개인 키워드는 변동사항 목록에 같은 키워드가 여러 줄로 반복된다
@@ -113,22 +108,21 @@ export default function SharedReportPage({ token }) {
   }, [report, idsInScope]);
 
   const searchVolumeById = useMemo(() => new Map(filteredItems.map(i => [i.id, i.searchVolume])), [filteredItems]);
+  const averageCtrById = useMemo(() => new Map(filteredItems.map(i => [i.id, i.averageCtr])), [filteredItems]);
 
-  // 통합검색 노출 변동사항은 순위 변동사항처럼 구간으로 나누지 않고 한 목록으로
-  // 보여주므로, 검색량 높은 키워드부터 내림차순으로 정렬해 중요한 것이 위로 오게 한다.
+  // 두 변동사항 목록 모두 구간으로 나누지 않고 한 목록으로 세로 나열하되, 검색량
+  // 높은 키워드부터 내림차순으로 정렬해 중요한 것이 위로 오게 한다.
+  const sortedChanges = useMemo(() => {
+    return [...filteredChanges].sort(
+      (a, b) => (searchVolumeById.get(b.id) ?? 0) - (searchVolumeById.get(a.id) ?? 0)
+    );
+  }, [filteredChanges, searchVolumeById]);
+
   const sortedIntegratedChanges = useMemo(() => {
     return [...filteredIntegratedChanges].sort(
       (a, b) => (searchVolumeById.get(b.id) ?? 0) - (searchVolumeById.get(a.id) ?? 0)
     );
   }, [filteredIntegratedChanges, searchVolumeById]);
-
-  const rankChangesByTier = useMemo(() => {
-    const buckets = { high: [], mid: [], low: [] };
-    for (const c of filteredChanges) {
-      buckets[volumeTier(searchVolumeById.get(c.id))].push(c);
-    }
-    return buckets;
-  }, [filteredChanges, searchVolumeById]);
 
   // 아래 변동사항 카드들을 다시 훑지 않아도 성과가 한눈에 들어오도록, 카드 위에
   // 큼직한 숫자 요약(헤드라인)을 따로 뽑아둔다.
@@ -281,7 +275,7 @@ export default function SharedReportPage({ token }) {
                 </motion.div>
 
               <div style={{
-                display: 'grid', gridTemplateColumns: '3fr 2fr',
+                display: 'grid', gridTemplateColumns: '1fr 1fr',
                 gap: 12, margin: '0 0 20px', alignItems: 'stretch',
               }}>
                 <motion.div
@@ -292,53 +286,46 @@ export default function SharedReportPage({ token }) {
                     <TrendingUp size={18} style={{ color: '#30D158' }} />
                     순위 변동사항
                   </div>
-                  <div style={{ display: 'flex' }}>
-                    {VOLUME_TIERS.map((tier, idx) => {
-                      const list = rankChangesByTier[tier.key];
-                      return (
-                        <div key={tier.key} style={{
-                          flex: 1, minWidth: 0,
-                          borderLeft: idx > 0 ? '1px solid var(--border)' : 'none',
-                          paddingLeft: idx > 0 ? 18 : 0,
-                          marginLeft: idx > 0 ? 18 : 0,
-                        }}>
-                          <div style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--text-tertiary)', marginBottom: 10 }}>
-                            {tier.label}
-                          </div>
-                          {list.length === 0 ? (
-                            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
-                          ) : (
-                            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                              {groupChangesById(list).map((group, i) => (
-                                <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                                  <span style={{
-                                    fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
-                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                  }}>
-                                    {group[0].keyword}
-                                    {group.length > 1 && (
-                                      <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>×{group.length}</span>
-                                    )}
+                  {sortedChanges.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
+                  ) : (
+                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {groupChangesById(sortedChanges).map((group, i) => {
+                        const volumeCtr = formatVolumeCtr(searchVolumeById.get(group[0].id), averageCtrById.get(group[0].id));
+                        return (
+                          <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            <div>
+                              <span style={{
+                                fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
+                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              }}>
+                                {group[0].keyword}
+                                {group.length > 1 && (
+                                  <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>×{group.length}</span>
+                                )}
+                              </span>
+                              {volumeCtr && (
+                                <span style={{ display: 'block', fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 1 }}>
+                                  {volumeCtr}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                              {group.map((c, j) => (
+                                <span key={j} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                  <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
+                                    {c.type === 'new_top5' ? '미노출' : `${c.fromRank}위`}
                                   </span>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                                    {group.map((c, j) => (
-                                      <span key={j} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                                        <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
-                                          {c.type === 'new_top5' ? '미노출' : `${c.fromRank}위`}
-                                        </span>
-                                        <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                                        <span style={{ fontSize: 12.5, fontWeight: 700, color: '#30D158' }}>{c.toRank}위</span>
-                                      </span>
-                                    ))}
-                                  </div>
-                                </li>
+                                  <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#30D158' }}>{c.toRank}위</span>
+                                </span>
                               ))}
-                            </ul>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </motion.div>
 
                 <motion.div
@@ -349,36 +336,43 @@ export default function SharedReportPage({ token }) {
                     <Radio size={18} style={{ color: '#5E5CE6' }} />
                     통합검색 노출 변동사항
                   </div>
-                  {/* 왼쪽 카드는 검색량 구간 라벨이 한 줄 더 있어서, 오른쪽도 같은 높이의
-                      빈 자리를 둬야 두 카드의 첫 항목 줄이 같은 높이에서 시작한다. */}
-                  <div style={{ fontSize: 11.5, fontWeight: 700, marginBottom: 10, visibility: 'hidden' }} aria-hidden="true">-</div>
                   {sortedIntegratedChanges.length === 0 ? (
                     <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
                   ) : (
-                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {groupChangesById(sortedIntegratedChanges).map((group, i) => (
-                        <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                          <span style={{
-                            fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}>
-                            {group[0].keyword}
-                          </span>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                            {summarizeByType(group).map(({ type, count }) => (
-                              <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                                <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
-                                  {type === 'gained' ? '미노출' : '노출'}
-                                </span>
-                                <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                                <span style={{ fontSize: 12.5, fontWeight: 700, color: type === 'gained' ? '#30D158' : '#FF453A' }}>
-                                  {type === 'gained' ? '노출' : '미노출'}{count > 1 && ` ×${count}`}
-                                </span>
+                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {groupChangesById(sortedIntegratedChanges).map((group, i) => {
+                        const volumeCtr = formatVolumeCtr(searchVolumeById.get(group[0].id), averageCtrById.get(group[0].id));
+                        return (
+                          <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            <div>
+                              <span style={{
+                                fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
+                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                              }}>
+                                {group[0].keyword}
                               </span>
-                            ))}
-                          </div>
-                        </li>
-                      ))}
+                              {volumeCtr && (
+                                <span style={{ display: 'block', fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 1 }}>
+                                  {volumeCtr}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                              {summarizeByType(group).map(({ type, count }) => (
+                                <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                  <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
+                                    {type === 'gained' ? '미노출' : '노출'}
+                                  </span>
+                                  <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                                  <span style={{ fontSize: 12.5, fontWeight: 700, color: type === 'gained' ? '#30D158' : '#FF453A' }}>
+                                    {type === 'gained' ? '노출' : '미노출'}{count > 1 && ` ×${count}`}
+                                  </span>
+                                </span>
+                              ))}
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </motion.div>
