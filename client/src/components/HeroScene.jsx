@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { isWebGLAvailable } from '../utils/webgl';
 
 // intensity(0~1)는 데이터 위주 페이지(순위 추적 등)에서 배경이 콘텐츠를 방해하지
 // 않도록 불투명도와 회전 속도를 함께 낮추는 용도 — 랜딩 화면(기본값 1)은 그대로 둔다.
@@ -10,7 +11,7 @@ export default function HeroScene({ className, dark = true, particleCount = 500,
 
   useEffect(() => {
     const mount = mountRef.current;
-    if (!mount) return;
+    if (!mount || !isWebGLAvailable()) return;
 
     // 라이트 배경에서는 옅은 하늘색 파티클이 거의 안 보여서, 테마에 따라
     // 파티클 색/크기/불투명도를 다르게 준다(와이어프레임 색은 두 배경 모두에서
@@ -25,7 +26,13 @@ export default function HeroScene({ className, dark = true, particleCount = 500,
     const camera = new THREE.PerspectiveCamera(50, mount.clientWidth / mount.clientHeight, 0.1, 100);
     camera.position.z = 8;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (err) {
+      console.warn('[HeroScene] WebGL 렌더러 생성 실패, 배경 애니메이션을 건너뜁니다:', err.message);
+      return;
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(mount.clientWidth, mount.clientHeight);
     mount.appendChild(renderer.domElement);

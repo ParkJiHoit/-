@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import { isWebGLAvailable } from '../utils/webgl';
 
 export default function AuthScene() {
   const mountRef = useRef(null);
@@ -7,13 +8,19 @@ export default function AuthScene() {
 
   useEffect(() => {
     const el = mountRef.current;
-    if (!el) return;
+    if (!el || !isWebGLAvailable()) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, el.clientWidth / el.clientHeight, 0.1, 1000);
     camera.position.z = 3;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (err) {
+      console.warn('[AuthScene] WebGL 렌더러 생성 실패, 배경 애니메이션을 건너뜁니다:', err.message);
+      return;
+    }
     renderer.setSize(el.clientWidth, el.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     el.appendChild(renderer.domElement);
