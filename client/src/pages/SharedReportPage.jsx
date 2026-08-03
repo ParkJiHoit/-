@@ -241,7 +241,7 @@ export default function SharedReportPage({ token }) {
             {filteredItems.length > 0 && (
               <>
                 <motion.div
-                  className="mac-card"
+                  className="report-glass-card"
                   style={{ display: 'flex', flexWrap: 'wrap', gap: 24, padding: '18px 24px', margin: '0 0 12px' }}
                   custom={3} variants={cardEntranceVariants} initial="hidden" animate="show"
                 >
@@ -279,7 +279,7 @@ export default function SharedReportPage({ token }) {
                 gap: 12, margin: '0 0 20px', alignItems: 'stretch',
               }}>
                 <motion.div
-                  className="mac-card" style={{ padding: '22px 26px' }}
+                  className="report-glass-card" style={{ padding: '22px 26px' }}
                   custom={4} variants={cardEntranceVariants} initial="hidden" animate="show"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -330,7 +330,7 @@ export default function SharedReportPage({ token }) {
                 </motion.div>
 
                 <motion.div
-                  className="mac-card" style={{ padding: '22px 26px' }}
+                  className="report-glass-card" style={{ padding: '22px 26px' }}
                   custom={5} variants={cardEntranceVariants} initial="hidden" animate="show"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
