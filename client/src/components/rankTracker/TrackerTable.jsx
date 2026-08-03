@@ -17,11 +17,6 @@ function bestRank(item) {
   return ranks.length ? Math.min(...ranks) : null;
 }
 
-function earliestAddedDate(item) {
-  const dates = Object.values(item.latestRanks || {}).map(r => r.addedDate).filter(Boolean);
-  return dates.length ? dates.sort()[0] : null;
-}
-
 // "안정화됨" 분류는 링크 단위 등록일 기준으로 판단한다 — 키워드 자체는 오래됐어도
 // 그 안에 방금 추가한 링크가 하나라도 있으면(=가장 최근 링크가 기준일 이내면)
 // 아직 안정화되지 않은 것으로 취급해 접히지 않게 한다.
@@ -47,7 +42,9 @@ function getSortValue(item, key) {
   if (key === 'keyword') return item.keyword;
   if (key === 'searchVolume') return item.searchVolume ?? -1;
   if (key === 'rank') return bestRank(item) ?? 999;
-  if (key === 'addedDate') return earliestAddedDate(item) || '';
+  // 키워드에 새 링크를 추가하면(기존 링크는 그대로 두고) 그 키워드가 목록 최상단으로
+  // 올라와야 하므로, 가장 오래된 링크가 아니라 가장 최근에 추가된 링크 기준으로 정렬한다.
+  if (key === 'addedDate') return mostRecentAddedDate(item) || '';
   return 0;
 }
 
