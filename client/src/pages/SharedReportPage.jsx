@@ -294,10 +294,11 @@ export default function SharedReportPage({ token }) {
                         const volumeCtr = formatVolumeCtr(searchVolumeById.get(group[0].id), averageCtrById.get(group[0].id));
                         return (
                           <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
                               <span style={{
                                 fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
                                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                flex: '1 1 auto', minWidth: 0,
                               }}>
                                 {group[0].keyword}
                                 {group.length > 1 && (
@@ -305,7 +306,7 @@ export default function SharedReportPage({ token }) {
                                 )}
                               </span>
                               {volumeCtr && (
-                                <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
+                                <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                                   {volumeCtr}
                                 </span>
                               )}
@@ -344,15 +345,16 @@ export default function SharedReportPage({ token }) {
                         const volumeCtr = formatVolumeCtr(searchVolumeById.get(group[0].id), averageCtrById.get(group[0].id));
                         return (
                           <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
                               <span style={{
                                 fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
                                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                flex: '1 1 auto', minWidth: 0,
                               }}>
                                 {group[0].keyword}
                               </span>
                               {volumeCtr && (
-                                <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
+                                <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', flexShrink: 0 }}>
                                   {volumeCtr}
                                 </span>
                               )}
