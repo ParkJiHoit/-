@@ -69,16 +69,23 @@ export function findMatchingRank(rankings, storedKey) {
 
 const BACKFILL_CHUNK_SIZE = 8;
 
-// 검색량이 비어 있는(이 기능 추가 이전에 등록된) 키워드를 한 번 호출에 몇 개씩만 처리한다
-// (Vercel 서버리스 30초 제한 안에서 끝나도록). 프론트가 done:false인 동안 반복 호출한다.
-// 조회에 실패해도 0으로 채워 다음 호출에서 같은 키워드를 무한정 다시 시도하지 않게 한다.
+// 검색량 또는 CTR이 비어 있는(각 기능 추가 이전에 등록된) 키워드를 한 번 호출에
+// 몇 개씩만 처리한다(Vercel 서버리스 30초 제한 안에서 끝나도록). 프론트가
+// done:false인 동안 반복 호출한다. 조회에 실패해도 0으로 채워 다음 호출에서
+// 같은 키워드를 무한정 다시 시도하지 않게 한다. UPDATE에 COALESCE를 써서
+// 이미 값이 있는 컬럼(예: 검색량은 있는데 CTR만 나중에 추가되어 비어 있는 경우)은
+// 덮어쓰지 않고, 비어 있는 컬럼만 채운다.
 export async function backfillSearchVolumeChunk(userId) {
   const pool = getPool();
   if (!pool) throw Object.assign(new Error('DB가 설정되지 않았습니다.'), { status: 503 });
 
+  const needsBackfillClause = `(
+    (pc_search IS NULL AND mobile_search IS NULL) OR (pc_ctr IS NULL AND mobile_ctr IS NULL)
+  )`;
+
   const { rows } = await pool.query(
     `SELECT DISTINCT keyword FROM tracked_keywords
-     WHERE user_id = $1 AND deleted_at IS NULL AND pc_search IS NULL AND mobile_search IS NULL
+     WHERE user_id = $1 AND deleted_at IS NULL AND ${needsBackfillClause}
      ORDER BY keyword LIMIT $2`,
     [userId, BACKFILL_CHUNK_SIZE]
   );
@@ -86,27 +93,31 @@ export async function backfillSearchVolumeChunk(userId) {
   for (const { keyword } of rows) {
     let pcSearch = 0;
     let mobileSearch = 0;
-    let pcCtr = null;
-    let mobileCtr = null;
+    let pcCtr = 0;
+    let mobileCtr = 0;
     try {
       const vol = await fetchKeywordVolume(keyword);
       pcSearch = vol?.pcSearch ?? 0;
       mobileSearch = vol?.mobileSearch ?? 0;
-      pcCtr = vol?.pcCtr ?? null;
-      mobileCtr = vol?.mobileCtr ?? null;
+      pcCtr = vol?.pcCtr ?? 0;
+      mobileCtr = vol?.mobileCtr ?? 0;
     } catch (err) {
       console.warn(`[backfill] "${keyword}" 검색량 조회 실패: ${err.message}`);
     }
     await pool.query(
-      `UPDATE tracked_keywords SET pc_search = $1, mobile_search = $2, pc_ctr = $3, mobile_ctr = $4
-       WHERE user_id = $5 AND keyword = $6 AND pc_search IS NULL AND mobile_search IS NULL`,
+      `UPDATE tracked_keywords SET
+         pc_search = COALESCE(pc_search, $1),
+         mobile_search = COALESCE(mobile_search, $2),
+         pc_ctr = COALESCE(pc_ctr, $3),
+         mobile_ctr = COALESCE(mobile_ctr, $4)
+       WHERE user_id = $5 AND keyword = $6`,
       [pcSearch, mobileSearch, pcCtr, mobileCtr, userId, keyword]
     );
   }
 
   const { rows: remainingRows } = await pool.query(
     `SELECT COUNT(DISTINCT keyword) AS cnt FROM tracked_keywords
-     WHERE user_id = $1 AND deleted_at IS NULL AND pc_search IS NULL AND mobile_search IS NULL`,
+     WHERE user_id = $1 AND deleted_at IS NULL AND ${needsBackfillClause}`,
     [userId]
   );
   const remaining = Number(remainingRows[0]?.cnt || 0);

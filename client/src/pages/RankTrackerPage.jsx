@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../AuthContext';
 import BulkImportModal from '../components/BulkImportModal';
 import NotificationSettingsModal from '../components/rankTracker/NotificationSettingsModal';
@@ -455,6 +455,29 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
 
   useEffect(() => { loadItems(); }, [loadItems]);
   useEffect(() => { setSelectedIds(new Set()); }, [mode, selectedGroupId]);
+
+  // 검색량·CTR이 비어 있는(각 기능 추가 이전에 등록된) 키워드를 조용히 백그라운드에서
+  // 채운다 — 청크 단위 API라 세션당 한 번만 끝까지 돌리면 된다. 실패해도 페이지 이용에는
+  // 영향 없어야 하므로 에러는 무시한다(프리미엄이 아니면 403이 나는데 그것도 그냥 넘어간다).
+  const backfillRanRef = useRef(false);
+  useEffect(() => {
+    if (!token || backfillRanRef.current) return;
+    backfillRanRef.current = true;
+    (async () => {
+      try {
+        let done = false;
+        let processedAny = false;
+        while (!done) {
+          const result = await apiFetch('/backfill-search-volume', { method: 'POST' }, token);
+          done = !!result.done;
+          if (result.processed > 0) processedAny = true;
+        }
+        if (processedAny) loadItems();
+      } catch {
+        // 조용히 무시 — 검색량/CTR 백필은 부가 기능이라 실패해도 페이지 이용에 지장 없어야 한다.
+      }
+    })();
+  }, [token, loadItems]);
 
   const loadGroups = useCallback(async () => {
     if (!token) return;
