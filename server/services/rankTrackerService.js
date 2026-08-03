@@ -21,6 +21,15 @@ async function getOrFetchSearchVolume(pool, userId, keyword, mode, groupId) {
   }
 }
 
+// "키워드 분석" 기능과 동일하게 PC/모바일 CTR의 단순 평균을 쓴다(검색량 가중평균이
+// 아님) — 하나만 있으면 그 값을 그대로 쓰고, 둘 다 없으면 null.
+export function computeAverageCtr(pcCtr, mobileCtr) {
+  if (pcCtr == null && mobileCtr == null) return null;
+  if (pcCtr == null) return mobileCtr;
+  if (mobileCtr == null) return pcCtr;
+  return Math.round(((pcCtr + mobileCtr) / 2) * 10) / 10;
+}
+
 export function extractPostKey(url) {
   const str = String(url || '').trim();
 
@@ -77,17 +86,21 @@ export async function backfillSearchVolumeChunk(userId) {
   for (const { keyword } of rows) {
     let pcSearch = 0;
     let mobileSearch = 0;
+    let pcCtr = null;
+    let mobileCtr = null;
     try {
       const vol = await fetchKeywordVolume(keyword);
       pcSearch = vol?.pcSearch ?? 0;
       mobileSearch = vol?.mobileSearch ?? 0;
+      pcCtr = vol?.pcCtr ?? null;
+      mobileCtr = vol?.mobileCtr ?? null;
     } catch (err) {
       console.warn(`[backfill] "${keyword}" 검색량 조회 실패: ${err.message}`);
     }
     await pool.query(
-      `UPDATE tracked_keywords SET pc_search = $1, mobile_search = $2
-       WHERE user_id = $3 AND keyword = $4 AND pc_search IS NULL AND mobile_search IS NULL`,
-      [pcSearch, mobileSearch, userId, keyword]
+      `UPDATE tracked_keywords SET pc_search = $1, mobile_search = $2, pc_ctr = $3, mobile_ctr = $4
+       WHERE user_id = $5 AND keyword = $6 AND pc_search IS NULL AND mobile_search IS NULL`,
+      [pcSearch, mobileSearch, pcCtr, mobileCtr, userId, keyword]
     );
   }
 
@@ -104,7 +117,7 @@ export async function backfillSearchVolumeChunk(userId) {
 export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search, is_favorite, is_stabilized
+    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search, pc_ctr, mobile_ctr, is_favorite, is_stabilized
      FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL
      ORDER BY is_favorite DESC, created_at DESC`,
     [userId]
@@ -150,7 +163,8 @@ export async function listTracked(userId) {
     const searchVolume = (row.pc_search != null || row.mobile_search != null)
       ? (row.pc_search || 0) + (row.mobile_search || 0)
       : null;
-    return { ...row, latestRanks: latestByBlog, searchVolume };
+    const averageCtr = computeAverageCtr(row.pc_ctr, row.mobile_ctr);
+    return { ...row, latestRanks: latestByBlog, searchVolume, averageCtr };
   }));
   return result;
 }
@@ -177,15 +191,17 @@ export async function createTracked(userId, keyword, mode, blogUrls = [], groupI
     .filter(Boolean);
   const searchVolume = await getOrFetchSearchVolume(pool, userId, trimmedKeyword, mode, groupId);
   const { rows } = await pool.query(
-    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id, pc_search, mobile_search)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id, pc_search, mobile_search, pc_ctr, mobile_ctr)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      ON CONFLICT (user_id, keyword, mode, (COALESCE(group_id, -1))) DO UPDATE
        SET blog_ids = EXCLUDED.blog_ids,
            deleted_at = NULL,
            pc_search = COALESCE(tracked_keywords.pc_search, EXCLUDED.pc_search),
-           mobile_search = COALESCE(tracked_keywords.mobile_search, EXCLUDED.mobile_search)
+           mobile_search = COALESCE(tracked_keywords.mobile_search, EXCLUDED.mobile_search),
+           pc_ctr = COALESCE(tracked_keywords.pc_ctr, EXCLUDED.pc_ctr),
+           mobile_ctr = COALESCE(tracked_keywords.mobile_ctr, EXCLUDED.mobile_ctr)
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
-    [userId, trimmedKeyword, mode, blogIds, groupId, searchVolume?.pcSearch ?? null, searchVolume?.mobileSearch ?? null]
+    [userId, trimmedKeyword, mode, blogIds, groupId, searchVolume?.pcSearch ?? null, searchVolume?.mobileSearch ?? null, searchVolume?.pcCtr ?? null, searchVolume?.mobileCtr ?? null]
   );
   await recordBlogLinkAdditions(pool, rows[0].id, blogIds);
   return rows[0];
@@ -199,8 +215,8 @@ export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], 
     .filter(Boolean);
   const searchVolume = await getOrFetchSearchVolume(pool, userId, trimmedKeyword, mode, groupId);
   const { rows } = await pool.query(
-    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id, pc_search, mobile_search)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO tracked_keywords (user_id, keyword, mode, blog_ids, group_id, pc_search, mobile_search, pc_ctr, mobile_ctr)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      ON CONFLICT (user_id, keyword, mode, (COALESCE(group_id, -1))) DO UPDATE
        SET blog_ids = CASE
              -- 삭제됐던 항목을 재등록하는 경우는 완전히 새 등록으로 취급해 URL 목록을
@@ -221,9 +237,11 @@ export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], 
              ELSE tracked_keywords.last_refreshed_at
            END,
        pc_search = COALESCE(tracked_keywords.pc_search, EXCLUDED.pc_search),
-       mobile_search = COALESCE(tracked_keywords.mobile_search, EXCLUDED.mobile_search)
+       mobile_search = COALESCE(tracked_keywords.mobile_search, EXCLUDED.mobile_search),
+       pc_ctr = COALESCE(tracked_keywords.pc_ctr, EXCLUDED.pc_ctr),
+       mobile_ctr = COALESCE(tracked_keywords.mobile_ctr, EXCLUDED.mobile_ctr)
      RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
-    [userId, trimmedKeyword, mode, newIds, groupId, searchVolume?.pcSearch ?? null, searchVolume?.mobileSearch ?? null]
+    [userId, trimmedKeyword, mode, newIds, groupId, searchVolume?.pcSearch ?? null, searchVolume?.mobileSearch ?? null, searchVolume?.pcCtr ?? null, searchVolume?.mobileCtr ?? null]
   );
   await recordBlogLinkAdditions(pool, rows[0].id, rows[0].blog_ids);
   return rows[0];
