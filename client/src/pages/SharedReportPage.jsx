@@ -320,14 +320,14 @@ export default function SharedReportPage({ token }) {
                                       <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>×{group.length}</span>
                                     )}
                                   </span>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                                     {group.map((c, j) => (
-                                      <span key={j} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)' }}>
+                                      <span key={j} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                        <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
                                           {c.type === 'new_top5' ? '미노출' : `${c.fromRank}위`}
                                         </span>
                                         <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                                        <span className="mac-badge mac-badge-green" style={{ fontSize: 12 }}>{c.toRank}위</span>
+                                        <span style={{ fontSize: 12.5, fontWeight: 700, color: '#30D158' }}>{c.toRank}위</span>
                                       </span>
                                     ))}
                                   </div>
@@ -372,14 +372,14 @@ export default function SharedReportPage({ token }) {
                             {i === 0 && <Flame size={12} style={{ color: '#FF9F0A', flexShrink: 0 }} />}
                             {group[0].keyword}
                           </span>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                             {summarizeByType(group).map(({ type, count }) => (
-                              <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)' }}>
+                              <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
                                   {type === 'gained' ? '미노출' : '노출'}
                                 </span>
                                 <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                                <span className={`mac-badge ${type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ fontSize: 12 }}>
+                                <span style={{ fontSize: 12.5, fontWeight: 700, color: type === 'gained' ? '#30D158' : '#FF453A' }}>
                                   {type === 'gained' ? '노출' : '미노출'}{count > 1 && ` ×${count}`}
                                 </span>
                               </span>
