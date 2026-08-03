@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Radio, Search, ArrowUp, Sparkles, ChevronDown, Flame } from 'lucide-react';
+import { TrendingUp, Radio, Search, ArrowUp, ArrowRight, Sparkles, ChevronDown, Flame } from 'lucide-react';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import ExposureDonutCard from '../components/rankTracker/ExposureDonutCard';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
@@ -49,9 +49,9 @@ function groupChangesById(list) {
   return order.map(id => byId.get(id));
 }
 
-// 통합검색 노출 변동사항은 링크마다 텍스트가 "노출 시작"/"노출 중단" 둘 중
-// 하나뿐이라, 링크 수만큼 같은 배지를 반복하면 "노출 시작 노출 시작 노출 시작"처럼
-// 지저분해진다. 같은 타입끼리는 배지 하나로 합치고 "×N"으로 개수만 표시한다.
+// 통합검색 노출 변동사항은 링크마다 "미노출 → 노출" 또는 "노출 → 미노출" 둘 중
+// 하나뿐이라, 링크 수만큼 같은 칩을 반복하면 지저분해진다. 같은 타입끼리는
+// 칩 하나로 합치고 "×N"으로 개수만 표시한다.
 function summarizeByType(group) {
   const order = [];
   const counts = new Map();
@@ -320,10 +320,14 @@ export default function SharedReportPage({ token }) {
                                       <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>×{group.length}</span>
                                     )}
                                   </span>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                                     {group.map((c, j) => (
-                                      <span key={j} className="mac-badge mac-badge-green" style={{ fontSize: 12 }}>
-                                        {c.type === 'new_top5' ? '미노출' : `${c.fromRank}위`} → {c.toRank}위
+                                      <span key={j} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)' }}>
+                                          {c.type === 'new_top5' ? '미노출' : `${c.fromRank}위`}
+                                        </span>
+                                        <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                                        <span className="mac-badge mac-badge-green" style={{ fontSize: 12 }}>{c.toRank}위</span>
                                       </span>
                                     ))}
                                   </div>
@@ -345,6 +349,9 @@ export default function SharedReportPage({ token }) {
                     <Radio size={18} style={{ color: '#5E5CE6' }} />
                     통합검색 노출 변동사항
                   </div>
+                  {/* 왼쪽 카드는 검색량 구간 라벨이 한 줄 더 있어서, 오른쪽도 같은 높이의
+                      빈 자리를 둬야 두 카드의 첫 항목 줄이 같은 높이에서 시작한다. */}
+                  <div style={{ fontSize: 11.5, fontWeight: 700, marginBottom: 10, visibility: 'hidden' }} aria-hidden="true">-</div>
                   {filteredIntegratedChanges.length === 0 ? (
                     <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
                   ) : (
@@ -365,10 +372,16 @@ export default function SharedReportPage({ token }) {
                             {i === 0 && <Flame size={12} style={{ color: '#FF9F0A', flexShrink: 0 }} />}
                             {group[0].keyword}
                           </span>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                             {summarizeByType(group).map(({ type, count }) => (
-                              <span key={type} className={`mac-badge ${type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ fontSize: 12 }}>
-                                {type === 'gained' ? '노출 시작' : '노출 중단'}{count > 1 && ` ×${count}`}
+                              <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)' }}>
+                                  {type === 'gained' ? '미노출' : '노출'}
+                                </span>
+                                <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                                <span className={`mac-badge ${type === 'gained' ? 'mac-badge-green' : 'mac-badge-red'}`} style={{ fontSize: 12 }}>
+                                  {type === 'gained' ? '노출' : '미노출'}{count > 1 && ` ×${count}`}
+                                </span>
                               </span>
                             ))}
                           </div>
