@@ -26,7 +26,7 @@ function LegendValue({ value }) {
 // 같은 높이(compact minHeight 200)를 채우도록 도넛을 가운데에 크게 배치하고
 // 범례는 아래에 한 줄로 감싼다. paddingAngle을 0으로 둬서 링이 중간에 끊겨
 // 보이지 않고 완전히 이어지도록 한다 — 색이 서로 다르므로 구분에는 문제없다.
-export default function ExposureDonutCard({ total, segments, compact = true, index = 0 }) {
+export default function ExposureDonutCard({ total, segments, compact = true, index = 0, glass = false }) {
   const filtered = segments.filter(s => s.value > 0);
   const data = filtered.map(s => ({ ...s, total }));
   const donutSize = compact ? 108 : 76;
@@ -34,7 +34,7 @@ export default function ExposureDonutCard({ total, segments, compact = true, ind
 
   return (
     <motion.article
-      className="mac-card"
+      className={glass ? 'report-glass-card' : 'mac-card'}
       custom={index} variants={cardEntranceVariants} initial="hidden" animate="show"
       style={{
         padding: compact ? '16px 18px' : '18px 20px', minHeight: compact ? 200 : 154,

@@ -3,12 +3,12 @@ import { motion } from 'framer-motion';
 import useCountUp from '../../hooks/useCountUp';
 import { cardEntranceVariants } from '../../utils/motionVariants';
 
-function StatCard({ label, value, total, color, icon: Icon, sub, compact, index = 0 }) {
+function StatCard({ label, value, total, color, icon: Icon, sub, compact, index = 0, glass = false }) {
   const animatedValue = useCountUp(value);
   const pct = total ? Math.round((animatedValue / total) * 100) : null;
   return (
     <motion.article
-      className="mac-card"
+      className={glass ? 'report-glass-card' : 'mac-card'}
       custom={index} variants={cardEntranceVariants} initial="hidden" animate="show"
       style={{
         padding: compact ? '16px 18px' : '20px 22px 20px', minHeight: compact ? 200 : 154,
@@ -45,7 +45,7 @@ function StatCard({ label, value, total, color, icon: Icon, sub, compact, index 
   );
 }
 
-export default function TrackerStatCards({ mode, filteredItems, compact = false, donutSlot = null }) {
+export default function TrackerStatCards({ mode, filteredItems, compact = false, donutSlot = null, glass = false }) {
   const keywordCount = filteredItems.length;
 
   if (mode === 'all') {
@@ -54,8 +54,8 @@ export default function TrackerStatCards({ mode, filteredItems, compact = false,
     ).length;
     return (
       <section style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: compact ? 8 : 10 }}>
-        <StatCard label="추적 키워드" value={keywordCount} total={null} color="#8E8E93" icon={Target} sub="키워드 블로그탭 상위 10개 스냅샷" compact={compact} index={0} />
-        <StatCard label="5위 내 노출" value={top5KeywordCount} total={keywordCount} color="#30D158" icon={Trophy} sub={null} compact={compact} index={1} />
+        <StatCard label="추적 키워드" value={keywordCount} total={null} color="#8E8E93" icon={Target} sub="키워드 블로그탭 상위 10개 스냅샷" compact={compact} index={0} glass={glass} />
+        <StatCard label="5위 내 노출" value={top5KeywordCount} total={keywordCount} color="#30D158" icon={Trophy} sub={null} compact={compact} index={1} glass={glass} />
       </section>
     );
   }
@@ -73,12 +73,12 @@ export default function TrackerStatCards({ mode, filteredItems, compact = false,
     <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: compact ? 8 : 10 }}>
       {donutSlot ?? (
         <StatCard label="추적 키워드" value={keywordCount} total={null} color="#8E8E93" icon={Target}
-          sub={distinctGroups.size > 0 ? `그룹 ${distinctGroups.size}개에 분산` : '그룹 미지정'} compact={compact} index={0} />
+          sub={distinctGroups.size > 0 ? `그룹 ${distinctGroups.size}개에 분산` : '그룹 미지정'} compact={compact} index={0} glass={glass} />
       )}
       <StatCard label="추적 링크" value={linkCount} total={null} color="#0A84FF" icon={Link2}
-        sub={`키워드당 평균 ${avgLinks}개`} compact={compact} index={1} />
-      <StatCard label="5위 내 노출" value={top5LinkCount} total={linkCount} color="#30D158" icon={Trophy} sub={null} compact={compact} index={2} />
-      <StatCard label="통검 노출 중" value={integratedCount} total={linkCount} color="#5E5CE6" icon={Radio} sub={null} compact={compact} index={3} />
+        sub={`키워드당 평균 ${avgLinks}개`} compact={compact} index={1} glass={glass} />
+      <StatCard label="5위 내 노출" value={top5LinkCount} total={linkCount} color="#30D158" icon={Trophy} sub={null} compact={compact} index={2} glass={glass} />
+      <StatCard label="통검 노출 중" value={integratedCount} total={linkCount} color="#5E5CE6" icon={Radio} sub={null} compact={compact} index={3} glass={glass} />
     </section>
   );
 }
