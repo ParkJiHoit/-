@@ -232,8 +232,9 @@ export default function SharedReportPage({ token }) {
                 mode={mode}
                 filteredItems={filteredItems}
                 compact
+                glass
                 donutSlot={exposureSummary && (
-                  <ExposureDonutCard total={exposureSummary.total} segments={exposureSummary.segments} compact index={0} />
+                  <ExposureDonutCard total={exposureSummary.total} segments={exposureSummary.segments} compact index={0} glass />
                 )}
               />
             </div>
