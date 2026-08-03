@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Radio, Search, ArrowUp, ArrowRight, Sparkles, ChevronDown, Flame } from 'lucide-react';
+import { TrendingUp, Radio, Search, ArrowUp, ArrowRight, Sparkles, ChevronDown } from 'lucide-react';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import ExposureDonutCard from '../components/rankTracker/ExposureDonutCard';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
@@ -113,6 +113,14 @@ export default function SharedReportPage({ token }) {
   }, [report, idsInScope]);
 
   const searchVolumeById = useMemo(() => new Map(filteredItems.map(i => [i.id, i.searchVolume])), [filteredItems]);
+
+  // 통합검색 노출 변동사항은 순위 변동사항처럼 구간으로 나누지 않고 한 목록으로
+  // 보여주므로, 검색량 높은 키워드부터 내림차순으로 정렬해 중요한 것이 위로 오게 한다.
+  const sortedIntegratedChanges = useMemo(() => {
+    return [...filteredIntegratedChanges].sort(
+      (a, b) => (searchVolumeById.get(b.id) ?? 0) - (searchVolumeById.get(a.id) ?? 0)
+    );
+  }, [filteredIntegratedChanges, searchVolumeById]);
 
   const rankChangesByTier = useMemo(() => {
     const buckets = { high: [], mid: [], low: [] };
@@ -302,19 +310,11 @@ export default function SharedReportPage({ token }) {
                           ) : (
                             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
                               {groupChangesById(list).map((group, i) => (
-                                <li key={i} style={{
-                                  display: 'flex', flexDirection: 'column', gap: 5,
-                                  padding: i === 0 ? '8px 10px' : 0,
-                                  borderRadius: i === 0 ? 8 : 0,
-                                  background: i === 0 ? 'rgba(48,209,88,0.08)' : 'transparent',
-                                  border: i === 0 ? '1px solid rgba(48,209,88,0.22)' : 'none',
-                                }}>
+                                <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                                   <span style={{
                                     fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
                                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                    display: 'flex', alignItems: 'center', gap: 4,
                                   }}>
-                                    {i === 0 && <Flame size={12} style={{ color: '#FF9F0A', flexShrink: 0 }} />}
                                     {group[0].keyword}
                                     {group.length > 1 && (
                                       <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>×{group.length}</span>
@@ -352,24 +352,16 @@ export default function SharedReportPage({ token }) {
                   {/* 왼쪽 카드는 검색량 구간 라벨이 한 줄 더 있어서, 오른쪽도 같은 높이의
                       빈 자리를 둬야 두 카드의 첫 항목 줄이 같은 높이에서 시작한다. */}
                   <div style={{ fontSize: 11.5, fontWeight: 700, marginBottom: 10, visibility: 'hidden' }} aria-hidden="true">-</div>
-                  {filteredIntegratedChanges.length === 0 ? (
+                  {sortedIntegratedChanges.length === 0 ? (
                     <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
                   ) : (
                     <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {groupChangesById(filteredIntegratedChanges).map((group, i) => (
-                        <li key={i} style={{
-                          display: 'flex', flexDirection: 'column', gap: 5,
-                          padding: i === 0 ? '8px 10px' : 0,
-                          borderRadius: i === 0 ? 8 : 0,
-                          background: i === 0 ? 'rgba(94,92,230,0.08)' : 'transparent',
-                          border: i === 0 ? '1px solid rgba(94,92,230,0.22)' : 'none',
-                        }}>
+                      {groupChangesById(sortedIntegratedChanges).map((group, i) => (
+                        <li key={i} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                           <span style={{
                             fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                            display: 'flex', alignItems: 'center', gap: 4,
                           }}>
-                            {i === 0 && <Flame size={12} style={{ color: '#FF9F0A', flexShrink: 0 }} />}
                             {group[0].keyword}
                           </span>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
