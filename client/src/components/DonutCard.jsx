@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 // 도넛 차트 카드 — 여러 화면(블로그 구조 분석, 공유 리포트 등)에서 재사용하는
 // 분포 시각화. segments: [{ key, label, color, value }]
 export default function DonutCard({ title, segments, total }) {
@@ -7,10 +9,18 @@ export default function DonutCard({ title, segments, total }) {
   const r = (size - thickness) / 2;
   const circ = 2 * Math.PI * r;
 
+  // 처음 마운트될 때 0에서 시작해서 실제 값으로 스윕인한다 — 다음 프레임에 목표 값으로
+  // 바꿔서 아래 stroke-dasharray CSS transition이 0 -> 값 성장을 애니메이션하게 만든다.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   let offset = 0;
   const arcs = filtered.map(seg => {
     const pct = seg.value / total;
-    const dash = pct * circ;
+    const dash = mounted ? pct * circ : 0;
     const arc = { ...seg, dash, gap: circ - dash, offset: circ - offset };
     offset += dash + 1.5;
     return arc;
@@ -42,7 +52,7 @@ export default function DonutCard({ title, segments, total }) {
               strokeDasharray={`${arc.dash - 1.5} ${arc.gap + 1.5}`}
               strokeDashoffset={arc.offset}
               strokeLinecap="butt"
-              style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px`, transition: 'stroke-dasharray 0.5s ease' }}
+              style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px`, transition: 'stroke-dasharray 0.5s cubic-bezier(0.16, 1, 0.3, 1)' }}
             >
               <title>{`${arc.label}: ${arc.value}건 (${Math.round((arc.value / total) * 100)}%)`}</title>
             </circle>

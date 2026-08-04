@@ -405,7 +405,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                       background: feedbackType === id ? 'rgba(10,132,255,0.12)' : isDark ? '#2C2C2E' : '#F2F2F7',
                       color: feedbackType === id ? 'var(--accent)' : 'var(--text-secondary)',
                       fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                      transition: 'all 0.15s',
+                      transition: 'border-color 0.15s, background-color 0.15s, color 0.15s',
                       textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
                   >
@@ -439,7 +439,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                   fontSize: 13, fontWeight: 700,
                   color: feedbackContent.trim() ? '#fff' : 'var(--text-tertiary)',
                   cursor: feedbackContent.trim() ? 'pointer' : 'default',
-                  fontFamily: 'inherit', transition: 'all 0.15s',
+                  fontFamily: 'inherit', transition: 'background-color 0.15s, color 0.15s',
                 }}
               >
                 {feedbackSending ? '전송 중...' : '보내기'}

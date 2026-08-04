@@ -1048,7 +1048,7 @@ function AddTrackerModal({ mode: defaultMode, token, editItem, groups, defaultGr
                 flex: 1, padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
                 border: `1.5px solid ${modalMode === m.id ? 'var(--accent)' : 'var(--border)'}`,
                 background: modalMode === m.id ? 'rgba(10,132,255,0.08)' : 'transparent',
-                transition: 'all 0.15s',
+                transition: 'border-color 0.15s, background-color 0.15s',
               }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: modalMode === m.id ? 'var(--accent)' : 'var(--text-secondary)' }}>{m.label}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{m.desc}</div>
