@@ -58,6 +58,7 @@ export default function TrackerTable({
   onToggleFavorite,
   isGroupSelected,
   loading,
+  selectedLinks = new Set(), onToggleLinkSelect, onMoveSelectedLinks, onClearLinkSelection,
 }) {
   const [expanded, setExpanded] = useState(new Set());
   const [showStabilized, setShowStabilized] = useState(false);
@@ -179,6 +180,34 @@ export default function TrackerTable({
           >
             <Trash2 size={12} /> 선택 삭제
           </button>
+        </div>
+      )}
+
+      {selectedLinks.size > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', marginBottom: 8,
+          borderRadius: 8, background: 'rgba(10,132,255,0.08)', border: '1px solid rgba(10,132,255,0.2)',
+        }}>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>링크 {selectedLinks.size}개 선택됨</span>
+          <select
+            value=""
+            onChange={e => { if (e.target.value) onMoveSelectedLinks(e.target.value === '__none__' ? null : Number(e.target.value)); }}
+            title="선택한 링크만 다른 그룹으로 이동"
+            style={{
+              height: 28, padding: '0 8px', borderRadius: 6, fontSize: 12, fontWeight: 600,
+              background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)',
+              color: 'var(--text-primary)', outline: 'none', cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            <option value="" disabled>다른 그룹으로 이동</option>
+            <option value="__none__">그룹 없음</option>
+            {flattenGroupTree(groups).map(g => (
+              <option key={g.id} value={String(g.id)}>
+                {'　'.repeat(g.depth)}{g.depth > 0 ? '└ ' : ''}{g.name}
+              </option>
+            ))}
+          </select>
+          <button onClick={onClearLinkSelection} className="mac-btn-ghost mac-btn-sm">선택 해제</button>
         </div>
       )}
 
@@ -334,6 +363,16 @@ export default function TrackerTable({
                 {mode === 'blog' && (
                   <td style={{ color: 'var(--text-secondary)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                      {blogId && (
+                        <input
+                          type="checkbox" className="mac-checkbox"
+                          checked={selectedLinks.has(`${item.id}:${blogId}`)}
+                          onChange={() => onToggleLinkSelect(item.id, blogId)}
+                          onClick={e => e.stopPropagation()}
+                          title="이 링크만 선택해서 다른 그룹으로 이동"
+                          style={{ flexShrink: 0 }}
+                        />
+                      )}
                       <span style={{ flex: '0 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {blogId || '—'}
                       </span>
