@@ -5,6 +5,7 @@ import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import ExposureDonutCard from '../components/rankTracker/ExposureDonutCard';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
 import { cardEntranceVariants } from '../utils/motionVariants';
+import { flattenGroupTree, collectGroupAndDescendantIds } from '../utils/groupTree';
 import logoLight from '../assets/logo-light.png';
 import logoDark from '../assets/logo-dark.png';
 
@@ -81,9 +82,11 @@ export default function SharedReportPage({ token }) {
 
   const filteredItems = useMemo(() => {
     if (!report) return [];
-    const scoped = !selectedGroupId
+    // 상위 그룹(업체)을 고르면 그 아래 하위 그룹(캠페인)의 항목까지 함께 보여준다.
+    const groupIdsInScope = selectedGroupId ? collectGroupAndDescendantIds(report.groups, selectedGroupId) : null;
+    const scoped = !groupIdsInScope
       ? report.items
-      : report.items.filter(i => String(i.group_id ?? '') === selectedGroupId);
+      : report.items.filter(i => i.group_id != null && groupIdsInScope.has(i.group_id));
     const q = searchQuery.trim().toLowerCase();
     const searched = q ? scoped.filter(i => i.keyword.toLowerCase().includes(q)) : scoped;
     return [...searched].sort((a, b) => {
@@ -221,7 +224,11 @@ export default function SharedReportPage({ token }) {
                     }}
                   >
                     <option value="">전체 그룹</option>
-                    {report.groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
+                    {flattenGroupTree(report.groups).map(g => (
+                      <option key={g.id} value={String(g.id)}>
+                        {'　'.repeat(g.depth)}{g.depth > 0 ? '└ ' : ''}{g.name}
+                      </option>
+                    ))}
                   </select>
                 )}
               </div>
