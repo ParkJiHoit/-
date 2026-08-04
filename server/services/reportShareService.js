@@ -145,19 +145,25 @@ async function fetchGroupNames(pool, userId) {
   return rows;
 }
 
-// 리포트에 포함된(=컷오프를 통과한) 각 링크의 최초/최신 순위·통검 노출 여부를 비교해
-// 변동사항을 만든다. items는 filterItemsByCutoff를 통과한 뒤의 목록 — 즉 이미
-// "이 리포트에 보일" 링크만 담고 있다.
-async function fetchChanges(pool, items) {
+// 리포트에 포함된(=컷오프를 통과한) 각 링크의 순위·통합검색 노출 여부 변동사항을 만든다.
+// items는 filterItemsByCutoff를 통과한 뒤의 목록 — 즉 이미 "이 리포트에 보일" 링크만 담고 있다.
+//
+// 비교 기준(from)은 "역대 최초 스냅샷"이 아니라 "리포트 기간(cutoffDate) 시작 직전의
+// 마지막 스냅샷"이다 — 역대 최초 기록을 기준으로 고정하면, 포스팅 직후 흔한 "미노출"
+// 첫 스냅샷이 영구적인 비교 기준이 돼서 이후 실제 순위가 여러 번 움직여도 항상
+// "미노출 → 현재순위"로만 보이고 진짜 순위 개선폭("8위 → 3위" 같은)이 절대 드러나지
+// 않는 문제가 있었다. 기간 시작 전 기록이 없으면(신규 등록) from은 자연히 null이 되어
+// "미확인/미노출 → N위"로 표시된다.
+async function fetchChanges(pool, items, cutoffDate) {
   const trackedIds = [...new Set(items.map((i) => i.id))];
   if (!trackedIds.length) return { changes: [], integratedChanges: [] };
 
   const [{ rows: earliest }, { rows: latest }] = await Promise.all([
     pool.query(
       `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed
-       FROM rank_snapshots WHERE tracked_id = ANY($1)
-       ORDER BY tracked_id, blog_id, snapshotted_at ASC`,
-      [trackedIds]
+       FROM rank_snapshots WHERE tracked_id = ANY($1) AND snapshotted_at < $2
+       ORDER BY tracked_id, blog_id, snapshotted_at DESC`,
+      [trackedIds, cutoffDate]
     ),
     pool.query(
       `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed
@@ -228,7 +234,7 @@ export async function getPublicReport(token) {
 
   const [groups, { changes, integratedChanges }] = await Promise.all([
     groupId == null ? fetchGroupNames(pool, userId) : Promise.resolve([]),
-    fetchChanges(pool, items),
+    fetchChanges(pool, items, cutoffDate),
   ]);
 
   return { groupName: groupId == null ? null : groupName, groups, items, changes, integratedChanges };
