@@ -142,28 +142,36 @@ async function fetchGroupNames(pool, userId) {
   return rows;
 }
 
+function sameSnapshotDate(a, b) {
+  if (!a || !b) return false;
+  const ta = a instanceof Date ? a.getTime() : new Date(a).getTime();
+  const tb = b instanceof Date ? b.getTime() : new Date(b).getTime();
+  return ta === tb;
+}
+
 // 리포트에 포함된(=컷오프를 통과한) 각 링크의 순위·통합검색 노출 여부 변동사항을 만든다.
-// items는 filterItemsByCutoff를 통과한 뒤의 목록 — 즉 이미 "이 리포트에 보일" 링크만 담고 있다.
-//
-// 비교 기준(from)은 "역대 최초 스냅샷"이 아니라 "리포트 기간(cutoffDate) 시작 직전의
-// 마지막 스냅샷"이다 — 역대 최초 기록을 기준으로 고정하면, 포스팅 직후 흔한 "미노출"
-// 첫 스냅샷이 영구적인 비교 기준이 돼서 이후 실제 순위가 여러 번 움직여도 항상
-// "미노출 → 현재순위"로만 보이고 진짜 순위 개선폭("8위 → 3위" 같은)이 절대 드러나지
-// 않는 문제가 있었다. 기간 시작 전 기록이 없으면(신규 등록) from은 자연히 null이 되어
-// "미확인/미노출 → N위"로 표시된다.
-async function fetchChanges(pool, items, cutoffDate) {
+// items는 filterItemsByCutoff를 통과한 뒤의 목록 — 즉 이미 "이 리포트에 보일"(=최근
+// 14일 이내 등록된) 링크만 담고 있다. 그래서 비교 기준(from)은 "리포트 기간 시작
+// 이전 스냅샷"이 아니라 "역대 최초 스냅샷"이어야 한다 — filterItemsByCutoff를 통과한
+// 링크는 등록 자체가 14일 이내라 그보다 이전 스냅샷이 애초에 존재할 수 없고(등록 전엔
+// 순위를 잴 수 없으므로), "이전 스냅샷"을 기준으로 삼으면 리포트에 보이는 모든 링크가
+// 예외 없이 항상 "미확인 → 현재순위"로만 나오고 실제 순위 개선("8위 → 3위" 같은)이
+// 하나도 드러나지 않는다. 다만 스냅샷이 딱 하나뿐인(오늘 등록+오늘 처음이자 유일하게
+// 확인) 링크는 "역대 최초"와 "최신"이 같은 날짜의 같은 행이라 개선폭이 0으로 계산돼
+// 버리므로, 이 경우는 이전 상태를 "미확인"으로 취급한다(hasPriorSnapshot).
+async function fetchChanges(pool, items) {
   const trackedIds = [...new Set(items.map((i) => i.id))];
   if (!trackedIds.length) return { changes: [], integratedChanges: [] };
 
   const [{ rows: earliest }, { rows: latest }] = await Promise.all([
     pool.query(
-      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed
-       FROM rank_snapshots WHERE tracked_id = ANY($1) AND snapshotted_at < $2
-       ORDER BY tracked_id, blog_id, snapshotted_at DESC`,
-      [trackedIds, cutoffDate]
+      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed, snapshotted_at
+       FROM rank_snapshots WHERE tracked_id = ANY($1)
+       ORDER BY tracked_id, blog_id, snapshotted_at ASC`,
+      [trackedIds]
     ),
     pool.query(
-      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed
+      `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed, snapshotted_at
        FROM rank_snapshots WHERE tracked_id = ANY($1)
        ORDER BY tracked_id, blog_id, snapshotted_at DESC`,
       [trackedIds]
@@ -182,16 +190,17 @@ async function fetchChanges(pool, items, cutoffDate) {
     const from = earliestByKey.get(key);
     const to = latestByKey.get(key);
     if (!to) continue;
+    const hasPriorSnapshot = !!from && !sameSnapshotDate(from.snapshotted_at, to.snapshotted_at);
     pairs.push({
       id: trackedId,
       keyword: keywordById.get(trackedId) ?? '',
       blogId,
       searchVolume: searchVolumeById.get(trackedId) ?? 0,
-      fromRank: from?.rank ?? null,
-      fromStatus: from?.status ?? null,
+      fromRank: hasPriorSnapshot ? from.rank : null,
+      fromStatus: hasPriorSnapshot ? from.status : null,
       toRank: to.rank,
       toStatus: to.status,
-      fromIntegratedExposed: from?.integrated_exposed ?? null,
+      fromIntegratedExposed: hasPriorSnapshot ? from.integrated_exposed : null,
       toIntegratedExposed: to.integrated_exposed,
     });
   }
@@ -233,7 +242,7 @@ export async function getPublicReport(token) {
 
   const [groups, { changes, integratedChanges }] = await Promise.all([
     groupId == null ? fetchGroupNames(pool, userId) : Promise.resolve([]),
-    fetchChanges(pool, items, cutoffDate),
+    fetchChanges(pool, items),
   ]);
 
   return { groupName: groupId == null ? null : groupName, groups, items, changes, integratedChanges };
