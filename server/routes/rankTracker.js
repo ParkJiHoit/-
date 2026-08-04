@@ -5,7 +5,7 @@ import {
   getSnapshots, refreshRanks, mergeTrackedBlogUrls, updateTrackedGroup, setFavorite,
   listGroups, createGroup, renameGroup, deleteGroup, exportSnapshots,
   extractPostKey, postKeyToString, backfillSearchVolumeChunk, getDashboardSummary,
-  setStabilizedBulk, moveTrackedBlogLinks,
+  setStabilizedBulk,
 } from '../services/rankTrackerService.js';
 import { parseBulkImportText, groupParsedRows, normalizeKeyword } from '../services/bulkImportService.js';
 import { checkDailyLimit, ADMIN_EMAILS } from '../middleware/usageLimit.js';
@@ -142,17 +142,6 @@ router.post('/:id/remove-blog', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/:id/move-links', async (req, res, next) => {
-  try {
-    const { blogIds, groupId } = req.body || {};
-    if (!Array.isArray(blogIds) || !blogIds.length) {
-      return res.status(400).json({ message: '옮길 링크를 선택해 주세요.' });
-    }
-    const data = await moveTrackedBlogLinks(req.userId, Number(req.params.id), blogIds, groupId ?? null);
-    res.json(data);
-  } catch (e) { next(e); }
-});
-
 router.post('/export', requirePremium, async (req, res, next) => {
   try {
     const { ids } = req.body || {};
@@ -195,8 +184,7 @@ router.get('/groups', requirePremium, async (req, res, next) => {
 
 router.post('/groups', requirePremium, async (req, res, next) => {
   try {
-    const parentId = req.body?.parentId != null ? Number(req.body.parentId) : null;
-    const data = await createGroup(req.userId, req.body?.name, parentId);
+    const data = await createGroup(req.userId, req.body?.name);
     res.status(201).json(data);
   } catch (e) { next(e); }
 });

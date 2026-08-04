@@ -79,18 +79,6 @@ export async function initDb() {
       UNIQUE (user_id, name)
     );
     CREATE INDEX IF NOT EXISTS idx_tg_user ON tracker_groups (user_id);
-    -- 업체 > 캠페인처럼 그룹 안에 하위 그룹을 둘 수 있게 한다. 부모 그룹을 지워도
-    -- 하위 그룹의 키워드 배정까지 같이 날아가면 안 되므로, 하위 그룹은 삭제되지 않고
-    -- 최상위 그룹으로 승격된다(ON DELETE SET NULL).
-    ALTER TABLE tracker_groups ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES tracker_groups(id) ON DELETE SET NULL;
-    CREATE INDEX IF NOT EXISTS idx_tg_parent ON tracker_groups (parent_id);
-    -- 같은 이름이라도 부모가 다르면 별개 그룹으로 허용한다(여러 업체가 각자 "12월"
-    -- 캠페인을 가질 수 있어야 하므로). tracked_keywords의 그룹별 중복 판정과 동일한
-    -- COALESCE 패턴으로 "그룹 없음(parent_id NULL)"도 하나의 고정값으로 묶는다.
-    ALTER TABLE tracker_groups DROP CONSTRAINT IF EXISTS tracker_groups_user_id_name_key;
-    DROP INDEX IF EXISTS idx_tg_unique_per_parent;
-    CREATE UNIQUE INDEX idx_tg_unique_per_parent
-      ON tracker_groups (user_id, name, (COALESCE(parent_id, -1)));
   `);
   console.log('[DB] tracker_groups 테이블 준비 완료');
   await p.query(`

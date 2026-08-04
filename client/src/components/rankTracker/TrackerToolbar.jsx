@@ -1,9 +1,8 @@
 import { RefreshCw, Plus, Trash2, Download, Pencil, Bell, Share2, AlertTriangle } from 'lucide-react';
 import { formatKSTDateTime } from './trackerFormat';
-import { flattenGroupTree } from '../../utils/groupTree';
 
 export default function TrackerToolbar({
-  mode, groups, selectedGroupId, onGroupChange, onCreateGroup, onCreateSubGroup, onRenameGroup, onDeleteGroup,
+  mode, groups, selectedGroupId, onGroupChange, onCreateGroup, onRenameGroup, onDeleteGroup,
   searchQuery, onSearchChange,
   failedOnly, onToggleFailedOnly, failedCount,
   filteredItems,
@@ -21,7 +20,6 @@ export default function TrackerToolbar({
         value={selectedGroupId}
         onChange={e => {
           if (e.target.value === '__new__') { onCreateGroup(); return; }
-          if (e.target.value === '__new_sub__') { onCreateSubGroup(selectedGroupId); return; }
           onGroupChange(e.target.value);
         }}
         style={{
@@ -32,13 +30,8 @@ export default function TrackerToolbar({
         }}
       >
         <option value="">전체 그룹</option>
-        {flattenGroupTree(groups).map(g => (
-          <option key={g.id} value={String(g.id)}>
-            {'　'.repeat(g.depth)}{g.depth > 0 ? '└ ' : ''}{g.name}
-          </option>
-        ))}
+        {groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
         <option value="__new__">+ 새 그룹 만들기</option>
-        {selectedGroupId && <option value="__new_sub__">+ 이 그룹의 하위 그룹 만들기</option>}
       </select>
       {selectedGroupId && (
         <>
