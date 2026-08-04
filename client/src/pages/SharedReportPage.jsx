@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Radio, Search, ArrowUp, ArrowRight, Sparkles, ChevronDown } from 'lucide-react';
 import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
@@ -64,6 +64,19 @@ export default function SharedReportPage({ token }) {
   const [selectedGroupId, setSelectedGroupId] = useState(''); // '' = 전체
   const [searchQuery, setSearchQuery] = useState('');
   const [tableOpen, setTableOpen] = useState(false);
+  const [groupMenuOpen, setGroupMenuOpen] = useState(false);
+  const groupMenuRef = useRef(null);
+
+  // 네이티브 <select> 드롭다운은 브라우저 기본 팝업이라 리퀴드 글래스 카드 톤으로
+  // 커스텀할 수 없어, 버튼 + 절대위치 패널 조합으로 직접 구현한다 — 바깥 클릭하면 닫는다.
+  useEffect(() => {
+    if (!groupMenuOpen) return;
+    const handleClick = (e) => {
+      if (groupMenuRef.current && !groupMenuRef.current.contains(e.target)) setGroupMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [groupMenuOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -211,18 +224,47 @@ export default function SharedReportPage({ token }) {
                   />
                 </div>
                 {showGroupSwitcher && (
-                  <select
-                    value={selectedGroupId}
-                    onChange={e => setSelectedGroupId(e.target.value)}
-                    className="report-glass-pill"
-                    style={{
-                      height: 34, padding: '0 10px',
-                      color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, outline: 'none', cursor: 'pointer',
-                    }}
-                  >
-                    <option value="">전체 그룹</option>
-                    {report.groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
-                  </select>
+                  <div style={{ position: 'relative' }} ref={groupMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setGroupMenuOpen(v => !v)}
+                      className="report-glass-pill"
+                      style={{
+                        height: 34, padding: '0 10px', display: 'flex', alignItems: 'center', gap: 6,
+                        color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none',
+                      }}
+                    >
+                      {selectedGroupId ? (report.groups.find(g => String(g.id) === selectedGroupId)?.name ?? '전체 그룹') : '전체 그룹'}
+                      <ChevronDown size={13} style={{ opacity: 0.6, transition: 'transform 0.15s', transform: groupMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                    </button>
+
+                    {groupMenuOpen && (
+                      <div
+                        className="mac-dropdown mac-scroll p-1.5"
+                        style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', minWidth: 160, maxHeight: 280, overflowY: 'auto', zIndex: 10 }}
+                      >
+                        {[{ id: '', name: '전체 그룹' }, ...report.groups].map(g => {
+                          const value = String(g.id ?? '');
+                          const active = selectedGroupId === value;
+                          return (
+                            <button
+                              key={value || 'all'}
+                              type="button"
+                              onClick={() => { setSelectedGroupId(value); setGroupMenuOpen(false); }}
+                              style={{
+                                display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: 8,
+                                border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: active ? 700 : 500,
+                                color: active ? 'var(--accent)' : 'var(--text-primary)',
+                                background: active ? 'rgba(94,92,230,0.12)' : 'transparent',
+                              }}
+                            >
+                              {g.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
