@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Plus, Trash2, X, ChevronRight, ChevronDown, Star, RefreshCw, PauseCircle, PlayCircle } from 'lucide-react';
 import { formatRankStatus } from './trackerFormat';
-import { flattenGroupTree } from '../../utils/groupTree';
 
 const SORT_DEFAULT_DIR = { keyword: 'asc', searchVolume: 'desc', rank: 'asc', addedDate: 'desc' };
 // 신규 포스팅은 통상 1~2주 안에 순위가 크게 출렁이다 안정되는 편이라, 등록 14일이
@@ -320,11 +319,7 @@ export default function TrackerTable({
                         }}
                       >
                         <option value="">그룹 없음</option>
-                        {flattenGroupTree(groups).map(g => (
-                          <option key={g.id} value={String(g.id)}>
-                            {'　'.repeat(g.depth)}{g.depth > 0 ? '└ ' : ''}{g.name}
-                          </option>
-                        ))}
+                        {groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
                       </select>
                     </div>
                   ) : (

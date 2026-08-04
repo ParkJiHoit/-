@@ -382,30 +382,21 @@ export async function exportSnapshots(userId, trackedIds) {
 export async function listGroups(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT id, name, parent_id, created_at FROM tracker_groups WHERE user_id = $1 ORDER BY created_at ASC`,
+    `SELECT id, name, created_at FROM tracker_groups WHERE user_id = $1 ORDER BY created_at ASC`,
     [userId]
   );
   return rows;
 }
 
-export async function createGroup(userId, name, parentId = null) {
+export async function createGroup(userId, name) {
   const pool = getPool();
   const trimmed = String(name || '').trim();
   if (!trimmed) throw Object.assign(new Error('그룹 이름을 입력해 주세요.'), { status: 400 });
-
-  if (parentId != null) {
-    const { rows: parentRows } = await pool.query(
-      `SELECT id FROM tracker_groups WHERE id = $1 AND user_id = $2`,
-      [parentId, userId]
-    );
-    if (!parentRows.length) throw Object.assign(new Error('상위 그룹을 찾을 수 없습니다.'), { status: 404 });
-  }
-
   const { rows } = await pool.query(
-    `INSERT INTO tracker_groups (user_id, name, parent_id) VALUES ($1, $2, $3)
-     ON CONFLICT (user_id, name, (COALESCE(parent_id, -1))) DO UPDATE SET name = EXCLUDED.name
-     RETURNING id, name, parent_id, created_at`,
-    [userId, trimmed, parentId]
+    `INSERT INTO tracker_groups (user_id, name) VALUES ($1, $2)
+     ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
+     RETURNING id, name, created_at`,
+    [userId, trimmed]
   );
   return rows[0];
 }

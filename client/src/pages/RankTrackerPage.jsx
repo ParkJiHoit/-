@@ -8,7 +8,6 @@ import TrackerToolbar from '../components/rankTracker/TrackerToolbar';
 import TrackerTable from '../components/rankTracker/TrackerTable';
 import TrackerDetailDrawer from '../components/rankTracker/TrackerDetailDrawer';
 import { X, AlertTriangle } from 'lucide-react';
-import { collectGroupAndDescendantIds } from '../utils/groupTree';
 
 function getKSTToday() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -492,17 +491,15 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
 
   useEffect(() => { loadGroups(); }, [loadGroups]);
 
-  const handleCreateGroup = async (parentId = null) => {
-    const name = prompt(parentId ? '하위 그룹 이름을 입력하세요' : '새 그룹 이름을 입력하세요');
+  const handleCreateGroup = async () => {
+    const name = prompt('새 그룹 이름을 입력하세요');
     if (!name || !name.trim()) return;
     try {
-      const g = await apiFetch('/groups', { method: 'POST', body: JSON.stringify({ name, parentId }) }, token);
+      const g = await apiFetch('/groups', { method: 'POST', body: JSON.stringify({ name }) }, token);
       await loadGroups();
       setSelectedGroupId(String(g.id));
     } catch (e) { setError(e.message); }
   };
-
-  const handleCreateSubGroup = (parentGroupId) => handleCreateGroup(parentGroupId ? Number(parentGroupId) : null);
 
   const handleRenameGroup = async () => {
     if (!selectedGroupId) return;
@@ -718,13 +715,9 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     });
   };
 
-  // 그룹을 선택하면 그 그룹 자신뿐 아니라 하위 그룹(업체 아래의 캠페인 등)에 속한
-  // 항목까지 함께 보여준다 — 상위 그룹을 고르는 건 보통 "이 업체 전체를 보고 싶다"는
-  // 의도이지, 그 업체 이름표만 직접 붙은 항목만 보고 싶은 게 아니기 때문이다.
-  const groupIdsInScope = selectedGroupId ? collectGroupAndDescendantIds(groups, selectedGroupId) : null;
   const scopedItems = items.filter(i =>
     i.mode === mode &&
-    (!groupIdsInScope || (i.group_id != null && groupIdsInScope.has(i.group_id)))
+    (!selectedGroupId || String(i.group_id ?? '') === selectedGroupId)
   );
   const failedCount = scopedItems.filter(hasFetchFailedLink).length;
   const filteredItems = scopedItems.filter(i =>
@@ -874,7 +867,6 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         selectedGroupId={selectedGroupId}
         onGroupChange={(value) => { setSelectedGroupId(value); setSelected(null); setSnapshots([]); }}
         onCreateGroup={handleCreateGroup}
-        onCreateSubGroup={handleCreateSubGroup}
         onRenameGroup={handleRenameGroup}
         onDeleteGroup={handleDeleteGroup}
         searchQuery={searchQuery}

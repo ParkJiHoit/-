@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { filterItemsByCutoff, computeRankChanges, computeIntegratedChanges, collectGroupAndDescendantIds } from './reportShareService.js';
+import { filterItemsByCutoff, computeRankChanges, computeIntegratedChanges } from './reportShareService.js';
 
 test('filterItemsByCutoff: blog 모드는 링크별 addedDate 기준으로 컷오프 이전 링크를 제외한다', () => {
   const items = [
@@ -133,21 +133,4 @@ test('computeIntegratedChanges: 노출 시작(gained)이 노출 중단(lost)보�
   ];
   const result = computeIntegratedChanges(pairs);
   assert.deepEqual(result.map(c => c.keyword), ['gained-second', 'lost-first']);
-});
-
-test('collectGroupAndDescendantIds: 자기 자신 + 모든 하위 그룹(손자 포함) id를 모은다', () => {
-  const groups = [
-    { id: 1, parent_id: null },
-    { id: 2, parent_id: 1 },
-    { id: 3, parent_id: null },
-    { id: 4, parent_id: 2 },
-  ];
-  const ids = collectGroupAndDescendantIds(groups, 1);
-  assert.deepEqual([...ids].sort(), [1, 2, 4]);
-});
-
-test('collectGroupAndDescendantIds: 하위 그룹이 없으면 자기 자신만 반환한다', () => {
-  const groups = [{ id: 1, parent_id: null }, { id: 2, parent_id: null }];
-  const ids = collectGroupAndDescendantIds(groups, 2);
-  assert.deepEqual([...ids], [2]);
 });

@@ -139,33 +139,10 @@ export function computeIntegratedChanges(snapshotPairs) {
 
 async function fetchGroupNames(pool, userId) {
   const { rows } = await pool.query(
-    `SELECT id, name, parent_id FROM tracker_groups WHERE user_id = $1 ORDER BY name ASC`,
+    `SELECT id, name FROM tracker_groups WHERE user_id = $1 ORDER BY name ASC`,
     [userId]
   );
   return rows;
-}
-
-// 특정 그룹을 공유하면 그 그룹 자신 + 모든 하위 그룹(업체 아래의 캠페인 등)에 속한
-// 항목까지 함께 보여준다 — 클라이언트의 collectGroupAndDescendantIds와 동일한 로직
-// (서버/클라이언트가 각자 번들되므로 공유 모듈 대신 그대로 복제).
-export function collectGroupAndDescendantIds(groups, groupId) {
-  const byParent = new Map();
-  for (const g of groups) {
-    const key = g.parent_id ?? null;
-    if (!byParent.has(key)) byParent.set(key, []);
-    byParent.get(key).push(g);
-  }
-  const ids = new Set([groupId]);
-  const stack = [groupId];
-  while (stack.length) {
-    const current = stack.pop();
-    for (const child of byParent.get(current) || []) {
-      if (ids.has(child.id)) continue;
-      ids.add(child.id);
-      stack.push(child.id);
-    }
-  }
-  return ids;
 }
 
 // 리포트에 포함된(=컷오프를 통과한) 각 링크의 최초/최신 순위·통검 노출 여부를 비교해
@@ -236,11 +213,8 @@ export async function getPublicReport(token) {
   const cutoffDate = new Date(new Date(sharedAt).getTime() - 14 * 24 * 60 * 60 * 1000)
     .toISOString().slice(0, 10);
 
-  const [all, allGroups] = await Promise.all([listTracked(userId), fetchGroupNames(pool, userId)]);
-  const groupIdsInScope = groupId == null ? null : collectGroupAndDescendantIds(allGroups, groupId);
-  const scoped = groupId == null
-    ? all
-    : all.filter((i) => i.group_id != null && groupIdsInScope.has(i.group_id));
+  const all = await listTracked(userId);
+  const scoped = groupId == null ? all : all.filter((i) => i.group_id === groupId);
   const items = filterItemsByCutoff(scoped, cutoffDate).map((i) => ({
     id: i.id,
     keyword: i.keyword,
@@ -252,8 +226,10 @@ export async function getPublicReport(token) {
     averageCtr: i.averageCtr,
   }));
 
-  const { changes, integratedChanges } = await fetchChanges(pool, items);
-  const groups = groupId == null ? allGroups : [];
+  const [groups, { changes, integratedChanges }] = await Promise.all([
+    groupId == null ? fetchGroupNames(pool, userId) : Promise.resolve([]),
+    fetchChanges(pool, items),
+  ]);
 
   return { groupName: groupId == null ? null : groupName, groups, items, changes, integratedChanges };
 }
