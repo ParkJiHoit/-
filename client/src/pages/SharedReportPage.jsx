@@ -128,7 +128,7 @@ export default function SharedReportPage({ token }) {
   // 큼직한 숫자 요약(헤드라인)을 따로 뽑아둔다.
   const changeHeadline = useMemo(() => {
     const newTop5Count = filteredChanges.filter(c => c.type === 'new_top5').length;
-    const improvedCount = filteredChanges.length - newTop5Count;
+    const improvedCount = filteredChanges.filter(c => c.type === 'improved').length;
     const gainedCount = filteredIntegratedChanges.filter(c => c.type === 'gained').length;
     return { newTop5Count, improvedCount, gainedCount };
   }, [filteredChanges, filteredIntegratedChanges]);
@@ -316,7 +316,7 @@ export default function SharedReportPage({ token }) {
                               {group.map((c, j) => (
                                 <span key={j} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                                   <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
-                                    {c.type === 'new_top5' ? '미노출' : `${c.fromRank}위`}
+                                    {c.fromRank == null ? '미노출' : `${c.fromRank}위`}
                                   </span>
                                   <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
                                   <span style={{ fontSize: 12.5, fontWeight: 700, color: '#30D158' }}>{c.toRank}위</span>
