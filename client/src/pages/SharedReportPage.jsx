@@ -120,6 +120,17 @@ export default function SharedReportPage({ token }) {
     return (report.integratedChanges || []).filter(c => idsInScope.has(c.id));
   }, [report, idsInScope]);
 
+  // 위쪽 "주요 변동사항" 카드에 이미 나온 상승/신규진입 링크를, 아래 상세 테이블의
+  // 해당 순위 배지에서도 한 번 반짝여 표시한다 — 성과가 어디서 났는지 표를 훑지
+  // 않아도 바로 눈에 띄도록.
+  const improvedKeySet = useMemo(() => {
+    return new Set(
+      filteredChanges
+        .filter(c => c.type === 'improved' || c.type === 'new_top5')
+        .map(c => `${c.id}:${c.blogId}`)
+    );
+  }, [filteredChanges]);
+
   const searchVolumeById = useMemo(() => new Map(filteredItems.map(i => [i.id, i.searchVolume])), [filteredItems]);
   const averageCtrById = useMemo(() => new Map(filteredItems.map(i => [i.id, i.averageCtr])), [filteredItems]);
 
@@ -473,7 +484,13 @@ export default function SharedReportPage({ token }) {
                             </td>
                             <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{blogId || '—'}</td>
                             <td>{i === 0 ? (item.searchVolume ?? '—') : ''}</td>
-                            <td>{blogId ? <span className={rankBadgeClass(entry?.status ?? null, entry?.rank ?? null)}>{label}</span> : '—'}</td>
+                            <td>
+                              {blogId ? (
+                                <span className={`${rankBadgeClass(entry?.status ?? null, entry?.rank ?? null)}${improvedKeySet.has(`${item.id}:${blogId}`) ? ' mac-badge-flash' : ''}`}>
+                                  {label}
+                                </span>
+                              ) : '—'}
+                            </td>
                             <td style={{ color: entry?.integratedExposed ? '#0A84FF' : 'var(--text-tertiary)', fontWeight: 700 }}>
                               {entry?.integratedExposed == null ? '—' : (entry.integratedExposed ? 'O' : 'X')}
                             </td>

@@ -545,6 +545,20 @@ select option {
 [data-theme="light"] .mac-badge-indigo { background: rgba(88,86,214,0.1);   color: #3634a3; border-color: rgba(88,86,214,0.25); }
 [data-theme="light"] .mac-badge-teal   { background: rgba(85,190,240,0.1);  color: #0c5d8a; border-color: rgba(85,190,240,0.25); }
 
+/* 공유 리포트에서 순위가 오른 링크의 배지에 한 번 반짝이는 링을 씌워 성과를 강조한다
+   (무한 반복 아님 — 페이지 로드 시 1회만). */
+@keyframes mac-badge-flash-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(48,209,88,0.5); }
+  60%  { box-shadow: 0 0 0 6px rgba(48,209,88,0); }
+  100% { box-shadow: 0 0 0 0 rgba(48,209,88,0); }
+}
+.mac-badge-flash {
+  animation: mac-badge-flash-ring 1.6s cubic-bezier(0.16, 1, 0.3, 1) 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mac-badge-flash { animation: none; }
+}
+
 /* ─── Checkbox ─── */
 .mac-checkbox {
   -webkit-appearance: none;
