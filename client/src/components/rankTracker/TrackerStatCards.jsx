@@ -18,10 +18,20 @@ function StatCard({ label, value, total, color, icon: Icon, sub, compact, index 
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: compact ? 11 : 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+        <span style={glass ? {
+          fontSize: compact ? 12 : 13, fontWeight: 600, letterSpacing: '-0.1px', color: 'var(--text-secondary)',
+        } : {
+          fontSize: compact ? 11 : 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)',
+        }}>
           {label}
         </span>
-        <div style={{
+        <div style={glass ? {
+          width: compact ? 30 : 34, height: compact ? 30 : 34, borderRadius: compact ? 10 : 11, flexShrink: 0,
+          background: `linear-gradient(135deg, ${color}38, ${color}0c)`,
+          border: `1px solid ${color}45`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35), 0 2px 8px ${color}25`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        } : {
           width: compact ? 30 : 34, height: compact ? 30 : 34, borderRadius: compact ? 9 : 10, flexShrink: 0,
           background: color + '18', border: `1px solid ${color}35`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -29,7 +39,7 @@ function StatCard({ label, value, total, color, icon: Icon, sub, compact, index 
           <Icon size={compact ? 15 : 17} style={{ color }} />
         </div>
       </div>
-      <p style={{ margin: 0, fontSize: compact ? 34 : 38, fontWeight: 800, letterSpacing: '-1px', fontFamily: "'Space Grotesk', sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>
+      <p style={{ margin: 0, fontSize: compact ? 34 : 38, fontWeight: 800, letterSpacing: glass ? '-1.2px' : '-1px', fontFamily: "'Space Grotesk', sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>
         {animatedValue}
         {total != null && <span style={{ fontSize: compact ? 15 : 17, color: 'var(--text-tertiary)', fontWeight: 600 }}>/{total}</span>}
         {pct !== null && <span style={{ fontSize: compact ? 15 : 16, color, fontWeight: 700, marginLeft: 9 }}>{pct}%</span>}
