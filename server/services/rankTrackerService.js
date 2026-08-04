@@ -281,15 +281,49 @@ export async function mergeTrackedBlogUrls(userId, keyword, mode, newUrls = [], 
   return rows[0];
 }
 
+// 키워드 하나를 다른 그룹으로 옮길 때, 대상 그룹에 이미 같은 키워드가 있으면
+// idx_tk_unique_per_group 유니크 제약(deleteGroup과 동일한 제약)에 걸려 원본 DB
+// 에러가 그대로 노출된다. 대상 쪽 충돌 상대가 빈 껍데기(blog_ids 없음 — 예전 "링크
+// 단위 그룹 이동" 기능을 쓰다 남은 흔적 등)면 사람 개입 없이 지우고 이동을 이어가고,
+// 양쪽 다 실제 데이터가 있는 진짜 중복이면 사람이 정리하도록 안내한다.
 export async function updateTrackedGroup(userId, trackedId, groupId) {
   const pool = getPool();
-  const { rows } = await pool.query(
-    `UPDATE tracked_keywords SET group_id = $1 WHERE id = $2 AND user_id = $3
-     RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
-    [groupId, trackedId, userId]
-  );
-  if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
-  return rows[0];
+  try {
+    const { rows } = await pool.query(
+      `UPDATE tracked_keywords SET group_id = $1 WHERE id = $2 AND user_id = $3
+       RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
+      [groupId, trackedId, userId]
+    );
+    if (!rows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
+    return rows[0];
+  } catch (err) {
+    if (err.code !== '23505') throw err;
+    const { rows: movingRows } = await pool.query(
+      `SELECT keyword, mode FROM tracked_keywords WHERE id = $1 AND user_id = $2`,
+      [trackedId, userId]
+    );
+    if (!movingRows.length) throw Object.assign(new Error('항목을 찾을 수 없습니다.'), { status: 404 });
+    const moving = movingRows[0];
+    const { rows: conflictRows } = await pool.query(
+      `SELECT id, blog_ids FROM tracked_keywords
+       WHERE user_id = $1 AND keyword = $2 AND mode = $3 AND group_id IS NOT DISTINCT FROM $4 AND id <> $5`,
+      [userId, moving.keyword, moving.mode, groupId, trackedId]
+    );
+    const conflict = conflictRows[0];
+    if (conflict && !conflict.blog_ids?.length) {
+      await pool.query(`DELETE FROM tracked_keywords WHERE id = $1`, [conflict.id]);
+      const { rows } = await pool.query(
+        `UPDATE tracked_keywords SET group_id = $1 WHERE id = $2 AND user_id = $3
+         RETURNING id, keyword, mode, blog_ids, group_id, created_at`,
+        [groupId, trackedId, userId]
+      );
+      return rows[0];
+    }
+    throw Object.assign(
+      new Error(`"${moving.keyword}" 키워드가 이동할 그룹에 이미 있어 옮길 수 없습니다. 둘 중 하나를 정리한 뒤 다시 시도해 주세요.`),
+      { status: 409 }
+    );
+  }
 }
 
 export async function setFavorite(userId, trackedId, isFavorite) {
