@@ -43,7 +43,11 @@ export default function ExposureDonutCard({ total, segments, compact = true, ind
         borderTop: '1px solid rgba(10,132,255,0.25)',
       }}
     >
-      <span style={{ fontSize: compact ? 11 : 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+      <span style={glass ? {
+        fontSize: compact ? 12 : 13, fontWeight: 600, letterSpacing: '-0.1px', color: 'var(--text-secondary)',
+      } : {
+        fontSize: compact ? 11 : 12, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)',
+      }}>
         노출 현황
       </span>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
