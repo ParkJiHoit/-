@@ -290,7 +290,7 @@ export default function SharedReportPage({ token }) {
                   {sortedChanges.length === 0 ? (
                     <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
                   ) : (
-                    <ul style={{ margin: 0, padding: 0, paddingRight: 4, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 420, overflowY: 'auto' }}>
+                    <ul className="mac-scroll" style={{ margin: 0, padding: 0, paddingRight: 4, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 420, overflowY: 'auto' }}>
                       {groupChangesById(sortedChanges).map((group, i) => {
                         const volumeCtr = formatVolumeCtr(searchVolumeById.get(group[0].id), averageCtrById.get(group[0].id));
                         return (
@@ -341,7 +341,7 @@ export default function SharedReportPage({ token }) {
                   {sortedIntegratedChanges.length === 0 ? (
                     <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-tertiary)' }}>변동 없음</p>
                   ) : (
-                    <ul style={{ margin: 0, padding: 0, paddingRight: 4, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 420, overflowY: 'auto' }}>
+                    <ul className="mac-scroll" style={{ margin: 0, padding: 0, paddingRight: 4, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12, maxHeight: 420, overflowY: 'auto' }}>
                       {groupChangesById(sortedIntegratedChanges).map((group, i) => {
                         const volumeCtr = formatVolumeCtr(searchVolumeById.get(group[0].id), averageCtrById.get(group[0].id));
                         return (
