@@ -50,6 +50,16 @@ test('computeRankChanges: 미노출/미확인 상태에서 5위 이내 신규 �
   assert.equal(result[0].type, 'new_top5');
 });
 
+test('computeRankChanges: 이전 기록이 없는(신규) 링크는 5위 밖이어도 new_ranked로 포함한다', () => {
+  const pairs = [
+    { keyword: 'A', blogId: 'blog1/1', fromRank: null, fromStatus: null, toRank: 23, toStatus: 'ranked' },
+  ];
+  const result = computeRankChanges(pairs);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].type, 'new_ranked');
+  assert.equal(result[0].toRank, 23);
+});
+
 test('computeRankChanges: 3계단 이상 상승하면 improved로 표시, 2계단 이하는 제외', () => {
   const pairs = [
     { keyword: 'A', blogId: 'blog1/1', fromRank: 8, fromStatus: 'ranked', toRank: 5, toStatus: 'ranked' }, // 3계단, 포함
@@ -83,6 +93,16 @@ test('computeRankChanges: 임팩트(신규 5위 진입 > 상승폭 큰 순) 순�
   ];
   const result = computeRankChanges(pairs);
   assert.deepEqual(result.map(c => c.keyword), ['new-top5', 'big-improve', 'small-improve']);
+});
+
+test('computeRankChanges: new_ranked(신규·5위 밖)는 new_top5/improved보다 항상 뒤로 정렬된다', () => {
+  const pairs = [
+    { keyword: 'new-ranked', blogId: 'b1/1', fromRank: null, fromStatus: null, toRank: 30, toStatus: 'ranked' },
+    { keyword: 'small-improve', blogId: 'b2/1', fromRank: 8, fromStatus: 'ranked', toRank: 5, toStatus: 'ranked' },
+    { keyword: 'new-top5', blogId: 'b3/1', fromRank: null, fromStatus: null, toRank: 4, toStatus: 'ranked' },
+  ];
+  const result = computeRankChanges(pairs);
+  assert.deepEqual(result.map(c => c.keyword), ['new-top5', 'small-improve', 'new-ranked']);
 });
 
 test('computeRankChanges: id(트래킹 항목 id)를 그대로 통과시킨다', () => {
