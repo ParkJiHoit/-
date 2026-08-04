@@ -184,7 +184,8 @@ router.get('/groups', requirePremium, async (req, res, next) => {
 
 router.post('/groups', requirePremium, async (req, res, next) => {
   try {
-    const data = await createGroup(req.userId, req.body?.name);
+    const parentId = req.body?.parentId != null ? Number(req.body.parentId) : null;
+    const data = await createGroup(req.userId, req.body?.name, parentId);
     res.status(201).json(data);
   } catch (e) { next(e); }
 });
