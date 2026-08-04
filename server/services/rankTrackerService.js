@@ -185,7 +185,22 @@ export async function listTracked(userId) {
     const averageCtr = computeAverageCtr(row.pc_ctr, row.mobile_ctr);
     return { ...row, latestRanks: latestByBlog, searchVolume, averageCtr };
   }));
+  // 키워드의 원래 등록일(created_at)이 아니라 그 안의 링크 중 가장 최근에 추가된
+  // 것 기준으로 정렬한다 — 이미 등록된 키워드에 새 포스팅 URL만 추가한 경우에도
+  // 그 키워드가 목록 맨 위로 올라오게 하기 위함(클라이언트 "등록일" 정렬 기준과 동일).
+  result.sort((a, b) => {
+    if (!!a.is_favorite !== !!b.is_favorite) return a.is_favorite ? -1 : 1;
+    const ad = mostRecentSortDate(a);
+    const bd = mostRecentSortDate(b);
+    return bd.localeCompare(ad);
+  });
   return result;
+}
+
+export function mostRecentSortDate(item) {
+  const dates = Object.values(item.latestRanks || {}).map(r => r.addedDate).filter(Boolean);
+  const latest = dates.length ? dates.sort().at(-1) : null;
+  return latest || (item.created_at ? new Date(item.created_at).toISOString().slice(0, 10) : '');
 }
 
 // tracked_keywords.blog_ids는 단순 배열이라 "이 링크가 언제 추가됐는지"는 담지

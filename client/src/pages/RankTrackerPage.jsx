@@ -8,6 +8,7 @@ import TrackerToolbar from '../components/rankTracker/TrackerToolbar';
 import TrackerTable from '../components/rankTracker/TrackerTable';
 import TrackerDetailDrawer from '../components/rankTracker/TrackerDetailDrawer';
 import { X, AlertTriangle } from 'lucide-react';
+import { isEffectivelyStabilized } from '../utils/stabilization';
 
 function getKSTToday() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -633,7 +634,12 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
     finally { setRefreshingAll(false); }
   };
 
-  const handleRefreshAll = () => runRefreshJob(filteredItems.map(i => i.id), { skipFresh: true });
+  // 안정화된(수동 지정 또는 등록 14일 경과) 항목은 전체 갱신 대상에서 뺀다 — 이미
+  // 순위가 안정된 항목까지 매번 다시 조회하는 건 시간 낭비다.
+  const handleRefreshAll = () => runRefreshJob(
+    filteredItems.filter(i => !isEffectivelyStabilized(i, mode)).map(i => i.id),
+    { skipFresh: true }
+  );
   const handleRefreshSelected = (ids) => runRefreshJob(ids);
 
   const handleRetryFailed = async () => {
@@ -907,7 +913,6 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         onSetStabilizedSelected={handleSetStabilized}
         onRefreshSelected={handleRefreshSelected}
         refreshingSelected={refreshingAll}
-        isGroupSelected={!!selectedGroupId}
         loading={loading}
       />
 
