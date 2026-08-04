@@ -429,13 +429,61 @@ export async function renameGroup(userId, groupId, name) {
   return rows[0];
 }
 
-export async function deleteGroup(userId, groupId) {
-  const pool = getPool();
-  const { rowCount } = await pool.query(
-    `DELETE FROM tracker_groups WHERE id = $1 AND user_id = $2`,
+// 그룹을 지우면 소속 키워드의 group_id가 "그룹 없음"(NULL)으로 바뀌는데(FK ON DELETE
+// SET NULL), 이미 "그룹 없음"에 같은 키워드가 있으면 idx_tk_unique_per_group 유니크
+// 제약에 걸려 그룹 삭제 자체가 원본 DB 에러 그대로 실패한다. (예전에 있던 "링크 단위
+// 그룹 이동" 기능으로 링크를 전부 다른 그룹에 옮기고 남은 빈 껍데기 키워드 항목처럼,
+// blog_ids가 비어 데이터가 전혀 없는 쪽은 사람 개입 없이 자동으로 정리해 삭제를
+// 진행시키고, 양쪽 다 실제 데이터가 있는 진짜 중복이면 사람이 정리하도록 안내한다.
+async function resolveGroupDeleteConflicts(pool, userId, groupId) {
+  const { rows: conflicts } = await pool.query(
+    `SELECT a.id AS in_group_id, a.keyword, a.mode, a.blog_ids AS in_group_blog_ids,
+            b.id AS null_group_id, b.blog_ids AS null_group_blog_ids
+     FROM tracked_keywords a
+     JOIN tracked_keywords b
+       ON b.user_id = a.user_id AND b.keyword = a.keyword AND b.mode = a.mode AND b.group_id IS NULL
+     WHERE a.group_id = $1 AND a.user_id = $2`,
     [groupId, userId]
   );
-  if (rowCount === 0) throw Object.assign(new Error('그룹을 찾을 수 없습니다.'), { status: 404 });
+
+  const unresolved = [];
+  for (const c of conflicts) {
+    const inGroupEmpty = !c.in_group_blog_ids?.length;
+    const nullGroupEmpty = !c.null_group_blog_ids?.length;
+    if (inGroupEmpty) {
+      await pool.query(`DELETE FROM tracked_keywords WHERE id = $1`, [c.in_group_id]);
+    } else if (nullGroupEmpty) {
+      await pool.query(`DELETE FROM tracked_keywords WHERE id = $1`, [c.null_group_id]);
+    } else {
+      unresolved.push(c.keyword);
+    }
+  }
+  return unresolved;
+}
+
+export async function deleteGroup(userId, groupId) {
+  const pool = getPool();
+  try {
+    const { rowCount } = await pool.query(
+      `DELETE FROM tracker_groups WHERE id = $1 AND user_id = $2`,
+      [groupId, userId]
+    );
+    if (rowCount === 0) throw Object.assign(new Error('그룹을 찾을 수 없습니다.'), { status: 404 });
+  } catch (err) {
+    if (err.code !== '23505') throw err;
+    const unresolved = await resolveGroupDeleteConflicts(pool, userId, groupId);
+    if (unresolved.length) {
+      throw Object.assign(
+        new Error(`"${unresolved.join(', ')}" 키워드가 '그룹 없음'에 이미 있어 이 그룹을 삭제할 수 없습니다. 둘 중 하나를 정리한 뒤 다시 시도해 주세요.`),
+        { status: 409 }
+      );
+    }
+    const { rowCount } = await pool.query(
+      `DELETE FROM tracker_groups WHERE id = $1 AND user_id = $2`,
+      [groupId, userId]
+    );
+    if (rowCount === 0) throw Object.assign(new Error('그룹을 찾을 수 없습니다.'), { status: 404 });
+  }
 }
 
 // 소프트 삭제 — rank_snapshots는 tracked_id를 그대로 참조하므로 순위 기록이 보존되고,
