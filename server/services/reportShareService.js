@@ -90,27 +90,18 @@ export function filterItemsByCutoff(items, cutoffDate) {
 
 const NEW_TOP5_THRESHOLD = 5;
 const IMPROVED_THRESHOLD = 3;
-const MAX_CHANGES = 12;
+const MAX_CHANGES = 30;
 const MAX_INTEGRATED_CHANGES = 12;
-
-// 신규 5위 진입은 항상 "몇 계단 올랐는지"보다 임팩트가 크다고 보고, improved보다
-// 항상 높은 점수를 준다(위 계단 수는 최대 9 안팎이라 1000대 점수면 절대 안 겹친다).
-// new_ranked(신규지만 5위 밖)는 실제 순위 변동이 아니라 "이제 막 확인된" 정보라
-// 항상 음수 점수를 줘서 new_top5/improved보다 뒤로 밀리게 한다(둘 다 최소 3점
-// 이상이라 절대 안 겹침). new_top5끼리는 순위가 좋을수록, improved끼리는 상승폭이
-// 클수록, new_ranked끼리는 순위가 좋을수록 위로 오도록 정렬한다.
-function changeImpact(c) {
-  if (c.type === 'new_top5') return 1000 - c.toRank;
-  if (c.type === 'improved') return c.fromRank - c.toRank;
-  return -c.toRank;
-}
 
 // 리포트에 포함된 각 링크의 "컷오프 시작 직전 스냅샷"과 "가장 최신 스냅샷"을 비교해
 // 눈에 띄는 변화(신규 5위 이내 진입, 3계단 이상 상승)를 추려낸다. 컷오프 이전 기록이
 // 아예 없는(=이번 리포트 기간에 새로 등록된) 링크는 "개선폭"을 계산할 수 없지만,
 // 처음 확인된 순위 자체가 중요한 정보라 임계값과 무관하게 항상 포함한다(new_ranked).
-// 전부 나열하면 오히려 안 읽히므로 임팩트 순으로 최대 12개까지 반환한다. id(트래킹
-// 항목 id)는 클라이언트가 검색량 등 items 쪽 정보와 다시 매칭할 수 있도록 그대로 통과시킨다.
+// 정렬/컷오프는 "임팩트"(신규 5위 진입 > 상승폭)가 아니라 키워드 검색량 내림차순으로
+// 한다 — 클라이언트가 보여주는 순서와 동일한 기준이어야, 검색량 낮은 변화 때문에
+// 검색량 높은 실제 키워드의 변화가 상한(MAX_CHANGES)에 밀려 누락되는 일이 없다.
+// id(트래킹 항목 id)는 클라이언트가 검색량 등 items 쪽 정보와 다시 매칭할 수 있도록
+// 그대로 통과시킨다.
 export function computeRankChanges(snapshotPairs) {
   const changes = [];
   for (const p of snapshotPairs) {
@@ -119,12 +110,12 @@ export function computeRankChanges(snapshotPairs) {
     if (!isRanked) continue;
     if (!wasRanked) {
       const type = p.toRank <= NEW_TOP5_THRESHOLD ? 'new_top5' : 'new_ranked';
-      changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type });
+      changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type, searchVolume: p.searchVolume ?? 0 });
     } else if (p.fromRank - p.toRank >= IMPROVED_THRESHOLD) {
-      changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type: 'improved' });
+      changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, fromRank: p.fromRank, toRank: p.toRank, type: 'improved', searchVolume: p.searchVolume ?? 0 });
     }
   }
-  changes.sort((a, b) => changeImpact(b) - changeImpact(a));
+  changes.sort((a, b) => b.searchVolume - a.searchVolume);
   return changes.slice(0, MAX_CHANGES);
 }
 
@@ -182,6 +173,7 @@ async function fetchChanges(pool, items, cutoffDate) {
   const earliestByKey = new Map(earliest.map((r) => [`${r.tracked_id}:${r.blog_id}`, r]));
   const latestByKey = new Map(latest.map((r) => [`${r.tracked_id}:${r.blog_id}`, r]));
   const keywordById = new Map(items.map((i) => [i.id, i.keyword]));
+  const searchVolumeById = new Map(items.map((i) => [i.id, i.searchVolume]));
 
   const pairs = [];
   for (const key of latestByKey.keys()) {
@@ -194,6 +186,7 @@ async function fetchChanges(pool, items, cutoffDate) {
       id: trackedId,
       keyword: keywordById.get(trackedId) ?? '',
       blogId,
+      searchVolume: searchVolumeById.get(trackedId) ?? 0,
       fromRank: from?.rank ?? null,
       fromStatus: from?.status ?? null,
       toRank: to.rank,

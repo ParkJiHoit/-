@@ -78,31 +78,21 @@ test('computeRankChanges: 최신 상태가 순위권 밖이면 변동사항에�
   assert.equal(computeRankChanges(pairs).length, 0);
 });
 
-test('computeRankChanges: 최대 12개까지만 반환한다', () => {
-  const pairs = Array.from({ length: 15 }, (_, i) => ({
-    keyword: `K${i}`, blogId: `b${i}/1`, fromRank: null, fromStatus: 'not_in_top5', toRank: 3, toStatus: 'ranked',
+test('computeRankChanges: 최대 30개까지만 반환한다', () => {
+  const pairs = Array.from({ length: 35 }, (_, i) => ({
+    keyword: `K${i}`, blogId: `b${i}/1`, fromRank: null, fromStatus: 'not_in_top5', toRank: 3, toStatus: 'ranked', searchVolume: i,
   }));
-  assert.equal(computeRankChanges(pairs).length, 12);
+  assert.equal(computeRankChanges(pairs).length, 30);
 });
 
-test('computeRankChanges: 임팩트(신규 5위 진입 > 상승폭 큰 순) 순으로 정렬한다', () => {
+test('computeRankChanges: 타입과 무관하게 키워드 검색량 내림차순으로 정렬한다', () => {
   const pairs = [
-    { keyword: 'small-improve', blogId: 'b1/1', fromRank: 8, fromStatus: 'ranked', toRank: 5, toStatus: 'ranked' }, // 3계단
-    { keyword: 'new-top5', blogId: 'b2/1', fromRank: null, fromStatus: 'not_in_top5', toRank: 4, toStatus: 'ranked' }, // 신규 진입
-    { keyword: 'big-improve', blogId: 'b3/1', fromRank: 9, fromStatus: 'ranked', toRank: 1, toStatus: 'ranked' }, // 8계단
+    { keyword: 'small-volume', blogId: 'b1/1', fromRank: 8, fromStatus: 'ranked', toRank: 5, toStatus: 'ranked', searchVolume: 100 },
+    { keyword: 'big-volume-new', blogId: 'b2/1', fromRank: null, fromStatus: null, toRank: 23, toStatus: 'ranked', searchVolume: 5000 },
+    { keyword: 'mid-volume', blogId: 'b3/1', fromRank: 9, fromStatus: 'ranked', toRank: 1, toStatus: 'ranked', searchVolume: 800 },
   ];
   const result = computeRankChanges(pairs);
-  assert.deepEqual(result.map(c => c.keyword), ['new-top5', 'big-improve', 'small-improve']);
-});
-
-test('computeRankChanges: new_ranked(신규·5위 밖)는 new_top5/improved보다 항상 뒤로 정렬된다', () => {
-  const pairs = [
-    { keyword: 'new-ranked', blogId: 'b1/1', fromRank: null, fromStatus: null, toRank: 30, toStatus: 'ranked' },
-    { keyword: 'small-improve', blogId: 'b2/1', fromRank: 8, fromStatus: 'ranked', toRank: 5, toStatus: 'ranked' },
-    { keyword: 'new-top5', blogId: 'b3/1', fromRank: null, fromStatus: null, toRank: 4, toStatus: 'ranked' },
-  ];
-  const result = computeRankChanges(pairs);
-  assert.deepEqual(result.map(c => c.keyword), ['new-top5', 'small-improve', 'new-ranked']);
+  assert.deepEqual(result.map(c => c.keyword), ['big-volume-new', 'mid-volume', 'small-volume']);
 });
 
 test('computeRankChanges: id(트래킹 항목 id)를 그대로 통과시킨다', () => {
