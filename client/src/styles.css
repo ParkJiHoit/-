@@ -523,6 +523,7 @@ select option {
   font-weight: 600;
   white-space: nowrap;
   border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
 }
 
 .mac-badge-green   { background: rgba(48,209,88,0.15);   color: #30D158; border-color: rgba(48,209,88,0.22); }

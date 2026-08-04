@@ -840,7 +840,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
           fontSize: 13, color: '#FF453A', display: 'flex', justifyContent: 'space-between',
         }}>
           {error}
-          <button onClick={() => setError('')} style={{ background: 'none', border: 'none', color: '#FF453A', cursor: 'pointer' }}>✕</button>
+          <button onClick={() => setError('')} style={{ background: 'none', border: 'none', color: '#FF453A', cursor: 'pointer', padding: 8, margin: -8, display: 'flex' }}>✕</button>
         </div>
       )}
 
@@ -856,7 +856,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
               flex: 1, padding: '14px 18px', borderRadius: 14, cursor: 'pointer',
               border: `1.5px solid ${mode === m.id ? 'var(--accent)' : 'var(--border)'}`,
               background: mode === m.id ? 'rgba(10,132,255,0.08)' : 'var(--bg-elevated)',
-              transition: 'all 0.15s',
+              transition: 'border-color 0.15s, background-color 0.15s',
             }}
           >
             <div style={{ fontSize: 14, fontWeight: 700, color: mode === m.id ? 'var(--accent)' : 'var(--text-primary)', marginBottom: 3 }}>{m.title}</div>
@@ -1036,7 +1036,7 @@ function AddTrackerModal({ mode: defaultMode, token, editItem, groups, defaultGr
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div style={{ fontSize: 18, fontWeight: 700 }}>{isEdit ? `URL 추가 — ${editItem.keyword}` : '추적 등록'}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', padding: 8, margin: -8 }}>
             <X size={18} />
           </button>
         </div>
@@ -1119,7 +1119,7 @@ function AddTrackerModal({ mode: defaultMode, token, editItem, groups, defaultGr
                   }}>
                     {extractBlogId(url)}
                     <button type="button" onClick={() => setBlogUrls(p => p.filter(u => u !== url))}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 0, display: 'flex', lineHeight: 1 }}>
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 6, margin: -6, display: 'flex', lineHeight: 1 }}>
                       <X size={10} />
                     </button>
                   </span>

@@ -77,7 +77,7 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div style={{ fontSize: 18, fontWeight: 700 }}>대량 등록 (CSV/엑셀)</div>
           <button onClick={onClose} className="mac-icon-btn mac-icon-btn-danger mac-icon-btn-x"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 6, display: 'flex' }}>
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 8, margin: -8, display: 'flex' }}>
             <X size={18} />
           </button>
         </div>
