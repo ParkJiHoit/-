@@ -435,10 +435,6 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const [error, setError] = useState('');
   const [premiumOnly, setPremiumOnly] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
-  // 링크 단위 선택 — "itemId:blogId" 문자열 키. 항목(키워드) 전체가 아니라 그 안의
-  // 링크 일부만 골라 다른 그룹으로 옮길 때 쓴다(예: 같은 키워드에 7월·8월 배포분이
-  // 섞여 있을 때 8월 것만 분리).
-  const [selectedLinks, setSelectedLinks] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [failedOnly, setFailedOnly] = useState(false);
   const [failedToastCount, setFailedToastCount] = useState(null);
@@ -459,7 +455,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   }, [token]);
 
   useEffect(() => { loadItems(); }, [loadItems]);
-  useEffect(() => { setSelectedIds(new Set()); setSelectedLinks(new Set()); }, [mode, selectedGroupId]);
+  useEffect(() => { setSelectedIds(new Set()); }, [mode, selectedGroupId]);
 
   // 검색량·CTR이 비어 있는(각 기능 추가 이전에 등록된) 키워드를 조용히 백그라운드에서
   // 채운다 — 청크 단위 API라 세션당 한 번만 끝까지 돌리면 된다. 실패해도 페이지 이용에는
@@ -532,37 +528,6 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
   const handleMoveItemGroup = async (itemId, groupId) => {
     try {
       await apiFetch(`/${itemId}/group`, { method: 'PATCH', body: JSON.stringify({ groupId: groupId || null }) }, token);
-      await loadItems();
-    } catch (e) { setError(e.message); }
-  };
-
-  const handleToggleLinkSelect = (itemId, blogId) => {
-    const key = `${itemId}:${blogId}`;
-    setSelectedLinks(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      return next;
-    });
-  };
-
-  const handleClearLinkSelection = () => setSelectedLinks(new Set());
-
-  // 선택된 링크는 여러 키워드에 걸쳐 있을 수 있으므로 키워드별로 묶어서 각각
-  // 옮긴다 — 이동 API가 "한 키워드 안의 링크 일부"만 다루기 때문이다.
-  const handleMoveSelectedLinks = async (targetGroupId) => {
-    if (!selectedLinks.size || !token) return;
-    const byItem = new Map();
-    for (const key of selectedLinks) {
-      const [itemIdStr, blogId] = key.split(':');
-      const itemId = Number(itemIdStr);
-      if (!byItem.has(itemId)) byItem.set(itemId, []);
-      byItem.get(itemId).push(blogId);
-    }
-    try {
-      await Promise.all([...byItem.entries()].map(([itemId, blogIds]) =>
-        apiFetch(`/${itemId}/move-links`, { method: 'POST', body: JSON.stringify({ blogIds, groupId: targetGroupId }) }, token)
-      ));
-      setSelectedLinks(new Set());
       await loadItems();
     } catch (e) { setError(e.message); }
   };
@@ -952,10 +917,6 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
         refreshingSelected={refreshingAll}
         isGroupSelected={!!selectedGroupId}
         loading={loading}
-        selectedLinks={selectedLinks}
-        onToggleLinkSelect={handleToggleLinkSelect}
-        onMoveSelectedLinks={handleMoveSelectedLinks}
-        onClearLinkSelection={handleClearLinkSelection}
       />
 
       <TrackerDetailDrawer
