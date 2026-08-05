@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, Home, LogOut, MessageSquarePlus, Search, TrendingUp } from 'lucide-react';
+import { ChevronDown, Crown, FileText, Home, LogOut, MessageSquarePlus, Search, TrendingUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import SearchHistoryDropdown from './SearchHistoryDropdown';
@@ -38,7 +38,7 @@ const SERVICES = [
 ];
 
 export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService, theme, isSubscribed, onSelectHistory }) {
-  const { user, signInWithGoogle, signOut } = useAuth();
+  const { user, session, signInWithGoogle, signOut } = useAuth();
   const [serviceOpen, setServiceOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [hoveredNav, setHoveredNav] = useState(null);
@@ -48,8 +48,33 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
   const [feedbackContent, setFeedbackContent] = useState('');
   const [feedbackSending, setFeedbackSending] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
+  const [grantOpen, setGrantOpen] = useState(false);
+  const [grantEmail, setGrantEmail] = useState('');
+  const [grantSending, setGrantSending] = useState(false);
+  const [grantMessage, setGrantMessage] = useState(null); // { ok: bool, text: string }
   const dropdownRef = useRef(null);
   const userMenuRef = useRef(null);
+
+  async function handleGrantSubmit() {
+    if (!grantEmail.trim() || !session?.access_token) return;
+    setGrantSending(true);
+    setGrantMessage(null);
+    try {
+      const res = await fetch('/api/billing/admin/grant-premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ email: grantEmail.trim() }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.message || '처리에 실패했습니다.');
+      setGrantMessage({ ok: true, text: `"${body.email}" 계정을 프리미엄으로 전환했습니다.` });
+      setGrantEmail('');
+    } catch (e) {
+      setGrantMessage({ ok: false, text: e.message });
+    } finally {
+      setGrantSending(false);
+    }
+  }
 
   async function handleFeedbackSubmit() {
     if (!feedbackContent.trim()) return;
@@ -338,6 +363,18 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
                   {user.email}
                 </p>
               </div>
+              {isSubscribed === 'admin' && (
+                <button
+                  onClick={() => { setGrantOpen(true); setGrantMessage(null); setUserMenuOpen(false); }}
+                  className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left"
+                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-primary)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Crown style={{ width: 14, height: 14 }} />
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>이메일로 프리미엄 부여</span>
+                </button>
+              )}
               <button
                 onClick={() => { signOut(); setUserMenuOpen(false); }}
                 className="flex w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left"
@@ -446,6 +483,66 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
               </button>
             </>
           )}
+        </div>
+      </div>
+    )}
+
+    {grantOpen && (
+      <div onClick={() => setGrantOpen(false)} style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 2000, padding: 24,
+      }}>
+        <div onClick={e => e.stopPropagation()} style={{
+          background: isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 16, padding: '28px 28px',
+          maxWidth: 400, width: '100%',
+          border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--text-primary)' }}>이메일로 프리미엄 부여</h2>
+            <button onClick={() => setGrantOpen(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}>✕</button>
+          </div>
+
+          <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
+            이미 가입한 계정의 이메일을 입력하면 결제 없이 즉시 프리미엄으로 전환됩니다.
+          </p>
+
+          <input
+            type="email"
+            value={grantEmail}
+            onChange={e => setGrantEmail(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleGrantSubmit(); }}
+            placeholder="user@example.com"
+            style={{
+              width: '100%', borderRadius: 10, padding: '11px 14px', boxSizing: 'border-box',
+              border: '1.5px solid var(--border)',
+              background: isDark ? '#2C2C2E' : '#F2F2F7', color: 'var(--text-primary)',
+              fontSize: 13, fontFamily: 'inherit', outline: 'none',
+            }}
+          />
+
+          {grantMessage && (
+            <p style={{ margin: '10px 0 0', fontSize: 12.5, color: grantMessage.ok ? '#30D158' : 'var(--destructive)', lineHeight: 1.5 }}>
+              {grantMessage.text}
+            </p>
+          )}
+
+          <button
+            onClick={handleGrantSubmit}
+            disabled={grantSending || !grantEmail.trim()}
+            style={{
+              width: '100%', marginTop: 12, padding: '11px 0',
+              background: grantEmail.trim() ? 'var(--accent)' : isDark ? '#2C2C2E' : '#F2F2F7',
+              border: 'none', borderRadius: 10,
+              fontSize: 13, fontWeight: 700,
+              color: grantEmail.trim() ? '#fff' : 'var(--text-tertiary)',
+              cursor: grantEmail.trim() ? 'pointer' : 'default',
+              fontFamily: 'inherit', transition: 'background-color 0.15s, color 0.15s',
+            }}
+          >
+            {grantSending ? '처리 중...' : '프리미엄 전환'}
+          </button>
         </div>
       </div>
     )}

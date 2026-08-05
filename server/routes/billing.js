@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { ADMIN_EMAILS } from '../middleware/usageLimit.js';
-import { getSubscriptionStatus } from '../services/subscriptionService.js';
+import { getSubscriptionStatus, grantPremiumByEmail } from '../services/subscriptionService.js';
 
 const router = Router();
 
@@ -96,6 +96,15 @@ router.get('/status', requireAuth, async (req, res) => {
     console.error('[billing/status] 오류:', e.message);
     res.json({ status: 'none', isSubscribed: false });
   }
+});
+
+// 관리자 전용 — 이메일로 결제 없이 프리미엄 전환 (지인/체험 유저 등).
+router.post('/admin/grant-premium', requireAuth, async (req, res, next) => {
+  if (!req.isAdmin) return res.status(403).json({ message: '관리자만 사용할 수 있습니다.' });
+  try {
+    const result = await grantPremiumByEmail(req.body?.email);
+    res.json({ ok: true, ...result });
+  } catch (e) { next(e); }
 });
 
 export default router;
