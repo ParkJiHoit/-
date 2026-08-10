@@ -5,6 +5,7 @@ import TrackerStatCards from '../components/rankTracker/TrackerStatCards';
 import ExposureDonutCard from '../components/rankTracker/ExposureDonutCard';
 import { formatRankStatus } from '../components/rankTracker/trackerFormat';
 import { cardEntranceVariants } from '../utils/motionVariants';
+import useDelayedUnmount from '../hooks/useDelayedUnmount';
 import logoLight from '../assets/logo-light.png';
 import logoDark from '../assets/logo-dark.png';
 
@@ -66,6 +67,7 @@ export default function SharedReportPage({ token }) {
   const [tableOpen, setTableOpen] = useState(false);
   const [groupMenuOpen, setGroupMenuOpen] = useState(false);
   const groupMenuRef = useRef(null);
+  const { shouldRender: groupMenuMounted, isClosing: groupMenuClosing } = useDelayedUnmount(groupMenuOpen);
 
   // 네이티브 <select> 드롭다운은 브라우저 기본 팝업이라 리퀴드 글래스 카드 톤으로
   // 커스텀할 수 없어, 버튼 + 절대위치 패널 조합으로 직접 구현한다 — 바깥 클릭하면 닫는다.
@@ -249,9 +251,10 @@ export default function SharedReportPage({ token }) {
                       <ChevronDown size={13} style={{ opacity: 0.6, transition: 'transform 0.15s', transform: groupMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                     </button>
 
-                    {groupMenuOpen && (
+                    {groupMenuMounted && (
                       <div
                         className="mac-dropdown mac-scroll p-1.5"
+                        data-closing={groupMenuClosing}
                         style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', minWidth: 160, maxHeight: 280, overflowY: 'auto', zIndex: 10 }}
                       >
                         {[{ id: '', name: '전체 그룹' }, ...report.groups].map(g => {

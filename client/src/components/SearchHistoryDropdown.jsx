@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { History, Search, FileText } from 'lucide-react';
 import { supabase } from '../supabase';
+import useDelayedUnmount from '../hooks/useDelayedUnmount';
 
 const TYPE_META = {
   keyword: { label: '키워드 분석', icon: Search, color: '#0A84FF' },
@@ -25,6 +26,7 @@ export default function SearchHistoryDropdown({ user, isDark, onSelect, pillStyl
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const ref = useRef(null);
+  const { shouldRender: dropdownMounted, isClosing: dropdownClosing } = useDelayedUnmount(open);
 
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
@@ -66,9 +68,10 @@ export default function SearchHistoryDropdown({ user, isDark, onSelect, pillStyl
         최근 검색
       </button>
 
-      {open && (
+      {dropdownMounted && (
         <div
           className="mac-dropdown p-1.5"
+          data-closing={dropdownClosing}
           style={{
             position: 'absolute', left: '50%', transform: 'translateX(-50%)',
             top: 'calc(100% + 10px)', width: 300, maxHeight: 380, overflowY: 'auto',
