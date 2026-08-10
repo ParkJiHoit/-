@@ -1,5 +1,7 @@
 # UI 폴리시 2차 개선 (호버 게이팅 / 드롭다운 exit 애니메이션) Implementation Plan
 
+> STATUS: DONE (커밋 `c6be5a4` Task 1, `9593ce6` Task 2). Task 3은 계획대로 스킵.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Context:** `make-interfaces-feel-better`, `apple-design`, `emil-design-eng` 3개 디자인 스킬로 진행한 2차 UI 감사에서 findings #1~9를 도출했다. #1~6(leftover `transition: all`, 아이콘 버튼 hit area, `.mac-badge` tabular-nums 등)은 이미 적용 완료했고 커밋 `4a77992`로 푸시돼 있다. 이 플랜은 남은 #7, #8을 다룬다. #9(드롭다운 transform-origin)는 조사 결과 리스크 대비 이득이 작아 **스킵을 권장**한다 — 이유는 아래 Task 3 참고.
