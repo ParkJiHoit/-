@@ -71,7 +71,17 @@ export default function TrackerTable({
   const buildFlatRows = (items) => {
     const out = [];
     for (const item of items) {
-      const blogIds = mode === 'blog' ? (item.blog_ids || []) : [];
+      // blog_ids는 DB에 등록된 순서(=가장 오래된 게 먼저) 그대로라, 기존 키워드에
+      // 새 포스팅을 추가해도 대표 행(접혔을 때 보이는 첫 줄)이 계속 옛날 링크로
+      // 고정돼 있었다. 링크별 등록일(addedDate) 내림차순으로 정렬해 항상 가장 최근
+      // 등록한 링크가 대표 행 + 펼쳤을 때도 맨 위로 오게 한다.
+      const blogIds = mode === 'blog'
+        ? [...(item.blog_ids || [])].sort((a, b) => {
+            const da = item.latestRanks?.[a]?.addedDate || '';
+            const db = item.latestRanks?.[b]?.addedDate || '';
+            return db.localeCompare(da);
+          })
+        : [];
       if (!blogIds.length) {
         out.push({ item, blogId: null, isFirst: true, isOpen: false, hiddenCount: 0 });
       } else {

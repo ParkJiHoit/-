@@ -2,6 +2,7 @@ import { ChevronDown, Crown, FileText, Home, LogOut, MessageSquarePlus, Search, 
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import SearchHistoryDropdown from './SearchHistoryDropdown';
+import useDelayedUnmount from '../hooks/useDelayedUnmount';
 import logoLight from '../assets/logo-light.png';
 import logoDark from '../assets/logo-dark.png';
 
@@ -41,6 +42,8 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
   const { user, session, signInWithGoogle, signOut } = useAuth();
   const [serviceOpen, setServiceOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { shouldRender: serviceMenuMounted, isClosing: serviceMenuClosing } = useDelayedUnmount(serviceOpen);
+  const { shouldRender: userMenuMounted, isClosing: userMenuClosing } = useDelayedUnmount(userMenuOpen);
   const [hoveredNav, setHoveredNav] = useState(null);
   const [hoveredService, setHoveredService] = useState(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -210,9 +213,10 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
           />
         </button>
 
-        {serviceOpen && (
+        {serviceMenuMounted && (
           <div
             className="mac-dropdown p-1.5"
+            data-closing={serviceMenuClosing}
             style={{
               position: 'absolute',
               left: '50%',
@@ -351,8 +355,8 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
             <ChevronDown style={{ width: 10, height: 10, opacity: 0.5, transform: userMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
           </button>
 
-          {userMenuOpen && (
-            <div className="mac-dropdown p-1.5" style={{
+          {userMenuMounted && (
+            <div className="mac-dropdown p-1.5" data-closing={userMenuClosing} style={{
               position: 'absolute', right: 0, top: 'calc(100% + 10px)', minWidth: 180,
             }}>
               <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>

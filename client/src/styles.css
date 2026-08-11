@@ -135,9 +135,11 @@ button, input, select, textarea { font: inherit; }
   transition: opacity 0.12s;
 }
 
-.traffic-lights:hover .tl-red::after    { content: '×'; opacity: 1; }
-.traffic-lights:hover .tl-yellow::after { content: '–'; opacity: 1; }
-.traffic-lights:hover .tl-green::after  { content: '+'; opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .traffic-lights:hover .tl-red::after    { content: '×'; opacity: 1; }
+  .traffic-lights:hover .tl-yellow::after { content: '–'; opacity: 1; }
+  .traffic-lights:hover .tl-green::after  { content: '+'; opacity: 1; }
+}
 
 .tl-red    { background: #FF5F57; }
 .tl-yellow { background: #FFBD2E; }
@@ -295,7 +297,9 @@ select option {
   box-sizing: border-box;
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
-.mac-select:hover  { border-color: var(--text-tertiary); }
+@media (hover: hover) and (pointer: fine) {
+  .mac-select:hover  { border-color: var(--text-tertiary); }
+}
 .mac-select:focus  { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25); }
 [data-theme="light"] .mac-select { background: rgba(0, 0, 0, 0.04); }
 [data-theme="light"] .mac-select:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
@@ -314,10 +318,12 @@ select option {
 .mac-upload-label {
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-.mac-upload-label:hover {
-  border-color: var(--accent) !important;
-  color: var(--accent) !important;
-  background: rgba(10, 132, 255, 0.06);
+@media (hover: hover) and (pointer: fine) {
+  .mac-upload-label:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    background: rgba(10, 132, 255, 0.06);
+  }
 }
 
 /* Small input (filters) */
@@ -347,7 +353,9 @@ select option {
   transition: background 0.15s, transform 0.1s;
 }
 
-.mac-btn:hover:not(:disabled)  { background: var(--accent-hover); }
+@media (hover: hover) and (pointer: fine) {
+  .mac-btn:hover:not(:disabled)  { background: var(--accent-hover); }
+}
 .mac-btn:active:not(:disabled) { transform: scale(0.97); }
 .mac-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -363,13 +371,15 @@ select option {
   border: 1px solid var(--border);
 }
 
-.mac-btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-}
+@media (hover: hover) and (pointer: fine) {
+  .mac-btn-ghost:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+  }
 
-[data-theme="light"] .mac-btn-ghost:hover:not(:disabled) {
-  background: #D1D1D6;
+  [data-theme="light"] .mac-btn-ghost:hover:not(:disabled) {
+    background: #D1D1D6;
+  }
 }
 
 /* ─── Dropdown ─── */
@@ -381,6 +391,10 @@ select option {
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 1px rgba(0,0,0,0.4);
   animation: macScaleIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.mac-dropdown[data-closing="true"] {
+  animation: macScaleOut 0.12s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 [data-theme="light"] .mac-dropdown {
@@ -423,7 +437,9 @@ select option {
 }
 
 .mac-table tbody tr:last-child { border-bottom: none; }
-.mac-table tbody tr:hover { background: var(--bg-overlay); }
+@media (hover: hover) and (pointer: fine) {
+  .mac-table tbody tr:hover { background: var(--bg-overlay); }
+}
 
 .mac-table tbody td {
   padding: 10px 14px;
@@ -448,36 +464,44 @@ select option {
   border-radius: 6px;
 }
 
-.mac-icon-btn:hover {
-  transform: scale(1.15);
+@media (hover: hover) and (pointer: fine) {
+  .mac-icon-btn:hover {
+    transform: scale(1.15);
+  }
 }
 
 .mac-icon-btn:active {
   transform: scale(0.92);
 }
 
-.mac-icon-btn-danger:hover {
-  background: rgba(255,69,58,0.12);
-  color: #FF453A !important;
+@media (hover: hover) and (pointer: fine) {
+  .mac-icon-btn-danger:hover {
+    background: rgba(255,69,58,0.12);
+    color: #FF453A !important;
+  }
 }
 
 .mac-icon-btn-x svg {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.mac-icon-btn-x:hover svg {
-  transform: rotate(180deg);
+@media (hover: hover) and (pointer: fine) {
+  .mac-icon-btn-x:hover svg {
+    transform: rotate(180deg);
+  }
 }
 
 .mac-icon-btn-accent {
   transition: background 0.15s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.mac-icon-btn-accent:hover {
-  background: rgba(10,132,255,0.18);
-  color: var(--accent) !important;
-  transform: scale(1.35);
-  box-shadow: 0 0 0 5px rgba(10,132,255,0.14);
+@media (hover: hover) and (pointer: fine) {
+  .mac-icon-btn-accent:hover {
+    background: rgba(10,132,255,0.18);
+    color: var(--accent) !important;
+    transform: scale(1.35);
+    box-shadow: 0 0 0 5px rgba(10,132,255,0.14);
+  }
 }
 
 .mac-icon-btn-accent:active {
@@ -488,10 +512,12 @@ select option {
   transition: background 0.15s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.15s ease;
 }
 
-.mac-icon-btn-star:hover {
-  background: rgba(255,214,10,0.16);
-  color: #FFD60A !important;
-  transform: scale(1.25) rotate(-8deg);
+@media (hover: hover) and (pointer: fine) {
+  .mac-icon-btn-star:hover {
+    background: rgba(255,214,10,0.16);
+    color: #FFD60A !important;
+    transform: scale(1.25) rotate(-8deg);
+  }
 }
 
 .mac-icon-btn-star:active {
@@ -503,9 +529,11 @@ select option {
   border-radius: 6px;
 }
 
-.mac-expand-toggle:hover {
-  background: rgba(255,255,255,0.08);
-  color: var(--text-primary) !important;
+@media (hover: hover) and (pointer: fine) {
+  .mac-expand-toggle:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary) !important;
+  }
 }
 
 .mac-expand-toggle svg {
@@ -576,9 +604,11 @@ select option {
   vertical-align: middle;
 }
 
-.mac-checkbox:hover:not(:checked):not(:disabled) {
-  border-color: rgba(255,255,255,0.30);
-  background: rgba(255,255,255,0.05);
+@media (hover: hover) and (pointer: fine) {
+  .mac-checkbox:hover:not(:checked):not(:disabled) {
+    border-color: rgba(255,255,255,0.30);
+    background: rgba(255,255,255,0.05);
+  }
 }
 
 .mac-checkbox:focus-visible {
@@ -596,16 +626,20 @@ select option {
   box-shadow: 0 0 0 3px rgba(10,132,255,0.20);
 }
 
-.mac-checkbox:checked:hover {
-  background-color: var(--accent-hover);
-  border-color: var(--accent-hover);
+@media (hover: hover) and (pointer: fine) {
+  .mac-checkbox:checked:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
 }
 
 .mac-checkbox:disabled { opacity: 0.38; cursor: not-allowed; }
 
-[data-theme="light"] .mac-checkbox:hover:not(:checked):not(:disabled) {
-  border-color: rgba(0,0,0,0.30);
-  background: rgba(0,0,0,0.04);
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="light"] .mac-checkbox:hover:not(:checked):not(:disabled) {
+    border-color: rgba(0,0,0,0.30);
+    background: rgba(0,0,0,0.04);
+  }
 }
 
 [data-theme="light"] .mac-checkbox:focus-visible {
@@ -620,10 +654,14 @@ select option {
 .mac-scroll::-webkit-scrollbar            { width: 6px; height: 6px; }
 .mac-scroll::-webkit-scrollbar-track      { background: transparent; }
 .mac-scroll::-webkit-scrollbar-thumb      { background: #48484A; border-radius: 3px; }
-.mac-scroll::-webkit-scrollbar-thumb:hover{ background: #636366; }
+@media (hover: hover) and (pointer: fine) {
+  .mac-scroll::-webkit-scrollbar-thumb:hover{ background: #636366; }
+}
 
 [data-theme="light"] .mac-scroll::-webkit-scrollbar-thumb      { background: #C7C7CC; }
-[data-theme="light"] .mac-scroll::-webkit-scrollbar-thumb:hover{ background: #AEAEB2; }
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="light"] .mac-scroll::-webkit-scrollbar-thumb:hover{ background: #AEAEB2; }
+}
 
 /* ─── Toast ─── */
 .mac-toast {
@@ -670,6 +708,11 @@ select option {
 @keyframes macScaleIn {
   from { opacity: 0; transform: scale(0.95) translateY(-4px); }
   to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+@keyframes macScaleOut {
+  from { opacity: 1; transform: scale(1)    translateY(0); }
+  to   { opacity: 0; transform: scale(0.95) translateY(-4px); }
 }
 
 @keyframes floatBob {

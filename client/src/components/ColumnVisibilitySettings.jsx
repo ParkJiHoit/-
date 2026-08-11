@@ -1,6 +1,7 @@
 import { Columns3 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { KEYWORD_TABLE_COLUMNS } from './KeywordTable';
+import useDelayedUnmount from '../hooks/useDelayedUnmount';
 
 const DESCRIPTIONS = {
   relevanceLevel:      '기준 키워드와의 텍스트/의도 유사도를 높음·중간·낮음으로 구분합니다.',
@@ -14,6 +15,7 @@ const optionalCols = KEYWORD_TABLE_COLUMNS.filter((c) => !c.alwaysVisible);
 export default function ColumnVisibilitySettings({ visibleColumns, onChange, onReset }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const { shouldRender: dropdownMounted, isClosing: dropdownClosing } = useDelayedUnmount(open);
 
   const extraCount = optionalCols.filter((c) => !c.defaultVisible && visibleColumns[c.key]).length;
 
@@ -48,9 +50,10 @@ export default function ColumnVisibilitySettings({ visibleColumns, onChange, onR
         )}
       </button>
 
-      {open && (
+      {dropdownMounted && (
         <div
           className="mac-dropdown"
+          data-closing={dropdownClosing}
           style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, minWidth: 240, padding: '10px 14px', zIndex: 200 }}
         >
           <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: '0 0 8px' }}>
