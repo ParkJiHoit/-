@@ -74,26 +74,23 @@ export default function HeroScene({ className, dark = true, particleCount = 500,
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     scene.add(particles);
 
-    // 회전이 계속되는 배경은 전정 장애가 있는 사용자에게 불편할 수 있어, OS의
-    // reduced-motion 설정을 존중해 정적인 프레임 한 장만 렌더링하고 루프를 멈춘다.
-    const prefersReducedMotion = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-
+    // 장식용 배경이라 OS의 reduced-motion 설정과 무관하게 항상 회전한다
+    // (사용자 요청 — 콘텐츠를 가리거나 조작하는 애니메이션이 아니라 배경 장식이라
+    // 전정 장애 유발 가능성이 낮다고 판단).
     const clock = new THREE.Clock();
     let frameId;
     const animate = () => {
-      if (!prefersReducedMotion) {
-        const t = clock.getElapsedTime();
-        // 좌우로 살짝 흔들리는 건 그룹 전체(바깥+안쪽)가 함께 공유하고, Y축 회전은
-        // 각자 따로 줘서 안쪽이 바깥과 명확히 반대 방향으로 돌게 한다.
-        if (showSpheres) {
-          group.rotation.x = Math.sin(t * 0.1) * 0.3;
-          outerLine.rotation.y = t * 0.11 * intensity;
-          innerLine.rotation.y = -t * 0.18 * intensity;
-        }
-        particles.rotation.y = t * 0.02 * intensity;
+      const t = clock.getElapsedTime();
+      // 좌우로 살짝 흔들리는 건 그룹 전체(바깥+안쪽)가 함께 공유하고, Y축 회전은
+      // 각자 따로 줘서 안쪽이 바깥과 명확히 반대 방향으로 돌게 한다.
+      if (showSpheres) {
+        group.rotation.x = Math.sin(t * 0.1) * 0.3;
+        outerLine.rotation.y = t * 0.11 * intensity;
+        innerLine.rotation.y = -t * 0.18 * intensity;
       }
+      particles.rotation.y = t * 0.02 * intensity;
       renderer.render(scene, camera);
-      if (!prefersReducedMotion) frameId = requestAnimationFrame(animate);
+      frameId = requestAnimationFrame(animate);
     };
     frameId = requestAnimationFrame(animate);
 
