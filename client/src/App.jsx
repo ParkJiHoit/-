@@ -605,6 +605,7 @@ export default function App() {
   const hasResults    = (isKeywordTab && !!activeResult) ||
     (activeTab === 'blog' && (!!blogStructure || !!blogAudit)) ||
     activeTab === 'rank-tracker';
+  const [rankTrackerHasItems, setRankTrackerHasItems] = useState(false);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -905,16 +906,6 @@ export default function App() {
       {/* 결과 페이지 배경 */}
       {hasResults && (
         <>
-          {activeTab === 'rank-tracker' ? null : (
-            /* dot grid */
-            <div style={{
-              position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
-              backgroundImage: 'radial-gradient(circle, rgba(10,132,255,0.18) 1px, transparent 1px)',
-              backgroundSize: '28px 28px',
-              maskImage: 'radial-gradient(ellipse 100% 70% at 50% 0%, black 0%, transparent 100%)',
-              WebkitMaskImage: 'radial-gradient(ellipse 100% 70% at 50% 0%, black 0%, transparent 100%)',
-            }} />
-          )}
           {/* 상단 haze */}
           <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, height: 320, zIndex: 0, pointerEvents: 'none',
@@ -962,9 +953,9 @@ export default function App() {
       ) : activeTab === 'rank-tracker' ? (
         <div style={{ paddingTop: 'calc(var(--nav-offset) + 24px)', paddingBottom: 64 }}>
           <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-10">
-            <RankTrackerPage onLoginRequest={() => switchTab('auth')} onGoPricing={() => switchTab('pricing')} />
+            <RankTrackerPage onLoginRequest={() => switchTab('auth')} onGoPricing={() => switchTab('pricing')} onHasItemsChange={setRankTrackerHasItems} />
           </div>
-          <FeatureShowcaseSection tab="rank-tracker" />
+          {!rankTrackerHasItems && <FeatureShowcaseSection tab="rank-tracker" />}
         </div>
       ) : (
       <>
@@ -1162,7 +1153,7 @@ export default function App() {
         )}
       </div>
 
-      {(activeTab === 'analysis' || activeTab === 'blog') && (
+      {(activeTab === 'analysis' || activeTab === 'blog') && !hasResults && (
         <FeatureShowcaseSection tab={activeTab} />
       )}
 

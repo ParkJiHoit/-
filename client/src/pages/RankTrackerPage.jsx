@@ -412,12 +412,16 @@ async function apiFetch(path, options, token) {
 }
 
 // status는 이미 상위 5위 판정을 반영한다(백엔드 refreshRanks) — 'ranked'일 때만 숫자를 보여준다.
-export default function RankTrackerPage({ onLoginRequest, onGoPricing }) {
+export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItemsChange }) {
   const { user, session } = useAuth();
   const token = session?.access_token;
 
   const [mode, setMode] = useState('blog');
   const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    onHasItemsChange?.(items.length > 0);
+  }, [items, onHasItemsChange]);
   const [groups, setGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(''); // '' = 전체 그룹
   const [selected, setSelected] = useState(null);
