@@ -30,7 +30,7 @@ export default function DonutCard({ title, segments, total }) {
   const cy = size / 2;
 
   return (
-    <div className="mac-card" style={{
+    <div className="mac-card-glass" style={{
       padding: '18px 20px',
       background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.07) 0%, transparent 55%)',
       borderTop: '1px solid rgba(10,132,255,0.25)',

@@ -4,7 +4,7 @@ import DonutCard from './DonutCard';
 function StatCard({ label, value, sub, color }) {
   const accentColor = color || '#0A84FF';
   return (
-    <div className="mac-card" style={{
+    <div className="mac-card-glass" style={{
       padding: '20px 20px 18px', minWidth: 0,
       background: `radial-gradient(ellipse at top left, ${accentColor}10 0%, transparent 60%)`,
       borderTop: `1px solid ${accentColor}30`,
@@ -80,7 +80,7 @@ export default function BlogStructurePanel({ result, keyword }) {
 
   if (!posts.length) {
     return (
-      <div className="mac-card" style={{ padding: '48px 24px', textAlign: 'center' }}>
+      <div className="mac-card-glass" style={{ padding: '48px 24px', textAlign: 'center' }}>
         <div style={{ fontSize: 40, opacity: 0.25, marginBottom: 12 }}>📭</div>
         <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px' }}>
           "{keyword}"의 블로그 게시물을 찾을 수 없습니다
@@ -96,7 +96,7 @@ export default function BlogStructurePanel({ result, keyword }) {
   return (
     <div className="flex flex-col gap-5">
       {/* 헤더 */}
-      <div className="mac-card" style={{
+      <div className="mac-card-glass" style={{
         padding: '20px 24px',
         background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.09) 0%, transparent 60%)',
         borderTop: '2px solid rgba(10,132,255,0.35)',
@@ -168,7 +168,7 @@ export default function BlogStructurePanel({ result, keyword }) {
       </div>
 
       {/* 인사이트 */}
-      <div className="mac-card" style={{
+      <div className="mac-card-glass" style={{
         padding: '18px 20px',
         borderTop: '1px solid rgba(10,132,255,0.22)',
         background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
@@ -182,7 +182,7 @@ export default function BlogStructurePanel({ result, keyword }) {
       </div>
 
       {/* 상위 블로그 목록 */}
-      <div className="mac-card overflow-hidden" style={{ borderTop: '2px solid rgba(10,132,255,0.35)' }}>
+      <div className="mac-card-glass overflow-hidden" style={{ borderTop: '2px solid rgba(10,132,255,0.35)' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
             상위 블로그 상세

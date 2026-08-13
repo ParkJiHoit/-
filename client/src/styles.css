@@ -241,20 +241,30 @@ button, input, select, textarea { font: inherit; }
   box-shadow: 0 6px 18px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
 }
 
-/* ─── Subtle glass card (블로그 진단 결과 카드 전용) ───
-   report-glass-card보다 블러/채도/하이라이트를 절제한 톤다운 버전.
-   과한 유리 느낌 없이 배경 위에 살짝 떠 있는 정도로만 적용한다. */
+/* ─── Subtle glass card (블로그 진단/구조 분석 결과 카드 전용) ───
+   report-glass-card보다는 절제했지만, 살짝의 빛 맺힘(sheen)까지 더해
+   유리 재질감이 은은하게 느껴지는 중간 톤 버전. */
 .mac-card-glass {
   position: relative;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.025));
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid rgba(255,255,255,0.14);
   box-shadow:
-    0 4px 16px rgba(0,0,0,0.22),
-    inset 0 1px 0 rgba(255,255,255,0.09);
+    0 6px 22px rgba(0,0,0,0.26),
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset 0 -1px 0 rgba(255,255,255,0.03);
   isolation: isolate;
+}
+
+.mac-card-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 60% at 15% -10%, rgba(255,255,255,0.16), transparent 55%);
+  pointer-events: none;
 }
 
 .mac-card-glass > * {
@@ -263,11 +273,15 @@ button, input, select, textarea { font: inherit; }
 }
 
 [data-theme="light"] .mac-card-glass {
-  background: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.20));
-  border: 1px solid rgba(255,255,255,0.6);
+  background: linear-gradient(135deg, rgba(255,255,255,0.64), rgba(255,255,255,0.26));
+  border: 1px solid rgba(255,255,255,0.68);
   box-shadow:
-    0 4px 20px rgba(0,0,0,0.06),
-    inset 0 1px 0 rgba(255,255,255,0.55);
+    0 6px 22px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.65);
+}
+
+[data-theme="light"] .mac-card-glass::before {
+  background: radial-gradient(120% 60% at 15% -10%, rgba(255,255,255,0.4), transparent 55%);
 }
 
 /* ─── Input ─── */
