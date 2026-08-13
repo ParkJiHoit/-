@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ExternalLink, AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
+import ScoreRadarCard from './ScoreRadarCard';
 
 function InfoTip({ text }) {
   const [show, setShow] = useState(false);
@@ -59,37 +60,6 @@ const SCORE_MAX = {
   trust: 10,
   age: 10,
 };
-
-const SCORE_COLORS = {
-  activity:  '#0A84FF',
-  exposure:  'var(--success)',
-  influence: '#5E5CE6',
-  trust:     'var(--warning)',
-  age:       '#34C1FF',
-};
-
-function ScoreBar({ label, value, max, color, tip }) {
-  const pct = Math.round((value / max) * 100);
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <span style={{
-        fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)',
-        display: 'flex', alignItems: 'center', width: 104, flexShrink: 0, whiteSpace: 'nowrap',
-      }}>
-        {label}{tip && <InfoTip text={tip} />}
-      </span>
-      <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
-        <div style={{
-          width: `${pct}%`, height: '100%', borderRadius: 3, background: color,
-          transition: 'width 0.7s cubic-bezier(0.34,1.2,0.64,1)',
-        }} />
-      </div>
-      <span style={{ fontSize: 13, fontWeight: 800, color, minWidth: 42, textAlign: 'right', flexShrink: 0 }}>
-        {value}<span style={{ fontSize: 10.5, color: 'var(--text-tertiary)', fontWeight: 400 }}>/{max}</span>
-      </span>
-    </div>
-  );
-}
 
 function StatChip({ label, value, color, sub, tip }) {
   return (
@@ -181,7 +151,7 @@ export default function BlogAuditPanel({ result }) {
       {/* 항목별 점수 + KPI 가로 배치 */}
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
 
-        {/* 항목별 점수 바 */}
+        {/* 항목별 점수 — 레이더 차트 */}
         <div className="mac-card-glass" style={{
           padding: '20px 24px',
           borderTop: '1px solid rgba(10,132,255,0.22)',
@@ -189,19 +159,16 @@ export default function BlogAuditPanel({ result }) {
           flex: '1 1 0',
           minWidth: 0,
         }}>
-          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 16px' }}>
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 4px' }}>
             항목별 점수
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {Object.entries(score.breakdown).map(([key, val]) => (
-              <ScoreBar
-                key={key}
-                label={SCORE_LABELS[key] || key}
-                value={val}
-                max={SCORE_MAX[key] || 10}
-                color={SCORE_COLORS[key] || '#0A84FF'}
-                tip={SCORE_TIPS[key]}
-              />
+          <ScoreRadarCard breakdown={score.breakdown} labels={SCORE_LABELS} max={SCORE_MAX} color={gc.color} height={280} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', justifyContent: 'center', marginTop: 4 }}>
+            {Object.keys(score.breakdown).map(key => (
+              <span key={key} style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center' }}>
+                {SCORE_LABELS[key] || key}
+                {SCORE_TIPS[key] && <InfoTip text={SCORE_TIPS[key]} />}
+              </span>
             ))}
           </div>
         </div>
