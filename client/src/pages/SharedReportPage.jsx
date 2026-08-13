@@ -167,7 +167,9 @@ export default function SharedReportPage({ token }) {
     const newTop5Count = filteredChanges.filter(c => c.type === 'new_top5').length;
     const improvedCount = filteredChanges.filter(c => c.type === 'improved').length;
     const gainedCount = filteredIntegratedChanges.filter(c => c.type === 'gained').length;
-    return { newTop5Count, improvedCount, gainedCount };
+    const ongoingCount = filteredIntegratedChanges.filter(c => c.type === 'ongoing').length;
+    const lostCount = filteredIntegratedChanges.filter(c => c.type === 'lost').length;
+    return { newTop5Count, improvedCount, gainedCount, ongoingCount, lostCount };
   }, [filteredChanges, filteredIntegratedChanges]);
 
   // KPI 카드의 "추적 키워드" 자리를 대신할 노출 현황 도넛. all 모드(전체 순위
@@ -318,10 +320,12 @@ export default function SharedReportPage({ token }) {
                   {[
                     { Icon: ArrowUp, iconBg: 'rgba(48,209,88,0.14)', iconColor: '#30D158', count: changeHeadline.improvedCount, label: '순위 상승' },
                     { Icon: Sparkles, iconBg: 'rgba(255,159,10,0.14)', iconColor: '#FF9F0A', count: changeHeadline.newTop5Count, label: '신규 TOP5 진입' },
-                    { Icon: Radio, iconBg: 'rgba(94,92,230,0.14)', iconColor: '#5E5CE6', count: changeHeadline.gainedCount, label: '통합검색 노출 시작' },
+                    { Icon: Radio, iconBg: 'rgba(48,209,88,0.14)', iconColor: '#30D158', count: changeHeadline.gainedCount, label: '노출 시작' },
+                    { Icon: Radio, iconBg: 'rgba(94,92,230,0.14)', iconColor: '#5E5CE6', count: changeHeadline.ongoingCount, label: '노출 유지' },
+                    { Icon: Radio, iconBg: 'rgba(255,69,58,0.14)', iconColor: '#FF453A', count: changeHeadline.lostCount, label: '노출 종료' },
                   ].map(({ Icon, iconBg, iconColor, count, label }, i) => (
                     <div key={label} style={{
-                      flex: '1 1 200px', minWidth: 200,
+                      flex: '1 1 160px', minWidth: 160,
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: i === 0 ? '0 20px 0 0' : '0 20px',
                       borderLeft: i === 0 ? 'none' : '1px solid var(--border)',
