@@ -88,7 +88,7 @@ function ScoreBar({ label, value, max, color, tip }) {
 
 function StatChip({ label, value, color, sub, tip }) {
   return (
-    <div style={{
+    <div className="mac-card-glass" style={{
       display: 'flex', flexDirection: 'column', gap: 4, padding: '14px 16px',
       borderRadius: 12,
       background: `radial-gradient(ellipse at top left, ${color || '#0A84FF'}10 0%, transparent 60%)`,
@@ -115,7 +115,7 @@ export default function BlogAuditPanel({ result }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* 헤더 — 블로그 정보 + 종합 등급 */}
-      <div className="mac-card" style={{
+      <div className="mac-card-glass" style={{
         padding: '24px 28px',
         background: `radial-gradient(ellipse at top left, ${gc.color}10 0%, transparent 55%)`,
         borderTop: `2px solid ${gc.color}55`,
@@ -177,7 +177,7 @@ export default function BlogAuditPanel({ result }) {
       <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
 
         {/* 항목별 점수 바 */}
-        <div className="mac-card" style={{
+        <div className="mac-card-glass" style={{
           padding: '20px 24px',
           borderTop: '1px solid rgba(10,132,255,0.22)',
           background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
@@ -224,7 +224,7 @@ export default function BlogAuditPanel({ result }) {
 
       {/* 상위 노출 확인 포스트 */}
       {stats.exposedTitles.length > 0 && (
-        <div className="mac-card" style={{
+        <div className="mac-card-glass" style={{
           padding: '18px 22px',
           borderTop: '1px solid rgba(48,209,88,0.25)',
           background: 'radial-gradient(ellipse at top left, rgba(48,209,88,0.06) 0%, transparent 55%)',
@@ -248,7 +248,7 @@ export default function BlogAuditPanel({ result }) {
 
       {/* 최근 포스트 */}
       {recentPosts.length > 0 && (
-        <div className="mac-card overflow-hidden" style={{ borderTop: '2px solid rgba(10,132,255,0.35)' }}>
+        <div className="mac-card-glass overflow-hidden" style={{ borderTop: '2px solid rgba(10,132,255,0.35)' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
             <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
               최근 포스트

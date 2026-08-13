@@ -241,6 +241,35 @@ button, input, select, textarea { font: inherit; }
   box-shadow: 0 6px 18px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
 }
 
+/* ─── Subtle glass card (블로그 진단 결과 카드 전용) ───
+   report-glass-card보다 블러/채도/하이라이트를 절제한 톤다운 버전.
+   과한 유리 느낌 없이 배경 위에 살짝 떠 있는 정도로만 적용한다. */
+.mac-card-glass {
+  position: relative;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.09);
+  isolation: isolate;
+}
+
+.mac-card-glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme="light"] .mac-card-glass {
+  background: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.20));
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.55);
+}
+
 /* ─── Input ─── */
 .mac-input {
   width: 100%;
