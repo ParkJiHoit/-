@@ -10,7 +10,7 @@ const FONT_STACK = "'Pretendard Variable', 'Pretendard', -apple-system, sans-ser
 
 // 도넛 차트 카드 — 블로그 구조 분석 화면에서 쓰는 분포 시각화.
 // segments: [{ key, label, color, value }]
-export default function DonutCard({ title, segments, total, size = 216 }) {
+export default function DonutCard({ title, segments, total, size = 264 }) {
   const chartElRef = useRef(null);
   const chartRef = useRef(null);
   const filtered = segments.filter(s => s.value > 0);
