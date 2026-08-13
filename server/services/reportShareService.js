@@ -119,18 +119,27 @@ export function computeRankChanges(snapshotPairs) {
   return changes.slice(0, MAX_CHANGES);
 }
 
-// 순위와 별개로 "통합검색(블로그 collection) 노출 여부"가 바뀐 링크만 추려낸다.
-// all 모드는 integrated_exposed가 항상 null이라 자연히 제외된다(같음 취급 → 스킵).
-// "노출 시작"(좋은 소식)이 "노출 중단"보다 먼저 보이도록 gained를 앞에 정렬한다.
+// 순위와 별개로 "통합검색(블로그 collection) 노출 여부"를 보여준다. 이건 순위 변화와
+// 달리 "역대 최초 스냅샷" 대비가 아니라 "바로 직전 스냅샷" 대비여야 한다 — 역대
+// 최초 기준으로 비교하면 한 번 노출이 시작된 링크는 그 뒤로 계속 노출 중이어도
+// 매 리포트마다 "미노출 → 노출"이 다시 나타나서(이미 며칠 전에 일어난 일인데 오늘도
+// 방금 바뀐 것처럼 보임), 실제로는 아무 변화가 없는데도 변화로 오인하게 만든다.
+// 그래서 previousByKey(직전 스냅샷)를 기준으로 "gained"(방금 노출 시작)/"lost"(방금
+// 노출 중단)/"ongoing"(계속 노출 중 — 좋은 소식이라 같이 보여줄 가치가 있음)을
+// 구분한다. 계속 미노출인 경우는 보여줄 정보가 없어 제외한다.
+// all 모드는 integrated_exposed가 항상 null이라 자연히 제외된다.
 export function computeIntegratedChanges(snapshotPairs) {
   const changes = [];
   for (const p of snapshotPairs) {
+    if (!p.hasPreviousSnapshot) continue;
     const wasExposed = p.fromIntegratedExposed === true;
     const isExposed = p.toIntegratedExposed === true;
-    if (wasExposed === isExposed) continue;
-    changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, type: isExposed ? 'gained' : 'lost' });
+    if (!wasExposed && !isExposed) continue;
+    const type = wasExposed && isExposed ? 'ongoing' : (isExposed ? 'gained' : 'lost');
+    changes.push({ id: p.id, keyword: p.keyword, blogId: p.blogId, type });
   }
-  changes.sort((a, b) => (a.type === 'gained' ? 0 : 1) - (b.type === 'gained' ? 0 : 1));
+  const order = { gained: 0, ongoing: 1, lost: 2 };
+  changes.sort((a, b) => order[a.type] - order[b.type]);
   return changes.slice(0, MAX_INTEGRATED_CHANGES);
 }
 
@@ -163,7 +172,7 @@ async function fetchChanges(pool, items) {
   const trackedIds = [...new Set(items.map((i) => i.id))];
   if (!trackedIds.length) return { changes: [], integratedChanges: [] };
 
-  const [{ rows: earliest }, { rows: latest }] = await Promise.all([
+  const [{ rows: earliest }, { rows: latest }, { rows: previous }] = await Promise.all([
     pool.query(
       `SELECT DISTINCT ON (tracked_id, blog_id) tracked_id, blog_id, rank, status, integrated_exposed, snapshotted_at
        FROM rank_snapshots WHERE tracked_id = ANY($1)
@@ -176,10 +185,21 @@ async function fetchChanges(pool, items) {
        ORDER BY tracked_id, blog_id, snapshotted_at DESC`,
       [trackedIds]
     ),
+    // 통합검색 노출 변동은 "역대 최초" 대비가 아니라 "바로 직전" 대비여야 하므로
+    // 각 tracked_id/blog_id별로 최신에서 두 번째로 최근인 스냅샷을 따로 가져온다.
+    pool.query(
+      `SELECT tracked_id, blog_id, integrated_exposed, snapshotted_at FROM (
+         SELECT tracked_id, blog_id, integrated_exposed, snapshotted_at,
+                ROW_NUMBER() OVER (PARTITION BY tracked_id, blog_id ORDER BY snapshotted_at DESC) AS rn
+         FROM rank_snapshots WHERE tracked_id = ANY($1)
+       ) t WHERE rn = 2`,
+      [trackedIds]
+    ),
   ]);
 
   const earliestByKey = new Map(earliest.map((r) => [`${r.tracked_id}:${r.blog_id}`, r]));
   const latestByKey = new Map(latest.map((r) => [`${r.tracked_id}:${r.blog_id}`, r]));
+  const previousByKey = new Map(previous.map((r) => [`${r.tracked_id}:${r.blog_id}`, r]));
   const keywordById = new Map(items.map((i) => [i.id, i.keyword]));
   const searchVolumeById = new Map(items.map((i) => [i.id, i.searchVolume]));
 
@@ -188,9 +208,11 @@ async function fetchChanges(pool, items) {
     const [trackedIdStr, blogId] = key.split(':');
     const trackedId = Number(trackedIdStr);
     const from = earliestByKey.get(key);
+    const prev = previousByKey.get(key);
     const to = latestByKey.get(key);
     if (!to) continue;
     const hasPriorSnapshot = !!from && !sameSnapshotDate(from.snapshotted_at, to.snapshotted_at);
+    const hasPreviousSnapshot = !!prev && !sameSnapshotDate(prev.snapshotted_at, to.snapshotted_at);
     pairs.push({
       id: trackedId,
       keyword: keywordById.get(trackedId) ?? '',
@@ -200,7 +222,8 @@ async function fetchChanges(pool, items) {
       fromStatus: hasPriorSnapshot ? from.status : null,
       toRank: to.rank,
       toStatus: to.status,
-      fromIntegratedExposed: hasPriorSnapshot ? from.integrated_exposed : null,
+      hasPreviousSnapshot,
+      fromIntegratedExposed: hasPreviousSnapshot ? prev.integrated_exposed : null,
       toIntegratedExposed: to.integrated_exposed,
     });
   }

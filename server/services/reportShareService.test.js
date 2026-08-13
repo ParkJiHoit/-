@@ -103,44 +103,61 @@ test('computeRankChanges: id(트래킹 항목 id)를 그대로 통과시킨다',
   assert.equal(result[0].id, 42);
 });
 
-test('computeIntegratedChanges: 통검 미노출 -> 노출이면 gained로 표시', () => {
+test('computeIntegratedChanges: 직전 스냅샷 대비 통검 미노출 -> 노출이면 gained로 표시', () => {
   const pairs = [
-    { id: 1, keyword: 'A', blogId: 'blog1/1', fromIntegratedExposed: false, toIntegratedExposed: true },
+    { id: 1, keyword: 'A', blogId: 'blog1/1', hasPreviousSnapshot: true, fromIntegratedExposed: false, toIntegratedExposed: true },
   ];
   const result = computeIntegratedChanges(pairs);
   assert.equal(result.length, 1);
   assert.equal(result[0].type, 'gained');
 });
 
-test('computeIntegratedChanges: 통검 노출 -> 미노출이면 lost로 표시', () => {
+test('computeIntegratedChanges: 직전 스냅샷 대비 통검 노출 -> 미노출이면 lost로 표시', () => {
   const pairs = [
-    { id: 1, keyword: 'A', blogId: 'blog1/1', fromIntegratedExposed: true, toIntegratedExposed: false },
+    { id: 1, keyword: 'A', blogId: 'blog1/1', hasPreviousSnapshot: true, fromIntegratedExposed: true, toIntegratedExposed: false },
   ];
   const result = computeIntegratedChanges(pairs);
   assert.equal(result.length, 1);
   assert.equal(result[0].type, 'lost');
 });
 
-test('computeIntegratedChanges: 노출 여부가 그대로면 변동사항에서 제외한다', () => {
+test('computeIntegratedChanges: 직전 스냅샷도 계속 노출 중이면 ongoing으로 표시 (미노출->노출로 오인하지 않는다)', () => {
   const pairs = [
-    { id: 1, keyword: 'A', blogId: 'blog1/1', fromIntegratedExposed: true, toIntegratedExposed: true },
-    { id: 2, keyword: 'B', blogId: 'blog2/1', fromIntegratedExposed: null, toIntegratedExposed: null },
+    { id: 1, keyword: 'A', blogId: 'blog1/1', hasPreviousSnapshot: true, fromIntegratedExposed: true, toIntegratedExposed: true },
+  ];
+  const result = computeIntegratedChanges(pairs);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].type, 'ongoing');
+});
+
+test('computeIntegratedChanges: 계속 미노출이면 변동사항에서 제외한다', () => {
+  const pairs = [
+    { id: 1, keyword: 'A', blogId: 'blog1/1', hasPreviousSnapshot: true, fromIntegratedExposed: false, toIntegratedExposed: false },
+    { id: 2, keyword: 'B', blogId: 'blog2/1', hasPreviousSnapshot: true, fromIntegratedExposed: null, toIntegratedExposed: null },
+  ];
+  assert.equal(computeIntegratedChanges(pairs).length, 0);
+});
+
+test('computeIntegratedChanges: 직전 스냅샷이 없으면(신규 트래킹) 비교 기준이 없어 제외한다', () => {
+  const pairs = [
+    { id: 1, keyword: 'A', blogId: 'blog1/1', hasPreviousSnapshot: false, fromIntegratedExposed: null, toIntegratedExposed: true },
   ];
   assert.equal(computeIntegratedChanges(pairs).length, 0);
 });
 
 test('computeIntegratedChanges: 최대 12개까지만 반환한다', () => {
   const pairs = Array.from({ length: 15 }, (_, i) => ({
-    id: i, keyword: `K${i}`, blogId: `b${i}/1`, fromIntegratedExposed: false, toIntegratedExposed: true,
+    id: i, keyword: `K${i}`, blogId: `b${i}/1`, hasPreviousSnapshot: true, fromIntegratedExposed: false, toIntegratedExposed: true,
   }));
   assert.equal(computeIntegratedChanges(pairs).length, 12);
 });
 
-test('computeIntegratedChanges: 노출 시작(gained)이 노출 중단(lost)보다 먼저 오도록 정렬한다', () => {
+test('computeIntegratedChanges: gained -> ongoing -> lost 순으로 정렬한다', () => {
   const pairs = [
-    { id: 1, keyword: 'lost-first', blogId: 'b1/1', fromIntegratedExposed: true, toIntegratedExposed: false },
-    { id: 2, keyword: 'gained-second', blogId: 'b2/1', fromIntegratedExposed: false, toIntegratedExposed: true },
+    { id: 1, keyword: 'lost-last', blogId: 'b1/1', hasPreviousSnapshot: true, fromIntegratedExposed: true, toIntegratedExposed: false },
+    { id: 2, keyword: 'gained-first', blogId: 'b2/1', hasPreviousSnapshot: true, fromIntegratedExposed: false, toIntegratedExposed: true },
+    { id: 3, keyword: 'ongoing-mid', blogId: 'b3/1', hasPreviousSnapshot: true, fromIntegratedExposed: true, toIntegratedExposed: true },
   ];
   const result = computeIntegratedChanges(pairs);
-  assert.deepEqual(result.map(c => c.keyword), ['gained-second', 'lost-first']);
+  assert.deepEqual(result.map(c => c.keyword), ['gained-first', 'ongoing-mid', 'lost-last']);
 });

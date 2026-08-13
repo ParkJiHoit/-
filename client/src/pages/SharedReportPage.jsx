@@ -45,9 +45,9 @@ function groupChangesById(list) {
   return order.map(id => byId.get(id));
 }
 
-// 통합검색 노출 변동사항은 링크마다 "미노출 → 노출" 또는 "노출 → 미노출" 둘 중
-// 하나뿐이라, 링크 수만큼 같은 칩을 반복하면 지저분해진다. 같은 타입끼리는
-// 칩 하나로 합치고 "×N"으로 개수만 표시한다.
+// 통합검색 노출 변동사항은 링크마다 "미노출 → 노출"(gained) / "노출 → 미노출"(lost) /
+// 계속 노출 중(ongoing) 셋 중 하나뿐이라, 링크 수만큼 같은 칩을 반복하면 지저분해진다.
+// 같은 타입끼리는 칩 하나로 합치고 "×N"으로 개수만 표시한다.
 function summarizeByType(group) {
   const order = [];
   const counts = new Map();
@@ -418,15 +418,24 @@ export default function SharedReportPage({ token }) {
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                               {summarizeByType(group).map(({ type, count }) => (
-                                <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                                  <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
-                                    {type === 'gained' ? '미노출' : '노출'}
+                                type === 'ongoing' ? (
+                                  <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#30D158', flexShrink: 0 }} />
+                                    <span style={{ fontSize: 12.5, fontWeight: 700, color: '#30D158' }}>
+                                      노출 지속 중{count > 1 && ` ×${count}`}
+                                    </span>
                                   </span>
-                                  <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                                  <span style={{ fontSize: 12.5, fontWeight: 700, color: type === 'gained' ? '#30D158' : '#FF453A' }}>
-                                    {type === 'gained' ? '노출' : '미노출'}{count > 1 && ` ×${count}`}
+                                ) : (
+                                  <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                    <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
+                                      {type === 'gained' ? '미노출' : '노출'}
+                                    </span>
+                                    <ArrowRight size={11} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                                    <span style={{ fontSize: 12.5, fontWeight: 700, color: type === 'gained' ? '#30D158' : '#FF453A' }}>
+                                      {type === 'gained' ? '노출' : '미노출'}{count > 1 && ` ×${count}`}
+                                    </span>
                                   </span>
-                                </span>
+                                )
                               ))}
                             </div>
                           </li>
