@@ -1,4 +1,4 @@
-import { ExternalLink, CheckCircle2 } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import DonutCard from './DonutCard';
 
 const DONUT_SIZE = 264;
@@ -52,18 +52,18 @@ function InsightRow({ insight, index, isLast }) {
   );
 }
 
-function GuideCard({ text }) {
+function GuideColumn({ title, text, isFirst, isLast }) {
   return (
     <div style={{
-      flex: '1 1 300px',
-      display: 'flex', gap: 10, alignItems: 'flex-start',
-      padding: '14px 16px',
-      borderRadius: 12,
-      background: 'var(--bg-overlay)',
-      border: '1px solid var(--border)',
+      flex: '1 1 220px', minWidth: 220,
+      paddingLeft: isFirst ? 0 : 20,
+      paddingRight: isLast ? 0 : 20,
+      borderRight: isLast ? 'none' : '1px solid var(--border)',
     }}>
-      <CheckCircle2 size={16} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }} />
-      <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7 }}>
+      <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 8px', letterSpacing: '-0.2px' }}>
+        {title}
+      </p>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.75 }}>
         {text}
       </p>
     </div>
@@ -100,42 +100,45 @@ const RECENCY_SEGMENTS = [
 const POSITION_LABEL = { front: '앞', middle: '중간', back: '뒤', partial: '부분', none: '없음' };
 const POSITION_COLOR = { front: '#0a84ff', middle: '#5e5ce6', back: '#bf5af2', partial: '#ff9f0a', none: 'var(--text-tertiary)' };
 
-// 분석 수치를 바탕으로 실행 가능한 포스팅 작성 가이드 문장을 만든다.
+// 분석 수치를 바탕으로 "키워드 포함 여부 / 키워드 위치 / 최신성 / 블로그 다양성"
+// 4개 구간으로 나눈 포스팅 작성 가이드를 만든다.
 function buildPostingGuide({ titleIncludeRate, positionCounts = {}, freshRate, diversityRate, avgTitleLength }, keyword, totalPosts) {
-  const tips = [];
-
-  if (titleIncludeRate >= 50) {
-    tips.push(`제목에 "${keyword}"를 꼭 포함하세요 — 상위 ${totalPosts}개 중 ${titleIncludeRate}%가 제목에 키워드를 포함하고 있어요.`);
-  } else {
-    tips.push(`제목에 키워드를 넣지 않아도 상위 노출이 가능한 키워드예요 — 자연스러운 제목으로 클릭률을 높이는 게 더 유리할 수 있어요.`);
+  let titleText = titleIncludeRate >= 50
+    ? `상위 ${totalPosts}개 중 ${titleIncludeRate}%가 제목에 "${keyword}"를 포함하고 있어요. 제목에 키워드를 꼭 넣으세요.`
+    : `상위 결과의 ${titleIncludeRate}%만 제목에 키워드를 포함해요. 자연스러운 제목으로 클릭률을 높이는 것도 방법이에요.`;
+  if (avgTitleLength) {
+    titleText += ` 평균 제목 길이는 ${avgTitleLength}자예요.`;
   }
 
   const topPos = topSegment(positionCounts, POSITION_SEGMENTS);
-  if (topPos && topPos.value > 0) {
-    if (topPos.label === '앞') {
-      tips.push('키워드는 제목 맨 앞부분에 배치하세요 — 상위 글의 다수가 이 패턴을 따르고 있어요.');
-    } else if (topPos.label !== '없음') {
-      tips.push(`키워드를 제목 ${topPos.label}에 배치한 글이 가장 많아요 — 이 패턴을 참고해 배치를 정해보세요.`);
-    }
-  }
-
-  if (freshRate >= 70) {
-    tips.push('발행 경쟁이 치열한 키워드예요 — 꾸준히 새 글을 올려야 순위를 유지할 수 있어요.');
-  } else if (freshRate <= 30) {
-    tips.push('오래된 글도 순위를 유지하는 키워드예요 — 발행 속도보다 콘텐츠 완성도에 집중하세요.');
-  }
-
-  if (diversityRate <= 60) {
-    tips.push('소수 블로그가 상위를 독점하고 있어요 — 신규 블로그라면 차별화된 정보나 후기로 승부하세요.');
+  let positionText;
+  if (topPos && topPos.value > 0 && topPos.label === '앞') {
+    positionText = '키워드를 제목 맨 앞부분에 배치하세요. 상위 글의 다수가 이 패턴을 따르고 있어요.';
+  } else if (topPos && topPos.value > 0 && topPos.label !== '없음') {
+    positionText = `키워드를 제목 "${topPos.label}"에 배치한 글이 가장 많아요. 이 패턴을 참고해 배치를 정해보세요.`;
   } else {
-    tips.push('다양한 블로그가 상위에 노출되는 키워드예요 — 신규 블로그도 충분히 도전해볼 만해요.');
+    positionText = '키워드 배치 위치에 뚜렷한 패턴이 없어요. 제목 안에서 자연스러운 위치에 넣어도 괜찮아요.';
   }
 
-  if (avgTitleLength) {
-    tips.push(`제목 길이는 평균 ${avgTitleLength}자 내외로 작성하세요 — 상위 노출 글들의 평균 제목 길이예요.`);
+  let freshText;
+  if (freshRate >= 70) {
+    freshText = '발행 경쟁이 치열한 키워드예요. 꾸준히 새 글을 올려야 순위를 유지할 수 있어요.';
+  } else if (freshRate <= 30) {
+    freshText = '오래된 글도 순위를 유지하는 키워드예요. 발행 속도보다 콘텐츠 완성도에 집중하세요.';
+  } else {
+    freshText = '발행 최신성이 적당히 섞여 있는 키워드예요. 무리한 발행 속도 경쟁보다는 꾸준함이 중요해요.';
   }
 
-  return tips;
+  const diversityText = diversityRate <= 60
+    ? '소수 블로그가 상위를 독점하고 있어요. 신규 블로그라면 차별화된 정보나 후기로 승부하세요.'
+    : '다양한 블로그가 상위에 노출되는 키워드예요. 신규 블로그도 충분히 도전해볼 만해요.';
+
+  return [
+    { title: '키워드 포함 여부', text: titleText },
+    { title: '키워드 위치', text: positionText },
+    { title: '최신성', text: freshText },
+    { title: '블로그 다양성', text: diversityText },
+  ];
 }
 
 export default function BlogStructurePanel({ result, keyword }) {
@@ -262,12 +265,12 @@ export default function BlogStructurePanel({ result, keyword }) {
         padding: '18px 20px 20px',
         borderTop: '1px solid rgba(10,132,255,0.22)',
       }}>
-        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 12px' }}>
+        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 14px' }}>
           포스팅 작성 가이드
         </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-          {postingGuide.map((tip, i) => (
-            <GuideCard key={i} text={tip} />
+        <div style={{ display: 'flex', flexWrap: 'wrap', rowGap: 16 }}>
+          {postingGuide.map((section, i) => (
+            <GuideColumn key={i} title={section.title} text={section.text} isFirst={i === 0} isLast={i === postingGuide.length - 1} />
           ))}
         </div>
       </div>
