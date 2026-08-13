@@ -24,36 +24,40 @@ function StatCard({ label, value, sub, color }) {
   );
 }
 
-function InsightCard({ insight }) {
-  const colors = { warning: '#ff9f0a', success: '#30d158', info: '#0a84ff' };
-  const color = colors[insight.type] || colors.info;
+function InsightRow({ insight, index, isLast }) {
   return (
     <div style={{
-      padding: '16px 18px',
-      borderRadius: 12,
-      background: 'var(--bg-overlay)',
-      border: '1px solid var(--border)',
-      borderTop: `2px solid ${color}55`,
-      display: 'flex', flexDirection: 'column', gap: 10,
+      display: 'flex', gap: 18, alignItems: 'flex-start',
+      padding: '16px 2px',
+      borderBottom: isLast ? 'none' : '1px solid var(--border)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{
-          width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 14, lineHeight: 1,
-          background: `${color}18`, border: `1px solid ${color}35`,
-        }}>
-          {insight.icon || '💡'}
-        </span>
-        <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px', lineHeight: 1.3 }}>
+      <span style={{
+        fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif",
+        color: 'var(--text-tertiary)', opacity: 0.4, lineHeight: 1.25,
+        minWidth: 30, flexShrink: 0,
+      }}>
+        {String(index + 1).padStart(2, '0')}
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px', letterSpacing: '-0.2px' }}>
           {insight.title}
         </p>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7 }}>
+          {insight.body}
+        </p>
       </div>
-      <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.65 }}>
-        {insight.body}
-      </p>
     </div>
   );
+}
+
+// counts 객체에서 값이 가장 큰 세그먼트를 찾아 도넛 요약 코멘트에 쓴다.
+function topSegment(counts, defs) {
+  let best = null;
+  for (const def of defs) {
+    const value = counts[def.key] || 0;
+    if (!best || value > best.value) best = { label: def.label, value };
+  }
+  return best;
 }
 
 const POSITION_SEGMENTS = [
@@ -161,8 +165,8 @@ export default function BlogStructurePanel({ result, keyword }) {
         )}
       </div>
 
-      {/* 분포 도넛 차트 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      {/* 분포 도넛 차트 + 요약 코멘트 */}
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'stretch' }}>
         <DonutCard
           title="제목 키워드 위치 분포"
           total={posts.length}
@@ -173,19 +177,39 @@ export default function BlogStructurePanel({ result, keyword }) {
           total={posts.length}
           segments={RECENCY_SEGMENTS.map(s => ({ ...s, value: recencyCounts[s.key] || 0 }))}
         />
+        <div className="mac-card-glass" style={{
+          flex: '1 1 260px', minWidth: 260,
+          padding: '20px 22px',
+          borderTop: '1px solid rgba(10,132,255,0.22)',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10,
+        }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
+            분포 요약
+          </p>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
+            {(() => {
+              const pos = topSegment(positionCounts, POSITION_SEGMENTS);
+              const rec = topSegment(recencyCounts, RECENCY_SEGMENTS);
+              const posPct = pos && posts.length ? Math.round((pos.value / posts.length) * 100) : 0;
+              const recPct = rec && posts.length ? Math.round((rec.value / posts.length) * 100) : 0;
+              return `제목 키워드 위치는 "${pos?.label ?? '-'}" 유형이 ${pos?.value ?? 0}개(${posPct}%)로 가장 많고, 발행 최신성은 "${rec?.label ?? '-'}" 유형이 ${rec?.value ?? 0}개(${recPct}%)로 가장 흔합니다.`;
+            })()}
+          </p>
+        </div>
       </div>
 
       {/* 인사이트 */}
       <div className="mac-card-glass" style={{
-        padding: '18px 20px',
+        padding: '18px 20px 6px',
         borderTop: '1px solid rgba(10,132,255,0.22)',
-        background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
       }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 14px' }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 4px' }}>
           콘텐츠 전략 인사이트
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
-          {insights.map((ins, i) => <InsightCard key={i} insight={ins} />)}
+        <div>
+          {insights.map((ins, i) => (
+            <InsightRow key={i} insight={ins} index={i} isLast={i === insights.length - 1} />
+          ))}
         </div>
       </div>
 
