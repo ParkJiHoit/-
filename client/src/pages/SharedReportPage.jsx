@@ -166,11 +166,21 @@ export default function SharedReportPage({ token }) {
   const changeHeadline = useMemo(() => {
     const newTop5Count = filteredChanges.filter(c => c.type === 'new_top5').length;
     const improvedCount = filteredChanges.filter(c => c.type === 'improved').length;
-    const gainedCount = filteredIntegratedChanges.filter(c => c.type === 'gained').length;
-    const ongoingCount = filteredIntegratedChanges.filter(c => c.type === 'ongoing').length;
-    const lostCount = filteredIntegratedChanges.filter(c => c.type === 'lost').length;
-    return { newTop5Count, improvedCount, gainedCount, ongoingCount, lostCount };
-  }, [filteredChanges, filteredIntegratedChanges]);
+    return { newTop5Count, improvedCount };
+  }, [filteredChanges]);
+
+  // 통합검색 노출은 "변동"이 아니라 지금 몇 건이 노출 중인지 그 자체가 궁금한
+  // 지표라, filteredIntegratedChanges(변동분)가 아니라 최신 상태를 직접 센다.
+  const integratedExposedCount = useMemo(() => {
+    let count = 0;
+    for (const item of filteredItems) {
+      if (item.mode !== 'blog') continue;
+      for (const blogId of item.blog_ids || []) {
+        if (item.latestRanks?.[blogId]?.integratedExposed === true) count++;
+      }
+    }
+    return count;
+  }, [filteredItems]);
 
   // KPI 카드의 "추적 키워드" 자리를 대신할 노출 현황 도넛. all 모드(전체 순위
   // 스냅샷)는 "우리가 관리하는 링크"라는 개념이 없어 이 요약을 건너뛴다.
@@ -320,12 +330,10 @@ export default function SharedReportPage({ token }) {
                   {[
                     { Icon: ArrowUp, iconBg: 'rgba(48,209,88,0.14)', iconColor: '#30D158', count: changeHeadline.improvedCount, label: '순위 상승' },
                     { Icon: Sparkles, iconBg: 'rgba(255,159,10,0.14)', iconColor: '#FF9F0A', count: changeHeadline.newTop5Count, label: '신규 TOP5 진입' },
-                    { Icon: Radio, iconBg: 'rgba(48,209,88,0.14)', iconColor: '#30D158', count: changeHeadline.gainedCount, label: '노출 시작' },
-                    { Icon: Radio, iconBg: 'rgba(94,92,230,0.14)', iconColor: '#5E5CE6', count: changeHeadline.ongoingCount, label: '노출 유지' },
-                    { Icon: Radio, iconBg: 'rgba(255,69,58,0.14)', iconColor: '#FF453A', count: changeHeadline.lostCount, label: '노출 종료' },
+                    { Icon: Radio, iconBg: 'rgba(94,92,230,0.14)', iconColor: '#5E5CE6', count: integratedExposedCount, label: '통합검색 노출' },
                   ].map(({ Icon, iconBg, iconColor, count, label }, i) => (
                     <div key={label} style={{
-                      flex: '1 1 160px', minWidth: 160,
+                      flex: '1 1 200px', minWidth: 200,
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: i === 0 ? '0 20px 0 0' : '0 20px',
                       borderLeft: i === 0 ? 'none' : '1px solid var(--border)',
