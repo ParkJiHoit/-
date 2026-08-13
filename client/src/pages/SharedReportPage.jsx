@@ -422,7 +422,7 @@ export default function SharedReportPage({ token }) {
                                   <span key={type} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#30D158', flexShrink: 0 }} />
                                     <span style={{ fontSize: 12.5, fontWeight: 700, color: '#30D158' }}>
-                                      노출 지속 중{count > 1 && ` ×${count}`}
+                                      노출 유지 중{count > 1 && ` ×${count}`}
                                     </span>
                                   </span>
                                 ) : (
