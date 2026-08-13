@@ -95,7 +95,7 @@ function StatChip({ label, value, color, sub, tip }) {
       borderTop: `1px solid ${color || '#0A84FF'}28`,
       border: `1px solid var(--border)`,
     }}>
-      <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center' }}>
+      <span style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center' }}>
         {label}{tip && <InfoTip text={tip} />}
       </span>
       <span style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif", color: value === null || value === undefined ? 'var(--text-tertiary)' : (color || 'var(--text-primary)'), letterSpacing: '-0.5px', lineHeight: 1 }}>
@@ -185,7 +185,7 @@ export default function BlogAuditPanel({ result }) {
           minWidth: 0,
           display: 'flex', flexDirection: 'column',
         }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
             항목별 점수
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
@@ -229,7 +229,7 @@ export default function BlogAuditPanel({ result }) {
           borderTop: '1px solid rgba(48,209,88,0.25)',
           background: 'radial-gradient(ellipse at top left, rgba(48,209,88,0.06) 0%, transparent 55%)',
         }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--success)', margin: '0 0 12px' }}>
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--success)', margin: '0 0 12px' }}>
             상위 노출 확인된 키워드
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -250,7 +250,7 @@ export default function BlogAuditPanel({ result }) {
       {recentPosts.length > 0 && (
         <div className="mac-card-glass overflow-hidden" style={{ borderTop: '2px solid rgba(10,132,255,0.35)' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
+            <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
               최근 포스트
             </p>
             <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>RSS 기준 최근 {recentPosts.length}개</p>

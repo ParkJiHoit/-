@@ -88,7 +88,7 @@ export default function DonutCard({ title, segments, total, size = 264 }) {
       flexDirection: 'column',
     }}>
       <p style={{
-        fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+        fontSize: 12.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
         color: 'var(--accent)', margin: '0 0 2px',
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>

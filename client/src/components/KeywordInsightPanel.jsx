@@ -736,7 +736,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
             }}>
               {/* 라벨 */}
               <p style={{
-                fontSize: 12, color: 'var(--text-tertiary)', margin: 0,
+                fontSize: 13, color: 'var(--text-tertiary)', margin: 0,
                 fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase',
                 display: 'flex', alignItems: 'center',
               }}>

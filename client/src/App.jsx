@@ -1093,7 +1093,7 @@ export default function App() {
                   padding: '13px 18px 12px', borderBottom: '1px solid var(--border)',
                   display: 'flex', alignItems: 'center', gap: 8,
                 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
                     연관 키워드
                   </span>
                   <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>

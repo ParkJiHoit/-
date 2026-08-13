@@ -1,5 +1,7 @@
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import DonutCard from './DonutCard';
+
+const DONUT_SIZE = 264;
 
 function StatCard({ label, value, sub, color }) {
   const accentColor = color || '#0A84FF';
@@ -9,7 +11,7 @@ function StatCard({ label, value, sub, color }) {
       background: `radial-gradient(ellipse at top left, ${accentColor}10 0%, transparent 60%)`,
       borderTop: `1px solid ${accentColor}30`,
     }}>
-      <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0, marginBottom: 10 }}>
+      <p style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', margin: 0, marginBottom: 10 }}>
         {label}
       </p>
       <p style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px', color: color || 'var(--text-primary)', margin: 0, lineHeight: 1 }}>
@@ -50,6 +52,21 @@ function InsightRow({ insight, index, isLast }) {
   );
 }
 
+function GuideRow({ text, isLast }) {
+  return (
+    <div style={{
+      display: 'flex', gap: 12, alignItems: 'flex-start',
+      padding: '14px 2px',
+      borderBottom: isLast ? 'none' : '1px solid var(--border)',
+    }}>
+      <CheckCircle2 size={16} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }} />
+      <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7 }}>
+        {text}
+      </p>
+    </div>
+  );
+}
+
 // counts 객체에서 값이 가장 큰 세그먼트를 찾아 도넛 요약 코멘트에 쓴다.
 function topSegment(counts, defs) {
   let best = null;
@@ -80,6 +97,44 @@ const RECENCY_SEGMENTS = [
 const POSITION_LABEL = { front: '앞', middle: '중간', back: '뒤', partial: '부분', none: '없음' };
 const POSITION_COLOR = { front: '#0a84ff', middle: '#5e5ce6', back: '#bf5af2', partial: '#ff9f0a', none: 'var(--text-tertiary)' };
 
+// 분석 수치를 바탕으로 실행 가능한 포스팅 작성 가이드 문장을 만든다.
+function buildPostingGuide({ titleIncludeRate, positionCounts = {}, freshRate, diversityRate, avgTitleLength }, keyword, totalPosts) {
+  const tips = [];
+
+  if (titleIncludeRate >= 50) {
+    tips.push(`제목에 "${keyword}"를 꼭 포함하세요 — 상위 ${totalPosts}개 중 ${titleIncludeRate}%가 제목에 키워드를 포함하고 있어요.`);
+  } else {
+    tips.push(`제목에 키워드를 넣지 않아도 상위 노출이 가능한 키워드예요 — 자연스러운 제목으로 클릭률을 높이는 게 더 유리할 수 있어요.`);
+  }
+
+  const topPos = topSegment(positionCounts, POSITION_SEGMENTS);
+  if (topPos && topPos.value > 0) {
+    if (topPos.label === '앞') {
+      tips.push('키워드는 제목 맨 앞부분에 배치하세요 — 상위 글의 다수가 이 패턴을 따르고 있어요.');
+    } else if (topPos.label !== '없음') {
+      tips.push(`키워드를 제목 ${topPos.label}에 배치한 글이 가장 많아요 — 이 패턴을 참고해 배치를 정해보세요.`);
+    }
+  }
+
+  if (freshRate >= 70) {
+    tips.push('발행 경쟁이 치열한 키워드예요 — 꾸준히 새 글을 올려야 순위를 유지할 수 있어요.');
+  } else if (freshRate <= 30) {
+    tips.push('오래된 글도 순위를 유지하는 키워드예요 — 발행 속도보다 콘텐츠 완성도에 집중하세요.');
+  }
+
+  if (diversityRate <= 60) {
+    tips.push('소수 블로그가 상위를 독점하고 있어요 — 신규 블로그라면 차별화된 정보나 후기로 승부하세요.');
+  } else {
+    tips.push('다양한 블로그가 상위에 노출되는 키워드예요 — 신규 블로그도 충분히 도전해볼 만해요.');
+  }
+
+  if (avgTitleLength) {
+    tips.push(`제목 길이는 평균 ${avgTitleLength}자 내외로 작성하세요 — 상위 노출 글들의 평균 제목 길이예요.`);
+  }
+
+  return tips;
+}
+
 export default function BlogStructurePanel({ result, keyword }) {
   if (!result) return null;
 
@@ -105,6 +160,8 @@ export default function BlogStructurePanel({ result, keyword }) {
     );
   }
 
+  const postingGuide = buildPostingGuide(analysis, keyword, posts.length);
+
   return (
     <div className="flex flex-col gap-5 mac-stagger">
       {/* 헤더 */}
@@ -113,7 +170,7 @@ export default function BlogStructurePanel({ result, keyword }) {
         background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.09) 0%, transparent 60%)',
         borderTop: '2px solid rgba(10,132,255,0.35)',
       }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
+        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
           블로그 구조 분석
         </p>
         <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '6px 0 0' }}>
@@ -171,44 +228,43 @@ export default function BlogStructurePanel({ result, keyword }) {
           title="제목 키워드 위치 분포"
           total={posts.length}
           segments={POSITION_SEGMENTS.map(s => ({ ...s, value: positionCounts[s.key] || 0 }))}
+          size={DONUT_SIZE}
         />
         <DonutCard
           title="게시물 최신성 분포"
           total={posts.length}
           segments={RECENCY_SEGMENTS.map(s => ({ ...s, value: recencyCounts[s.key] || 0 }))}
+          size={DONUT_SIZE}
         />
         <div className="mac-card-glass" style={{
           flex: '1 1 260px', minWidth: 260,
-          padding: '20px 22px',
+          height: DONUT_SIZE,
+          padding: '16px 18px 4px',
           borderTop: '1px solid rgba(10,132,255,0.22)',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10,
+          display: 'flex', flexDirection: 'column',
         }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
-            분포 요약
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 2px' }}>
+            콘텐츠 전략 인사이트
           </p>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
-            {(() => {
-              const pos = topSegment(positionCounts, POSITION_SEGMENTS);
-              const rec = topSegment(recencyCounts, RECENCY_SEGMENTS);
-              const posPct = pos && posts.length ? Math.round((pos.value / posts.length) * 100) : 0;
-              const recPct = rec && posts.length ? Math.round((rec.value / posts.length) * 100) : 0;
-              return `제목 키워드 위치는 "${pos?.label ?? '-'}" 유형이 ${pos?.value ?? 0}개(${posPct}%)로 가장 많고, 발행 최신성은 "${rec?.label ?? '-'}" 유형이 ${rec?.value ?? 0}개(${recPct}%)로 가장 흔합니다.`;
-            })()}
-          </p>
+          <div className="mac-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            {insights.map((ins, i) => (
+              <InsightRow key={i} insight={ins} index={i} isLast={i === insights.length - 1} />
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 인사이트 */}
+      {/* 포스팅 작성 가이드 */}
       <div className="mac-card-glass" style={{
         padding: '18px 20px 6px',
         borderTop: '1px solid rgba(10,132,255,0.22)',
       }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 4px' }}>
-          콘텐츠 전략 인사이트
+        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 4px' }}>
+          포스팅 작성 가이드
         </p>
         <div>
-          {insights.map((ins, i) => (
-            <InsightRow key={i} insight={ins} index={i} isLast={i === insights.length - 1} />
+          {postingGuide.map((tip, i) => (
+            <GuideRow key={i} text={tip} isLast={i === postingGuide.length - 1} />
           ))}
         </div>
       </div>
@@ -216,7 +272,7 @@ export default function BlogStructurePanel({ result, keyword }) {
       {/* 상위 블로그 목록 */}
       <div className="mac-card-glass overflow-hidden" style={{ borderTop: '2px solid rgba(10,132,255,0.35)' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
             상위 블로그 상세
           </p>
           <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>

@@ -44,7 +44,7 @@ export default function SummaryCards({ summary }) {
             {/* 헤더 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{
-                fontSize: 12, fontWeight: 600, letterSpacing: '0.07em',
+                fontSize: 13, fontWeight: 600, letterSpacing: '0.07em',
                 textTransform: 'uppercase', color: 'var(--text-tertiary)',
               }}>
                 {label}
