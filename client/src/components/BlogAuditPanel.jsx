@@ -71,17 +71,22 @@ const SCORE_COLORS = {
 function ScoreBar({ label, value, max, color, tip }) {
   const pct = Math.round((value / max) * 100);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>{label}{tip && <InfoTip text={tip} />}</span>
-        <span style={{ fontSize: 16, fontWeight: 800, color }}>{value}<span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 400 }}>/{max}</span></span>
-      </div>
-      <div style={{ height: 8, borderRadius: 4, background: 'var(--border)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{
+        fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)',
+        display: 'flex', alignItems: 'center', width: 104, flexShrink: 0, whiteSpace: 'nowrap',
+      }}>
+        {label}{tip && <InfoTip text={tip} />}
+      </span>
+      <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
         <div style={{
-          width: `${pct}%`, height: '100%', borderRadius: 4, background: color,
+          width: `${pct}%`, height: '100%', borderRadius: 3, background: color,
           transition: 'width 0.7s cubic-bezier(0.34,1.2,0.64,1)',
         }} />
       </div>
+      <span style={{ fontSize: 13, fontWeight: 800, color, minWidth: 42, textAlign: 'right', flexShrink: 0 }}>
+        {value}<span style={{ fontSize: 10.5, color: 'var(--text-tertiary)', fontWeight: 400 }}>/{max}</span>
+      </span>
     </div>
   );
 }
@@ -174,7 +179,7 @@ export default function BlogAuditPanel({ result }) {
       )}
 
       {/* 항목별 점수 + KPI 가로 배치 */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
 
         {/* 항목별 점수 바 */}
         <div className="mac-card-glass" style={{
@@ -183,12 +188,11 @@ export default function BlogAuditPanel({ result }) {
           background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
           flex: '1 1 0',
           minWidth: 0,
-          display: 'flex', flexDirection: 'column',
         }}>
-          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 18px' }}>
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 16px' }}>
             항목별 점수
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {Object.entries(score.breakdown).map(([key, val]) => (
               <ScoreBar
                 key={key}
