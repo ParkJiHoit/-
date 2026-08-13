@@ -252,7 +252,19 @@ export async function getPublicReport(token) {
 
   const all = await listTracked(userId);
   const scoped = groupId == null ? all : all.filter((i) => i.group_id === groupId);
-  const items = filterItemsByCutoff(scoped, cutoffDate).map((i) => ({
+  const cutoffItems = filterItemsByCutoff(scoped, cutoffDate);
+
+  // 리포트를 보는 사람이 "이게 언제 기준 데이터인지" 알 수 있도록, 실제로 표에 나온
+  // 항목들 중 가장 최근에 순위를 갱신한 시각을 리포트 전체의 기준 시각으로 삼는다.
+  // (items로 매핑해 클라이언트에 내려주기 전, 원본에서 계산 — last_refreshed_at
+  // 자체는 공개 payload에 항목별로 넣을 필요가 없다.)
+  const lastUpdatedAt = cutoffItems.reduce((latest, i) => {
+    if (!i.last_refreshed_at) return latest;
+    const t = new Date(i.last_refreshed_at).getTime();
+    return !latest || t > latest ? t : latest;
+  }, null);
+
+  const items = cutoffItems.map((i) => ({
     id: i.id,
     keyword: i.keyword,
     mode: i.mode,
@@ -268,5 +280,12 @@ export async function getPublicReport(token) {
     fetchChanges(pool, items),
   ]);
 
-  return { groupName: groupId == null ? null : groupName, groups, items, changes, integratedChanges };
+  return {
+    groupName: groupId == null ? null : groupName,
+    groups,
+    items,
+    changes,
+    integratedChanges,
+    lastUpdatedAt: lastUpdatedAt ? new Date(lastUpdatedAt).toISOString() : null,
+  };
 }

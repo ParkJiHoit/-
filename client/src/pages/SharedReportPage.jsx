@@ -22,6 +22,17 @@ function earliestAddedDate(item) {
   return dates.length ? dates.sort().at(-1) : null; // 링크 여러 개면 "가장 최근에 추가된 링크" 기준으로 정렬
 }
 
+// 리포트를 보는 사람이 "이게 언제 기준 데이터인지" 알 수 있도록 갱신 시각을
+// "2026.08.13 14:32 기준" 형태로 포맷한다.
+function formatLastUpdated(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const date = d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\s/g, '').replace(/\.$/, '');
+  const time = d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  return `${date} ${time} 기준`;
+}
+
 // 검색량·CTR을 "검색량 1,200 · CTR 2.3%" 형태의 부가 정보 한 줄로 합친다.
 // 둘 다 없으면 아예 표시하지 않는다(등록 전 이 기능이 없던 옛 키워드는 값이 없을 수 있음).
 function formatVolumeCtr(searchVolume, averageCtr) {
@@ -196,6 +207,7 @@ export default function SharedReportPage({ token }) {
   const headerTitle = selectedGroupId
     ? report?.groups.find(g => String(g.id) === selectedGroupId)?.name
     : (report?.groupName || '전체 그룹');
+  const lastUpdatedLabel = formatLastUpdated(report?.lastUpdatedAt);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
@@ -219,6 +231,7 @@ export default function SharedReportPage({ token }) {
                 <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px', margin: 0 }}>{headerTitle}</h1>
                 <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
                   추적 키워드 {filteredItems.length}개 · 최근 14일 이내 등록된 링크만 표시 · 읽기 전용 공유 리포트
+                  {lastUpdatedLabel && ` · ${lastUpdatedLabel}`}
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -299,36 +312,29 @@ export default function SharedReportPage({ token }) {
               <>
                 <motion.div
                   className="report-glass-card"
-                  style={{ display: 'flex', flexWrap: 'wrap', gap: 24, padding: '18px 24px', margin: '0 0 12px' }}
+                  style={{ display: 'flex', flexWrap: 'wrap', padding: '18px 24px', margin: '0 0 12px' }}
                   custom={3} variants={cardEntranceVariants} initial="hidden" animate="show"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(48,209,88,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <ArrowUp size={17} style={{ color: '#30D158' }} />
-                    </span>
-                    <div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{changeHeadline.improvedCount}건</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>순위 상승</div>
+                  {[
+                    { Icon: ArrowUp, iconBg: 'rgba(48,209,88,0.14)', iconColor: '#30D158', count: changeHeadline.improvedCount, label: '순위 상승' },
+                    { Icon: Sparkles, iconBg: 'rgba(255,159,10,0.14)', iconColor: '#FF9F0A', count: changeHeadline.newTop5Count, label: '신규 TOP5 진입' },
+                    { Icon: Radio, iconBg: 'rgba(94,92,230,0.14)', iconColor: '#5E5CE6', count: changeHeadline.gainedCount, label: '통합검색 노출 시작' },
+                  ].map(({ Icon, iconBg, iconColor, count, label }, i) => (
+                    <div key={label} style={{
+                      flex: '1 1 200px', minWidth: 200,
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: i === 0 ? '0 20px 0 0' : '0 20px',
+                      borderLeft: i === 0 ? 'none' : '1px solid var(--border)',
+                    }}>
+                      <span style={{ width: 34, height: 34, borderRadius: 10, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={17} style={{ color: iconColor }} />
+                      </span>
+                      <div>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{count}건</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{label}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,159,10,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Sparkles size={17} style={{ color: '#FF9F0A' }} />
-                    </span>
-                    <div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{changeHeadline.newTop5Count}건</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>신규 TOP5 진입</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(94,92,230,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Radio size={17} style={{ color: '#5E5CE6' }} />
-                    </span>
-                    <div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>{changeHeadline.gainedCount}건</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>통합검색 노출 시작</div>
-                    </div>
-                  </div>
+                  ))}
                 </motion.div>
 
               <div style={{
