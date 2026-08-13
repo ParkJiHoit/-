@@ -153,25 +153,33 @@ export default function BlogAuditPanel({ result }) {
 
       </div>
 
-      {/* 상위 노출 확인 포스트 */}
+      {/* 검색 노출 확인 포스트 */}
       {stats.exposedTitles.length > 0 && (
         <div className="mac-card-glass" style={{
-          padding: '18px 22px',
-          borderTop: '1px solid rgba(48,209,88,0.25)',
-          background: 'radial-gradient(ellipse at top left, rgba(48,209,88,0.06) 0%, transparent 55%)',
+          padding: '18px 22px 6px',
+          borderTop: '1px solid rgba(10,132,255,0.22)',
         }}>
-          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--success)', margin: '0 0 12px' }}>
-            상위 노출 확인된 키워드
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 3px' }}>
+            검색 노출 확인된 포스트
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '0 0 6px' }}>
+            포스트 제목으로 네이버에 검색했을 때 실제로 노출이 확인된 글이에요.
+          </p>
+          <div>
             {stats.exposedTitles.map((t, i) => (
-              <span key={i} style={{
-                padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.25)',
-                color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: 5,
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '12px 2px',
+                borderBottom: i === stats.exposedTitles.length - 1 ? 'none' : '1px solid var(--border)',
               }}>
-                <CheckCircle2 size={11} /> {t}
-              </span>
+                <CheckCircle2 size={14} style={{ color: 'var(--success)', flexShrink: 0 }} />
+                <span style={{
+                  fontSize: 13, color: 'var(--text-secondary)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {t}
+                </span>
+              </div>
             ))}
           </div>
         </div>
