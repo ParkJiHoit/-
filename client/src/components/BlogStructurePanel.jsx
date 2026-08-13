@@ -25,23 +25,31 @@ function StatCard({ label, value, sub, color }) {
 }
 
 function InsightCard({ insight }) {
-  const colors = {
-    warning: { bg: 'rgba(255,159,10,0.08)', border: 'rgba(255,159,10,0.25)', title: '#ff9f0a' },
-    success:  { bg: 'rgba(48,209,88,0.08)',  border: 'rgba(48,209,88,0.25)',  title: '#30d158' },
-    info:     { bg: 'rgba(10,132,255,0.08)', border: 'rgba(10,132,255,0.20)', title: '#0a84ff' },
-  };
-  const c = colors[insight.type] || colors.info;
+  const colors = { warning: '#ff9f0a', success: '#30d158', info: '#0a84ff' };
+  const color = colors[insight.type] || colors.info;
   return (
     <div style={{
-      padding: '14px 16px',
-      background: c.bg,
-      border: `1px solid ${c.border}`,
-      borderRadius: 10,
+      padding: '16px 18px',
+      borderRadius: 12,
+      background: 'var(--bg-overlay)',
+      border: '1px solid var(--border)',
+      borderTop: `2px solid ${color}55`,
+      display: 'flex', flexDirection: 'column', gap: 10,
     }}>
-      <p style={{ fontSize: 15, fontWeight: 700, color: c.title, margin: 0, marginBottom: 6 }}>
-        {insight.title}
-      </p>
-      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.65 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{
+          width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 14, lineHeight: 1,
+          background: `${color}18`, border: `1px solid ${color}35`,
+        }}>
+          {insight.icon || '💡'}
+        </span>
+        <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px', lineHeight: 1.3 }}>
+          {insight.title}
+        </p>
+      </div>
+      <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.65 }}>
         {insight.body}
       </p>
     </div>
@@ -176,7 +184,7 @@ export default function BlogStructurePanel({ result, keyword }) {
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 14px' }}>
           콘텐츠 전략 인사이트
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
           {insights.map((ins, i) => <InsightCard key={i} insight={ins} />)}
         </div>
       </div>
