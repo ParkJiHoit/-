@@ -18,14 +18,6 @@ const SCORE_LABELS = {
   age: '블로그 연차',
 };
 
-const SCORE_TIPS = {
-  activity:  '최근 30일 포스팅 수와 발행 주기를 기반으로 블로그의 활동 빈도를 점수화한 항목입니다. (30점 만점)',
-  exposure:  '키워드 분석 시 해당 블로그가 블로그탭 상위 10위 안에 실제로 노출된 비율입니다. 높을수록 검색 노출 경험이 풍부합니다. (30점 만점)',
-  influence: '누적 방문자·이웃 수 등 블로그 전체 규모로 산정한 영향력 지수입니다. (20점 만점)',
-  trust:     '광고 비중, 도배성 포스팅 여부 등 콘텐츠 신뢰도를 평가한 항목입니다. (10점 만점)',
-  age:       'RSS에 기록된 최초 포스팅 날짜 기준 블로그 운영 기간입니다. 오래될수록 네이버 C-Rank에 유리합니다. (10점 만점)',
-};
-
 const SCORE_MAX = {
   activity: 30,
   exposure: 30,
@@ -122,7 +114,7 @@ export default function BlogAuditPanel({ result }) {
       )}
 
       {/* 항목별 점수 + KPI 가로 배치 */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
 
         {/* 항목별 점수 — 레이더 차트 */}
         <div className="mac-card-glass" style={{
@@ -131,11 +123,14 @@ export default function BlogAuditPanel({ result }) {
           background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.06) 0%, transparent 55%)',
           flex: '1 1 0',
           minWidth: 0,
+          display: 'flex', flexDirection: 'column',
         }}>
           <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 4px' }}>
             항목별 점수
           </p>
-          <ScoreRadarCard breakdown={score.breakdown} labels={SCORE_LABELS} tips={SCORE_TIPS} max={SCORE_MAX} color={gc.color} height={440} />
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <ScoreRadarCard breakdown={score.breakdown} labels={SCORE_LABELS} max={SCORE_MAX} color={gc.color} height="100%" />
+          </div>
         </div>
 
         {/* 핵심 지표 칩 — 2열 4행 */}
