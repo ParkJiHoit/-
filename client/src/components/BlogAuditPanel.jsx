@@ -112,7 +112,7 @@ export default function BlogAuditPanel({ result }) {
   const gc = GRADE_CONFIG[score.grade] || GRADE_CONFIG.C;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="mac-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* 헤더 — 블로그 정보 + 종합 등급 */}
       <div className="mac-card-glass" style={{

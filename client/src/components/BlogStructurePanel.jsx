@@ -106,7 +106,7 @@ export default function BlogStructurePanel({ result, keyword }) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 mac-stagger">
       {/* 헤더 */}
       <div className="mac-card-glass" style={{
         padding: '20px 24px',

@@ -1058,7 +1058,7 @@ export default function App() {
 
         {/* Keyword results */}
         {isKeywordTab && activeResult && !loading && (
-          <div className="mac-fade-in flex flex-col" style={{ gap: 48 }}>
+          <div className="mac-stagger flex flex-col" style={{ gap: 48 }}>
             {activeTab === 'analysis' && (
               <section>
                 <SectionLabel>키워드 인사이트</SectionLabel>
