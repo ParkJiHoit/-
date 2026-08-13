@@ -1,33 +1,6 @@
-import { useState } from 'react';
-import { ExternalLink, AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
+import { ExternalLink, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import ScoreRadarCard from './ScoreRadarCard';
-
-function InfoTip({ text }) {
-  const [show, setShow] = useState(false);
-  return (
-    <span
-      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: 4, verticalAlign: 'middle' }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      <HelpCircle style={{ width: 11, height: 11, color: 'var(--text-tertiary)', cursor: 'default' }} />
-      {show && (
-        <span style={{
-          position: 'absolute', bottom: 'calc(100% + 7px)', left: '50%', transform: 'translateX(-50%)',
-          zIndex: 300, width: 220,
-          background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
-          borderRadius: 10, padding: '9px 12px',
-          fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6,
-          boxShadow: '0 8px 28px rgba(0,0,0,0.4)',
-          pointerEvents: 'none', whiteSpace: 'normal', textAlign: 'left',
-          fontWeight: 400,
-        }}>
-          {text}
-        </span>
-      )}
-    </span>
-  );
-}
+import InfoTip from './InfoTip';
 
 const GRADE_CONFIG = {
   S: { color: 'var(--success)', bg: 'rgba(48,209,88,0.12)',  border: 'rgba(48,209,88,0.30)',  label: '최우수' },
@@ -162,15 +135,7 @@ export default function BlogAuditPanel({ result }) {
           <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 4px' }}>
             항목별 점수
           </p>
-          <ScoreRadarCard breakdown={score.breakdown} labels={SCORE_LABELS} max={SCORE_MAX} color={gc.color} height={280} />
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', justifyContent: 'center', marginTop: 4 }}>
-            {Object.keys(score.breakdown).map(key => (
-              <span key={key} style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center' }}>
-                {SCORE_LABELS[key] || key}
-                {SCORE_TIPS[key] && <InfoTip text={SCORE_TIPS[key]} />}
-              </span>
-            ))}
-          </div>
+          <ScoreRadarCard breakdown={score.breakdown} labels={SCORE_LABELS} tips={SCORE_TIPS} max={SCORE_MAX} color={gc.color} height={440} />
         </div>
 
         {/* 핵심 지표 칩 — 2열 4행 */}
