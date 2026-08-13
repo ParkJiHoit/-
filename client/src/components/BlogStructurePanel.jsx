@@ -52,12 +52,15 @@ function InsightRow({ insight, index, isLast }) {
   );
 }
 
-function GuideRow({ text, isLast }) {
+function GuideCard({ text }) {
   return (
     <div style={{
-      display: 'flex', gap: 12, alignItems: 'flex-start',
-      padding: '14px 2px',
-      borderBottom: isLast ? 'none' : '1px solid var(--border)',
+      flex: '1 1 300px',
+      display: 'flex', gap: 10, alignItems: 'flex-start',
+      padding: '14px 16px',
+      borderRadius: 12,
+      background: 'var(--bg-overlay)',
+      border: '1px solid var(--border)',
     }}>
       <CheckCircle2 size={16} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 2 }} />
       <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7 }}>
@@ -256,15 +259,15 @@ export default function BlogStructurePanel({ result, keyword }) {
 
       {/* 포스팅 작성 가이드 */}
       <div className="mac-card-glass" style={{
-        padding: '18px 20px 6px',
+        padding: '18px 20px 20px',
         borderTop: '1px solid rgba(10,132,255,0.22)',
       }}>
-        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 4px' }}>
+        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: '0 0 12px' }}>
           포스팅 작성 가이드
         </p>
-        <div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           {postingGuide.map((tip, i) => (
-            <GuideRow key={i} text={tip} isLast={i === postingGuide.length - 1} />
+            <GuideCard key={i} text={tip} />
           ))}
         </div>
       </div>
