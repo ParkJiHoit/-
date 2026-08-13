@@ -113,7 +113,7 @@ export default function BlogStructurePanel({ result, keyword }) {
       </div>
 
       {/* 수치 요약 카드 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
         <StatCard
           label="제목 키워드 포함률"
           value={`${titleIncludeRate}%`}
