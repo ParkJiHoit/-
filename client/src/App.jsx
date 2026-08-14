@@ -9,6 +9,7 @@ import ColumnVisibilitySettings from './components/ColumnVisibilitySettings';
 import KeywordFilters, { defaultFilters } from './components/KeywordFilters';
 import KeywordInsightPanel from './components/KeywordInsightPanel';
 import KeywordSearchForm from './components/KeywordSearchForm';
+import ResultSkeleton from './components/ResultSkeleton';
 import KeywordTable, { DEFAULT_VISIBLE_COLUMN_KEYS } from './components/KeywordTable';
 import KeywordCardList from './components/KeywordCardList';
 import KeywordTableB from './components/KeywordTableB';
@@ -605,6 +606,11 @@ export default function App() {
   const hasResults    = (isKeywordTab && !!activeResult) ||
     (activeTab === 'blog' && (!!blogStructure || !!blogAudit)) ||
     activeTab === 'rank-tracker';
+  // 히어로 레이아웃(100vh 랜딩 vs 압축된 상단 검색바)은 "실제 결과가 있는지"뿐 아니라
+  // "지금 첫 검색이 로딩 중인지"도 반영해야 한다 — 그래야 검색 버튼을 누르는 순간
+  // 검색창이 바로 위로 압축되면서 아래에 스켈레톤이 보이고, 결과가 나오면 그 자리에서
+  // 자연스럽게 실제 콘텐츠로 바뀐다(로딩 끝날 때까지 100vh 랜딩에 갇혀 있지 않음).
+  const heroCollapsed = hasResults || loading;
   const [rankTrackerHasItems, setRankTrackerHasItems] = useState(false);
 
   useEffect(() => {
@@ -616,10 +622,10 @@ export default function App() {
   // 묶는다 — html에 스크롤 스냅을 걸어야 실제로 페이지 스크롤에 적용되기 때문에,
   // 랜딩 상태의 키워드/블로그 탭일 때만 켜고 나머지 탭·상태에서는 평소처럼 자유 스크롤.
   useEffect(() => {
-    const isLandingSnapTab = (activeTab === 'analysis' || activeTab === 'blog') && !hasResults;
+    const isLandingSnapTab = (activeTab === 'analysis' || activeTab === 'blog') && !heroCollapsed;
     document.documentElement.classList.toggle('snap-flow', isLandingSnapTab);
     return () => document.documentElement.classList.remove('snap-flow');
-  }, [activeTab, hasResults]);
+  }, [activeTab, heroCollapsed]);
 
   useEffect(() => {
     window.localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visibleColumns));
@@ -904,7 +910,7 @@ export default function App() {
         <HeroScene className="absolute inset-0" dark={theme === 'dark'} showSpheres={false} particleCount={320} intensity={0.75} />
       </div>
       {/* 결과 페이지 배경 */}
-      {hasResults && (
+      {heroCollapsed && (
         <>
           {/* 상단 haze */}
           <div style={{
@@ -960,14 +966,11 @@ export default function App() {
       ) : (
       <>
 
-      <HeroSection tab={activeTab} blogSubTab={blogSubTab} hasResults={hasResults} theme={theme}>
+      <HeroSection tab={activeTab} blogSubTab={blogSubTab} hasResults={heroCollapsed} theme={theme}>
         {activeTab === 'analysis' && (
-          <>
-            <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
-              suggestions={analysis?.searchSuggestions || []}
-              isMain={!hasResults} dark={theme === 'dark'} />
-            {loading && !hasResults && <MainPageLoading label="키워드 데이터를 분석 중입니다…" />}
-          </>
+          <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
+            suggestions={analysis?.searchSuggestions || []}
+            isMain={!heroCollapsed} dark={theme === 'dark'} />
         )}
         {activeTab === 'blog' && (
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1006,10 +1009,7 @@ export default function App() {
             </div>
             {/* 구조 분석 폼 */}
             {blogSubTab === 'structure' && (
-              <>
-                <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} historyKey="keywordlab.blogHistory" dark={theme === 'dark'} />
-                {loading && !hasResults && <MainPageLoading label="상위 블로그 구조를 분석 중입니다…" />}
-              </>
+              <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!heroCollapsed} historyKey="keywordlab.blogHistory" dark={theme === 'dark'} />
             )}
             {/* 감사 폼 */}
             {blogSubTab === 'audit' && (
@@ -1033,12 +1033,20 @@ export default function App() {
         )}
       </HeroSection>
 
-      <div className={`mx-auto w-full max-w-[1400px] px-5 lg:px-10${hasResults ? ' pb-16' : ''}`}>
+      <div className={`mx-auto w-full max-w-[1400px] px-5 lg:px-10${heroCollapsed ? ' pb-16' : ''}`}>
+        {/* 키워드 분석 첫 검색 로딩 (아직 결과 없음) — 결과 모양 스켈레톤 */}
+        {loading && isKeywordTab && !activeResult && (
+          <ResultSkeleton variant="keyword" />
+        )}
         {/* 키워드 분석/확장 탭 재검색 로딩 (결과 있을 때만) */}
         {loading && isKeywordTab && activeResult && (
           <div className="mb-5">
             <LoadingRow label="키워드 데이터를 분석 중입니다…" />
           </div>
+        )}
+        {/* 블로그 구조 분석 첫 검색 로딩 (아직 결과 없음) — 결과 모양 스켈레톤 */}
+        {loading && activeTab === 'blog' && blogSubTab === 'structure' && !blogStructure && (
+          <ResultSkeleton variant="blog-structure" />
         )}
         {/* 블로그 재검색 로딩 (기존 결과 위에) */}
         {loading && activeTab === 'blog' && blogStructure && (
@@ -1159,7 +1167,7 @@ export default function App() {
         )}
       </div>
 
-      {(activeTab === 'analysis' || activeTab === 'blog') && !hasResults && (
+      {(activeTab === 'analysis' || activeTab === 'blog') && !heroCollapsed && (
         <FeatureShowcaseSection tab={activeTab} />
       )}
 

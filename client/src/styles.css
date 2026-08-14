@@ -798,6 +798,28 @@ select option {
   }
 }
 
+/* ─── Skeleton shimmer (검색 결과 로딩 시 결과 모양 미리보기) ─── */
+@keyframes skeletonShimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    100deg,
+    var(--bg-overlay) 30%,
+    var(--border-strong) 50%,
+    var(--bg-overlay) 70%
+  );
+  background-size: 400px 100%;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; background: var(--bg-overlay); }
+}
+
 /* ─── Feature Showcase (탭별 기능 소개 섹션) ─── */
 .feature-showcase {
   position: relative;
