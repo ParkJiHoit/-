@@ -422,12 +422,10 @@ function CompactNavSearch({ onSubmit, currentKeyword, visible }) {
         background: 'rgba(28,28,30,0.92)',
         backdropFilter: 'blur(24px) saturate(1.8)',
         WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
-        border: focused
-          ? '1.5px solid rgba(10,180,255,0.85)'
-          : '1px solid rgba(255,255,255,0.10)',
+        border: '1.5px solid rgba(10,180,255,0.85)',
         boxShadow: focused
-          ? '0 0 0 3px rgba(10,180,255,0.18), 0 0 32px rgba(10,180,255,0.28), 0 0 64px rgba(10,180,255,0.12)'
-          : '0 4px 24px rgba(0,0,0,0.5)',
+          ? '0 0 0 3px rgba(10,180,255,0.24), 0 0 40px rgba(10,180,255,0.34), 0 0 80px rgba(10,180,255,0.16)'
+          : '0 0 0 2px rgba(10,180,255,0.12), 0 0 24px rgba(10,180,255,0.22), 0 0 56px rgba(10,180,255,0.1)',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateX(0) scale(1)' : 'translateX(-16px) scale(0.94)',
         pointerEvents: visible ? 'auto' : 'none',
