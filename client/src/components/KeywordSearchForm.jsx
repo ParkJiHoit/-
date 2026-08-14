@@ -1,4 +1,4 @@
-import { ChevronDown, Clock, Search, X } from 'lucide-react';
+import { ChevronDown, Clock, Loader2, Search, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
 const KEYWORD_PLACEHOLDERS = ['분석할 키워드를 입력하세요'];
@@ -160,7 +160,9 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
           onMouseEnter={(e) => { if (!focused) e.currentTarget.style.background = 'var(--search-btn-hover)'; }}
           onMouseLeave={(e) => { if (!focused) e.currentTarget.style.background = 'var(--search-btn-bg)'; }}
         >
-          <Search style={{ width: 18, height: 18 }} />
+          {loading
+            ? <Loader2 style={{ width: 18, height: 18 }} className="animate-spin" />
+            : <Search style={{ width: 18, height: 18 }} />}
         </button>
       </form>
 

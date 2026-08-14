@@ -962,9 +962,12 @@ export default function App() {
 
       <HeroSection tab={activeTab} blogSubTab={blogSubTab} hasResults={hasResults} theme={theme}>
         {activeTab === 'analysis' && (
-          <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
-            suggestions={analysis?.searchSuggestions || []}
-            isMain={!hasResults} dark={theme === 'dark'} />
+          <>
+            <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
+              suggestions={analysis?.searchSuggestions || []}
+              isMain={!hasResults} dark={theme === 'dark'} />
+            {loading && !hasResults && <MainPageLoading label="키워드 데이터를 분석 중입니다…" />}
+          </>
         )}
         {activeTab === 'blog' && (
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1003,7 +1006,10 @@ export default function App() {
             </div>
             {/* 구조 분석 폼 */}
             {blogSubTab === 'structure' && (
-              <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} historyKey="keywordlab.blogHistory" dark={theme === 'dark'} />
+              <>
+                <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!hasResults} historyKey="keywordlab.blogHistory" dark={theme === 'dark'} />
+                {loading && !hasResults && <MainPageLoading label="상위 블로그 구조를 분석 중입니다…" />}
+              </>
             )}
             {/* 감사 폼 */}
             {blogSubTab === 'audit' && (
