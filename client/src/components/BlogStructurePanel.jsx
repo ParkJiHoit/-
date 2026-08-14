@@ -175,16 +175,27 @@ export default function BlogStructurePanel({ result, keyword }) {
         padding: '20px 24px',
         background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.09) 0%, transparent 60%)',
         borderTop: '2px solid rgba(10,132,255,0.35)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
       }}>
-        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
-          블로그 구조 분석
-        </p>
-        <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '6px 0 0' }}>
-          "{keyword}"
-        </p>
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
-          네이버 블로그 탭 상위 {posts.length}개 게시물 기준
-        </p>
+        <div>
+          <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
+            블로그 구조 분석
+          </p>
+          <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '6px 0 0' }}>
+            "{keyword}"
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
+            네이버 블로그 탭 상위 {posts.length}개 게시물 기준
+          </p>
+        </div>
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
+          <p style={{ fontSize: 44, fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", color: 'var(--accent)', margin: 0, lineHeight: 1, letterSpacing: '-1.5px' }}>
+            {titleIncludeRate}%
+          </p>
+          <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: '4px 0 0', fontWeight: 600, letterSpacing: '0.04em' }}>
+            제목 키워드 포함률
+          </p>
+        </div>
       </div>
 
       {/* 수치 요약 카드 */}
