@@ -310,7 +310,7 @@ export default function TrackerTable({
                 {mode === 'blog' && (
                   <td style={{ color: 'var(--text-secondary)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-                      <span style={{ flex: '0 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ width: 158, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {blogId || '—'}
                       </span>
                       {isFirst && !isOpen && hiddenCount > 0 && (
