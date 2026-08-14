@@ -331,7 +331,7 @@ export default function TrackerTable({
                   <td style={{ color: allColor, fontWeight: 700 }}>{allLabel}</td>
                 )}
                 {mode === 'blog' && (
-                  <td style={{ color: entry?.integratedExposed ? '#0A84FF' : 'var(--text-tertiary)', fontWeight: 700, fontSize: 11, whiteSpace: 'nowrap' }}>
+                  <td style={{ color: entry?.integratedExposed ? '#0A84FF' : 'var(--text-tertiary)', fontWeight: 700, whiteSpace: 'nowrap' }}>
                     {entry?.integratedExposed == null ? '—' : (entry.integratedExposed ? '노출' : '미노출')}
                   </td>
                 )}
