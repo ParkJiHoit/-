@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import BulkImportModal from '../components/BulkImportModal';
 import NotificationSettingsModal from '../components/rankTracker/NotificationSettingsModal';
@@ -9,6 +9,11 @@ import TrackerTable from '../components/rankTracker/TrackerTable';
 import TrackerDetailDrawer from '../components/rankTracker/TrackerDetailDrawer';
 import { X, AlertTriangle } from 'lucide-react';
 import { isEffectivelyStabilized } from '../utils/stabilization';
+
+const TRACKER_MODES = [
+  { id: 'blog', title: '블로그 추적 모드', desc: '특정 블로그가 키워드에서 몇 위인지 추적' },
+  { id: 'all',  title: '전체 순위 모드',   desc: '키워드 블로그탭 상위 10개 스냅샷 기록' },
+];
 
 function getKSTToday() {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -417,6 +422,12 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItem
   const token = session?.access_token;
 
   const [mode, setMode] = useState('blog');
+  const modeTabRefs = useRef({});
+  const [modeTabIndicator, setModeTabIndicator] = useState({ left: 0, width: 0 });
+  useLayoutEffect(() => {
+    const el = modeTabRefs.current[mode];
+    if (el) setModeTabIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [mode]);
   const [items, setItems] = useState([]);
 
   useEffect(() => {
@@ -848,25 +859,48 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItem
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8 }}>
-        {[
-          { id: 'blog', title: '블로그 추적 모드', desc: '특정 블로그가 키워드에서 몇 위인지 추적' },
-          { id: 'all',  title: '전체 순위 모드',   desc: '키워드 블로그탭 상위 10개 스냅샷 기록' },
-        ].map(m => (
-          <div
-            key={m.id}
-            onClick={() => { setMode(m.id); setSelected(null); setSnapshots([]); setSortKey(null); }}
-            style={{
-              flex: 1, padding: '14px 18px', borderRadius: 14, cursor: 'pointer',
-              border: `1.5px solid ${mode === m.id ? 'var(--accent)' : 'var(--border)'}`,
-              background: mode === m.id ? 'rgba(10,132,255,0.08)' : 'var(--bg-elevated)',
-              transition: 'border-color 0.15s, background-color 0.15s',
-            }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 700, color: mode === m.id ? 'var(--accent)' : 'var(--text-primary)', marginBottom: 3 }}>{m.title}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{m.desc}</div>
-          </div>
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{
+          position: 'relative', display: 'inline-flex', alignSelf: 'flex-start',
+          background: 'var(--bg-overlay)', border: '1px solid var(--border)',
+          borderRadius: 999, padding: 3, gap: 2,
+        }}>
+          <div style={{
+            position: 'absolute', top: 3, left: 0, bottom: 3,
+            width: modeTabIndicator.width,
+            borderRadius: 999,
+            background: 'var(--accent)',
+            transform: `translateX(${modeTabIndicator.left}px)`,
+            transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1), width 0.28s cubic-bezier(0.4,0,0.2,1)',
+            pointerEvents: 'none',
+          }} />
+          {TRACKER_MODES.map(m => {
+            const isActive = mode === m.id;
+            return (
+              <button
+                key={m.id}
+                ref={(el) => { modeTabRefs.current[m.id] = el; }}
+                onClick={() => { setMode(m.id); setSelected(null); setSnapshots([]); setSortKey(null); }}
+                style={{
+                  position: 'relative', zIndex: 1,
+                  padding: '8px 20px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                  fontSize: 13, fontWeight: isActive ? 700 : 500,
+                  borderRadius: 999,
+                  background: 'transparent',
+                  color: isActive ? '#fff' : 'var(--text-secondary)',
+                  transition: 'color 0.2s',
+                  letterSpacing: '-0.1px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {m.title}
+              </button>
+            );
+          })}
+        </div>
+        <p key={mode} className="mac-fade-in" style={{ margin: '0 0 0 2px', fontSize: 12, color: 'var(--text-tertiary)' }}>
+          {TRACKER_MODES.find(m => m.id === mode)?.desc}
+        </p>
       </div>
 
       <TrackerStatCards mode={mode} filteredItems={filteredItems} />
