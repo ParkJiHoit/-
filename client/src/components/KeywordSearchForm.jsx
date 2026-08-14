@@ -1,5 +1,6 @@
 import { ChevronDown, Clock, Loader2, Search, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const KEYWORD_PLACEHOLDERS = ['분석할 키워드를 입력하세요'];
 const BLOG_PLACEHOLDERS = ['분석할 키워드를 입력하세요'];
@@ -174,7 +175,7 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
 
       {/* ── Recent search history ── */}
       {showHistory && (
-        <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <div className="mac-fade-in" style={{ marginTop: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -203,9 +204,15 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
 
           {/* Pills */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center' }}>
+            <AnimatePresence initial={false}>
             {history.map((kw) => (
-              <div
+              <motion.div
                 key={kw}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                transition={{ duration: 0.18 }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 0,
                   background: 'rgba(255,255,255,0.10)',
@@ -252,15 +259,16 @@ export default function KeywordSearchForm({ onSubmit, loading, suggestions = [],
                 >
                   <X style={{ width: 10, height: 10 }} />
                 </button>
-              </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
           </div>
         </div>
       )}
 
       {/* ── Related suggestions (after search) ── */}
       {showSuggestions && (
-        <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div className="mac-fade-in" style={{ marginTop: 22, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           <p style={{
             fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
             color: 'var(--text-tertiary)', margin: 0

@@ -46,7 +46,7 @@ function StatCard({ label, value, total, color, icon: Icon, sub, compact, index 
       </p>
       {pct !== null ? (
         <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 2, transition: 'width 0.7s cubic-bezier(0.34,1.2,0.64,1)' }} />
+          <div style={{ width: '100%', height: '100%', background: color, borderRadius: 2, transformOrigin: 'left', transform: `scaleX(${pct / 100})`, transition: 'transform 0.7s cubic-bezier(0.34,1.2,0.64,1)' }} />
         </div>
       ) : sub != null && (
         <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-secondary)' }}>{sub}</p>

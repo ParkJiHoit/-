@@ -23,6 +23,8 @@ export default function InfoTip({ text, placement = 'top' }) {
           boxShadow: '0 8px 28px rgba(0,0,0,0.4)',
           pointerEvents: 'none', whiteSpace: 'normal', textAlign: 'left',
           fontWeight: 400,
+          transformOrigin: isTop ? 'bottom center' : 'top center',
+          animation: 'macScaleIn 0.15s var(--ease-out) both',
         }}>
           {text}
         </span>

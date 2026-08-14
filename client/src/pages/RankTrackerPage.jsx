@@ -1032,20 +1032,21 @@ function AddTrackerModal({ mode: defaultMode, token, editItem, groups, defaultGr
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      className="mac-modal-backdrop"
       style={{
         position: 'fixed', inset: 0, zIndex: 3000,
         background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
       }}
     >
-      <div style={{
+      <div className="mac-modal-card" style={{
         background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
         borderRadius: 20, padding: '28px 32px', width: '100%', maxWidth: 480,
         boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <div style={{ fontSize: 18, fontWeight: 700 }}>{isEdit ? `URL 추가 — ${editItem.keyword}` : '추적 등록'}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', padding: 8, margin: -8 }}>
+          <button onClick={onClose} className="mac-icon-btn mac-icon-btn-danger" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', padding: 8, margin: -8 }}>
             <X size={18} />
           </button>
         </div>

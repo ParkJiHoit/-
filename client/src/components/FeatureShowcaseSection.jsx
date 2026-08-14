@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
 
 import keywordOverview from '../assets/showcase/keyword-overview.png';
@@ -83,26 +83,27 @@ const GLOW_COLORS = ['#0A84FF', '#BF5AF2', '#30D158'];
 
 function Slide({ slide, reverse, active, slideRef, index, glowIndex }) {
   const glowColor = GLOW_COLORS[glowIndex % GLOW_COLORS.length];
+  const reducedMotion = useReducedMotion();
   return (
     <div className="feature-showcase-slide" ref={slideRef} data-slide-index={index}>
       <div className={`feature-showcase-slide-inner${reverse ? ' reverse' : ''}`}>
         <motion.div
           className="feature-showcase-media"
-          initial={{ opacity: 0, x: reverse ? 48 : -48, scale: 0.96 }}
+          initial={{ opacity: 0, x: reducedMotion ? 0 : (reverse ? 48 : -48), scale: reducedMotion ? 1 : 0.96 }}
           animate={active ? { opacity: 1, x: 0, scale: 1 } : {}}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.div
             className="feature-showcase-glow"
             style={{ background: glowColor, [reverse ? 'right' : 'left']: '-8%', top: '10%' }}
-            animate={{ y: [0, -18, 0], opacity: [0.4, 0.6, 0.4] }}
+            animate={reducedMotion ? { opacity: [0.4, 0.6, 0.4] } : { y: [0, -18, 0], opacity: [0.4, 0.6, 0.4] }}
             transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
           />
           <ScreenshotFrame src={slide.image} alt={slide.heading} />
         </motion.div>
         <motion.div
           className="feature-showcase-copy"
-          initial={{ opacity: 0, x: reverse ? -32 : 32 }}
+          initial={{ opacity: 0, x: reducedMotion ? 0 : (reverse ? -32 : 32) }}
           animate={active ? { opacity: 1, x: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
         >

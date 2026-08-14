@@ -71,9 +71,11 @@ export default function SummaryCards({ summary }) {
             {pct !== null && (
               <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
                 <div style={{
-                  width: `${pct}%`, height: '100%',
+                  width: '100%', height: '100%',
                   background: color,
-                  borderRadius: 2, transition: 'width 0.7s cubic-bezier(0.34,1.2,0.64,1)',
+                  borderRadius: 2, transformOrigin: 'left',
+                  transform: `scaleX(${pct / 100})`,
+                  transition: 'transform 0.7s cubic-bezier(0.34,1.2,0.64,1)',
                 }} />
               </div>
             )}

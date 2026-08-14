@@ -27,6 +27,11 @@
   --warning:       #FF9F0A;
   --nav-h: 52px;
   --nav-offset: 76px; /* floating nav: 16px top + 44px height + 16px gap */
+
+  /* 등장(entrance) 애니메이션 전용 강한 ease-out — 감속하며 부드럽게 멈춘다.
+     상태 변경(hover/색상 등)은 계속 bare ease/ease-in-out을 쓴다. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 [data-theme="light"] {
@@ -423,7 +428,11 @@ select option {
   }
 }
 
-/* ─── Dropdown ─── */
+/* ─── Dropdown ───
+   data-entering/data-closing 둘 다 transition으로 처리한다 (keyframe이 아님) —
+   닫히는 도중 다시 열어도 현재 스케일/투명도에서 자연스럽게 되돌아간다.
+   transform-origin은 각 드롭다운이 트리거 기준 어느 방향으로 붙는지에 따라
+   호출부에서 inline style로 지정한다(기본값은 위쪽 중앙 기준). */
 .mac-dropdown {
   background: rgba(58, 58, 60, 0.96);
   backdrop-filter: blur(40px) saturate(1.8);
@@ -431,11 +440,17 @@ select option {
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 1px rgba(0,0,0,0.4);
-  animation: macScaleIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) both;
+  transform-origin: top center;
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition: opacity 0.18s var(--ease-out), transform 0.18s var(--ease-out);
 }
 
+.mac-dropdown[data-entering="true"],
 .mac-dropdown[data-closing="true"] {
-  animation: macScaleOut 0.12s cubic-bezier(0.4, 0, 0.2, 1) both;
+  opacity: 0;
+  transform: scale(0.95) translateY(-4px);
+  transition-duration: 0.12s;
 }
 
 [data-theme="light"] .mac-dropdown {
@@ -721,7 +736,7 @@ select option {
   z-index: 9999;
   white-space: nowrap;
   pointer-events: none;
-  animation: macFadeUp 0.22s ease both;
+  animation: macFadeUp 0.22s var(--ease-out) both;
 }
 
 [data-theme="light"] .mac-toast {
@@ -729,8 +744,40 @@ select option {
   box-shadow: 0 4px 20px rgba(0,0,0,0.12);
 }
 
+/* ─── Nav pill hover (배경만 확대되는 하이라이트, 박스 자체 크기는 고정) ───
+   예전엔 padding을 늘려 박스 자체가 커지면서 옆 메뉴들이 밀렸다. 이제 박스
+   패딩은 항상 최대치로 고정하고, ::before 레이어만 transform:scaleX로
+   커지므로 형제 메뉴가 안 밀리면서도 통통 튕기는 하이라이트 느낌은 유지된다. */
+.nav-pill {
+  position: relative;
+  isolation: isolate;
+}
+.nav-pill::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--nav-pill-bg, transparent);
+  transform: scaleX(var(--nav-pill-scale, 0.001));
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: -1;
+}
+
 /* ─── Divider ─── */
 .mac-divider { height: 1px; background: var(--border); }
+
+/* ─── Modal entrance (배경 딤 + 카드 팝인) ───
+   조건부 렌더로 순간 마운트되는 모달 공용 진입 애니메이션. 배경은 opacity만,
+   카드는 기존 macScaleIn(스케일+살짝 위에서 내려옴)을 재사용한다. */
+@keyframes macModalBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.mac-modal-backdrop { animation: macModalBackdropIn 0.2s var(--ease-out) both; }
+.mac-modal-card { animation: macScaleIn 0.22s var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) {
+  .mac-modal-backdrop, .mac-modal-card { animation: none; }
+}
 
 /* ─── Hero ─── */
 .hero-transition { transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -781,15 +828,18 @@ select option {
   pointer-events: none;
   animation: scrollHintBounce 1.8s ease-in-out infinite;
 }
+@media (prefers-reduced-motion: reduce) {
+  .hero-scroll-hint { animation: none; opacity: 0.55; }
+}
 
-.mac-fade-in { animation: macFadeIn 0.3s cubic-bezier(0.4,0,0.2,1) both; }
+.mac-fade-in { animation: macFadeIn 0.3s var(--ease-out) both; }
 
-.mac-stagger > *:nth-child(1) { animation: macFadeIn 0.3s 0ms   cubic-bezier(0.4,0,0.2,1) both; }
-.mac-stagger > *:nth-child(2) { animation: macFadeIn 0.3s 45ms  cubic-bezier(0.4,0,0.2,1) both; }
-.mac-stagger > *:nth-child(3) { animation: macFadeIn 0.3s 90ms  cubic-bezier(0.4,0,0.2,1) both; }
-.mac-stagger > *:nth-child(4) { animation: macFadeIn 0.3s 135ms cubic-bezier(0.4,0,0.2,1) both; }
-.mac-stagger > *:nth-child(5) { animation: macFadeIn 0.3s 180ms cubic-bezier(0.4,0,0.2,1) both; }
-.mac-stagger > *:nth-child(6) { animation: macFadeIn 0.3s 225ms cubic-bezier(0.4,0,0.2,1) both; }
+.mac-stagger > *:nth-child(1) { animation: macFadeIn 0.3s 0ms   var(--ease-out) both; }
+.mac-stagger > *:nth-child(2) { animation: macFadeIn 0.3s 45ms  var(--ease-out) both; }
+.mac-stagger > *:nth-child(3) { animation: macFadeIn 0.3s 90ms  var(--ease-out) both; }
+.mac-stagger > *:nth-child(4) { animation: macFadeIn 0.3s 135ms var(--ease-out) both; }
+.mac-stagger > *:nth-child(5) { animation: macFadeIn 0.3s 180ms var(--ease-out) both; }
+.mac-stagger > *:nth-child(6) { animation: macFadeIn 0.3s 225ms var(--ease-out) both; }
 
 @media (prefers-reduced-motion: reduce) {
   .mac-fade-in,
@@ -961,6 +1011,12 @@ select option {
   .feature-showcase-slide-inner,
   .feature-showcase-slide-inner.reverse { flex-direction: column; gap: 32px; }
   .feature-showcase-copy { max-width: none; }
+}
+
+/* 결제 성공 모달 체크마크 배지 — 살짝 오버슈트하며 통통 튀어 등장 */
+@keyframes paymentSuccessBounce {
+  from { opacity: 0; transform: scale(0.3); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes authOverlayIn {

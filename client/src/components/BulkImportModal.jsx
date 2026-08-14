@@ -62,13 +62,14 @@ export default function BulkImportModal({ token, groups: trackerGroups, defaultG
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      className="mac-modal-backdrop"
       style={{
         position: 'fixed', inset: 0, zIndex: 3000,
         background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
       }}
     >
-      <div style={{
+      <div className="mac-modal-card" style={{
         background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
         borderRadius: 20, padding: '28px 32px', width: '100%', maxWidth: 640,
         maxHeight: '85vh', overflowY: 'auto',

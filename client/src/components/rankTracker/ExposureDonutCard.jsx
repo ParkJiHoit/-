@@ -74,11 +74,11 @@ export default function ExposureDonutCard({ total, segments, compact = true, ind
         </div>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '3px 12px' }}>
-        {filtered.map(s => (
+        {filtered.map((s, i) => (
           <motion.div
             key={s.key}
             initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
+            transition={{ duration: 0.4, delay: 0.3 + i * 0.05 }}
             style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: compact ? 11 : 12 }}
           >
             <span style={{ width: 6, height: 6, borderRadius: 2, background: s.color, flexShrink: 0 }} />

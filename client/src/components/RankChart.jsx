@@ -46,6 +46,7 @@ export default function RankChart({ snapshots = [], blogIds = [] }) {
               background: days === d ? 'rgba(10,132,255,0.12)' : 'rgba(255,255,255,0.05)',
               color: days === d ? 'var(--accent)' : 'var(--text-secondary)',
               fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'border-color 0.15s ease, background 0.15s ease, color 0.15s ease',
             }}
           >
             {d}일
@@ -53,7 +54,7 @@ export default function RankChart({ snapshots = [], blogIds = [] }) {
         ))}
       </div>
 
-      <div style={{ position: 'relative' }}>
+      <div key={days} className="mac-fade-in" style={{ position: 'relative' }}>
         <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
           {[1, 3, 5, 7, 10].map(rank => {
             const y = rankToY(rank);

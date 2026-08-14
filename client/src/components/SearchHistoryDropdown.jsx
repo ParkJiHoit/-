@@ -60,6 +60,7 @@ export default function SearchHistoryDropdown({ user, isDark, onSelect, pillStyl
   return (
     <div style={{ position: 'relative' }} ref={ref}>
       <button
+        className="nav-pill"
         style={pillStyle}
         onClick={handleToggle}
         title="최근 검색"

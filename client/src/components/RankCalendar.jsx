@@ -170,6 +170,7 @@ export default function RankCalendar({ snapshots = [], blogIds = [] }) {
                   color: text,
                 }}
                 onMouseEnter={e => {
+                  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
                   e.currentTarget.style.transform = 'scale(1.5)';
                   e.currentTarget.style.zIndex = '10';
                 }}

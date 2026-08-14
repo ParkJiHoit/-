@@ -29,7 +29,7 @@ export default function AuthPage({ onSuccess, onClose, theme, forceMode }) {
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
-        animation: 'authOverlayIn 0.2s ease',
+        animation: 'authOverlayIn 0.2s var(--ease-out)',
       }}
     >
       {/* 팝업 박스 */}
@@ -555,18 +555,21 @@ function AuthInput({ isDark, ...props }) {
 
 function PrimaryButton({ children, style, ...props }) {
   const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
   return (
     <button
       {...props}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { setHovered(false); setPressed(false); }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
       style={{
         width: '100%', padding: '10px',
         background: hovered ? '#409CFF' : '#0A84FF',
         border: 'none', borderRadius: 8, color: '#fff',
         fontSize: 13, fontWeight: 700, cursor: 'pointer',
         fontFamily: 'inherit', transition: 'background 0.15s, transform 0.1s',
-        transform: hovered ? 'scale(1.015)' : 'scale(1)',
+        transform: pressed ? 'scale(0.97)' : hovered ? 'scale(1.015)' : 'scale(1)',
         boxShadow: '0 2px 10px rgba(10,132,255,0.3)',
         ...style,
       }}
@@ -578,12 +581,15 @@ function PrimaryButton({ children, style, ...props }) {
 
 function SocialButton({ children, onClick, isDark }) {
   const [hovered, setHovered] = useState(false);
+  const [pressed, setPressed] = useState(false);
   return (
     <button
       type="button"
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { setHovered(false); setPressed(false); }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
       style={{
         width: '100%', padding: '10px 14px',
         background: isDark
@@ -595,7 +601,7 @@ function SocialButton({ children, onClick, isDark }) {
         fontFamily: 'inherit',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         transition: 'background 0.15s, transform 0.1s',
-        transform: hovered ? 'scale(1.013)' : 'scale(1)',
+        transform: pressed ? 'scale(0.97)' : hovered ? 'scale(1.013)' : 'scale(1)',
       }}
     >
       {children}

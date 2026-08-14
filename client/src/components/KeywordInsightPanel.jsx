@@ -22,6 +22,8 @@ function InfoTooltip({ text }) {
           boxShadow: '0 8px 28px rgba(0,0,0,0.4)',
           pointerEvents: 'none', whiteSpace: 'normal', textAlign: 'left',
           fontWeight: 400, letterSpacing: 0, textTransform: 'none',
+          transformOrigin: 'bottom center',
+          animation: 'macScaleIn 0.15s var(--ease-out) both',
         }}>
           {text}
         </span>
@@ -532,9 +534,10 @@ function GenderBars({ gender, loading }) {
           </span>
           <div style={{ flex: 1, height: 14, background: 'var(--bg-overlay)', borderRadius: 6, overflow: 'hidden' }}>
             <div style={{
-              width: `${pct}%`, height: '100%',
+              width: '100%', height: '100%',
               background: color, borderRadius: 6,
-              transition: 'width 0.55s cubic-bezier(0.34,1.2,0.64,1)',
+              transformOrigin: 'left', transform: `scaleX(${pct / 100})`,
+              transition: 'transform 0.55s cubic-bezier(0.34,1.2,0.64,1)',
             }} />
           </div>
           <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', width: 32, textAlign: 'right', flexShrink: 0 }}>
@@ -762,7 +765,7 @@ export default function KeywordInsightPanel({ baseKeyword, keywordRow, insights,
                 </div>
               ) : bar != null ? (
                 <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(bar, 100)}%`, height: '100%', background: barColor, borderRadius: 2, transition: 'width 0.6s ease' }} />
+                  <div style={{ width: '100%', height: '100%', background: barColor, borderRadius: 2, transformOrigin: 'left', transform: `scaleX(${Math.min(bar, 100) / 100})`, transition: 'transform 0.6s ease' }} />
                 </div>
               ) : null}
 

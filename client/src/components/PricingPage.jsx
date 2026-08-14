@@ -41,11 +41,17 @@ function FaqAccordion({ items }) {
                 <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{item.q}</span>
                 <ChevronDown size={14} style={{ color: 'var(--text-tertiary)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0, marginLeft: 12 }} />
               </button>
-              {open && (
-                <div style={{ padding: '0 18px 16px' }}>
-                  <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{item.a}</p>
+              <div style={{
+                display: 'grid',
+                gridTemplateRows: open ? '1fr' : '0fr',
+                transition: 'grid-template-rows 0.25s var(--ease-out)',
+              }}>
+                <div style={{ overflow: 'hidden', minHeight: 0 }}>
+                  <div style={{ padding: '0 18px 16px', opacity: open ? 1 : 0, transition: 'opacity 0.2s var(--ease-out)' }}>
+                    <p style={{ margin: 0, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.7 }}>{item.a}</p>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
@@ -301,12 +307,12 @@ export default function PricingPage({ onGoToAuth, user, token, theme, isSubscrib
       </div>
 
       {modal && (
-        <div onClick={() => setModal(null)} style={{
+        <div onClick={() => setModal(null)} className="mac-modal-backdrop" style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 1000, padding: 24,
         }}>
-          <div onClick={e => e.stopPropagation()} style={{
+          <div onClick={e => e.stopPropagation()} className="mac-modal-card" style={{
             background: isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 16, padding: '28px 32px',
             maxWidth: 560, width: '100%', maxHeight: '80vh', overflowY: 'auto',
             border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
@@ -316,7 +322,7 @@ export default function PricingPage({ onGoToAuth, user, token, theme, isSubscrib
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
                 {modal === 'privacy' ? '개인정보처리방침' : '이용약관'}
               </h2>
-              <button onClick={() => setModal(null)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}>✕</button>
+              <button onClick={() => setModal(null)} className="mac-icon-btn mac-icon-btn-danger" style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1, padding: 6, margin: -6 }}>✕</button>
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
               {modal === 'privacy' ? <PrivacyContent /> : <TermsContent />}

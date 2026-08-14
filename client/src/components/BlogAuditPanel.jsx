@@ -1,6 +1,7 @@
 import { ExternalLink, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import ScoreRadarCard from './ScoreRadarCard';
 import InfoTip from './InfoTip';
+import useCountUp from '../hooks/useCountUp';
 
 const GRADE_CONFIG = {
   S: { color: 'var(--success)', bg: 'rgba(48,209,88,0.12)',  border: 'rgba(48,209,88,0.30)',  label: '최우수' },
@@ -50,6 +51,7 @@ export default function BlogAuditPanel({ result }) {
   if (!result) return null;
   const { blogId, blogUrl, blogName, score, verdict, warnings, stats, recentPosts } = result;
   const gc = GRADE_CONFIG[score.grade] || GRADE_CONFIG.C;
+  const animatedTotal = useCountUp(score.total);
 
   return (
     <div className="mac-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -66,6 +68,7 @@ export default function BlogAuditPanel({ result }) {
           width: 88, height: 88, borderRadius: '50%', flexShrink: 0,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           background: gc.bg, border: `2px solid ${gc.border}`,
+          animation: 'macScaleIn 0.5s 0.15s cubic-bezier(0.34,1.4,0.64,1) both',
         }}>
           <span style={{ fontSize: 36, fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", color: gc.color, lineHeight: 1 }}>{score.grade}</span>
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: gc.color, opacity: 0.8, marginTop: 2 }}>{gc.label}</span>
@@ -89,7 +92,7 @@ export default function BlogAuditPanel({ result }) {
         {/* 종합 점수 */}
         <div style={{ textAlign: 'center', flexShrink: 0 }}>
           <p style={{ fontSize: 52, fontWeight: 900, fontFamily: "'Space Grotesk', sans-serif", color: gc.color, margin: 0, lineHeight: 1, letterSpacing: '-2px' }}>
-            {score.total}
+            {animatedTotal}
           </p>
           <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: '4px 0 0', fontWeight: 600, letterSpacing: '0.04em' }}>
             / 100점

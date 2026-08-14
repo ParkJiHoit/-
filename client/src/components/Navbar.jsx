@@ -130,11 +130,11 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
 
   const pillItem = (id) => ({
     borderRadius: 999,
-    padding: hoveredNav === id ? '6px 20px' : '6px 12px',
-    transition: 'padding 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.18s ease, color 0.18s ease',
-    background: hoveredNav === id
-      ? isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'
-      : 'transparent',
+    padding: '6px 20px',
+    transition: 'color 0.18s ease',
+    background: 'transparent',
+    '--nav-pill-scale': hoveredNav === id ? 1 : 0.001,
+    '--nav-pill-bg': isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)',
     fontSize: 11,
     fontWeight: 700,
     color: hoveredNav === id ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -198,6 +198,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       {/* 서비스 dropdown */}
       <div style={{ position: 'relative' }} ref={dropdownRef}>
         <button
+          className="nav-pill"
           style={pillItem('services')}
           onMouseEnter={() => setHoveredNav('services')}
           onMouseLeave={() => setHoveredNav(null)}
@@ -281,6 +282,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       {SHOW_PRICING_NAV && (
         <div style={{ position: 'relative' }}>
           <button
+            className="nav-pill"
             style={pillItem('pricing')}
             onMouseEnter={() => setHoveredNav('pricing')}
             onMouseLeave={() => setHoveredNav(null)}
@@ -293,6 +295,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
 
       {/* 사용 가이드 */}
       <button
+        className="nav-pill"
         style={pillItem('guide')}
         onMouseEnter={() => setHoveredNav('guide')}
         onMouseLeave={() => setHoveredNav(null)}
@@ -303,6 +306,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
 
       {/* 업데이트 */}
       <button
+        className="nav-pill"
         style={pillItem('updates')}
         onMouseEnter={() => setHoveredNav('updates')}
         onMouseLeave={() => setHoveredNav(null)}
@@ -316,6 +320,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
       {/* 피드백 버튼 */}
       <button
         onClick={() => setFeedbackOpen(true)}
+        className="nav-pill"
         style={pillItem('feedback')}
         onMouseEnter={() => setHoveredNav('feedback')}
         onMouseLeave={() => setHoveredNav(null)}
@@ -412,12 +417,12 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
     </nav>
 
     {feedbackOpen && (
-      <div onClick={() => setFeedbackOpen(false)} style={{
+      <div onClick={() => setFeedbackOpen(false)} className="mac-modal-backdrop" style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 2000, padding: 24,
       }}>
-        <div onClick={e => e.stopPropagation()} style={{
+        <div onClick={e => e.stopPropagation()} className="mac-modal-card" style={{
           background: isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 16, padding: '28px 28px',
           maxWidth: 460, width: '100%',
           border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
@@ -425,7 +430,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--text-primary)' }}>피드백 보내기</h2>
-            <button onClick={() => setFeedbackOpen(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}>✕</button>
+            <button onClick={() => setFeedbackOpen(false)} className="mac-icon-btn mac-icon-btn-danger" style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1, padding: 6, margin: -6 }}>✕</button>
           </div>
 
           {feedbackDone ? (
@@ -492,12 +497,12 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
     )}
 
     {grantOpen && (
-      <div onClick={() => setGrantOpen(false)} style={{
+      <div onClick={() => setGrantOpen(false)} className="mac-modal-backdrop" style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 2000, padding: 24,
       }}>
-        <div onClick={e => e.stopPropagation()} style={{
+        <div onClick={e => e.stopPropagation()} className="mac-modal-card" style={{
           background: isDark ? '#1C1C1E' : '#FFFFFF', borderRadius: 16, padding: '28px 28px',
           maxWidth: 400, width: '100%',
           border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
@@ -505,7 +510,7 @@ export default function Navbar({ activeTab, onSwitchTab, onGoHome, onGoToService
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: 'var(--text-primary)' }}>이메일로 프리미엄 부여</h2>
-            <button onClick={() => setGrantOpen(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1 }}>✕</button>
+            <button onClick={() => setGrantOpen(false)} className="mac-icon-btn mac-icon-btn-danger" style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-tertiary)', lineHeight: 1, padding: 6, margin: -6 }}>✕</button>
           </div>
 
           <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>

@@ -56,13 +56,14 @@ export default function ShareReportModal({ token, groupId, groupName, onClose })
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      className="mac-modal-backdrop"
       style={{
         position: 'fixed', inset: 0, zIndex: 3000,
         background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
       }}
     >
-      <div style={{
+      <div className="mac-modal-card" style={{
         background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)',
         borderRadius: 20, padding: '28px 32px', width: '100%', maxWidth: 480,
         boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
@@ -72,7 +73,8 @@ export default function ShareReportModal({ token, groupId, groupName, onClose })
             <Share2 size={17} style={{ color: 'var(--accent)' }} />
             리포트 공유
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}>
+          <button onClick={onClose} className="mac-icon-btn mac-icon-btn-danger mac-icon-btn-x"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 8, margin: -8, display: 'flex' }}>
             <X size={18} />
           </button>
         </div>

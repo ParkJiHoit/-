@@ -213,7 +213,7 @@ export default function TrackerTable({
                     fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
                   }}
                 >
-                  <ChevronDown size={13} style={{ transform: showStabilized ? 'none' : 'rotate(-90deg)' }} />
+                  <ChevronDown size={13} style={{ transform: showStabilized ? 'none' : 'rotate(-90deg)', transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1)' }} />
                   안정화됨 (등록 {STABILIZED_AFTER_DAYS}일 경과) · {stabilizedItems.length}개
                 </button>
               </td>
@@ -286,7 +286,7 @@ export default function TrackerTable({
                             title={(isAllMode ? isAllRowOpen : isOpen) ? '접기' : (isAllMode ? '블로그탭 상위 5개 보기' : `블로그 ${totalBlogCount}개 펼치기`)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 2, display: 'flex' }}
                           >
-                            <ChevronRight size={13} style={{ transform: (isAllMode ? isAllRowOpen : isOpen) ? 'rotate(90deg)' : 'none' }} />
+                            <ChevronRight size={13} style={{ transform: (isAllMode ? isAllRowOpen : isOpen) ? 'rotate(90deg)' : 'none', transition: 'transform 0.18s cubic-bezier(0.4, 0, 0.2, 1)' }} />
                           </button>
                         )}
                       </span>

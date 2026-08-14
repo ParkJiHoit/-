@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, Send, RotateCcw, Mail } from 'lucide-react';
 
 const GREETING = '안녕하세요! 궁금하신 점을 물어보세요.\n자주 묻는 질문에 답변해 드려요.';
@@ -51,6 +51,7 @@ export default function ChatWidget({ user, token }) {
   const [sending, setSending] = useState(false);
   const [placeholder, setPlaceholder] = useState(PLACEHOLDER_HINTS[0]);
   const listRef = useRef(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (open && messages.length === 0) setMessages(initialMessages());
@@ -181,6 +182,9 @@ export default function ChatWidget({ user, token }) {
           width: 6px; height: 6px; border-radius: 999px; background: var(--text-tertiary);
           animation: chatDotBounce 1.1s ease-in-out infinite;
         }
+        @media (prefers-reduced-motion: reduce) {
+          .chat-bubble, .chat-chip-btn { animation: none !important; opacity: 1 !important; }
+        }
       `}</style>
 
       <motion.div
@@ -189,7 +193,7 @@ export default function ChatWidget({ user, token }) {
           height: open ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT,
           borderRadius: open ? 22 : 999,
         }}
-        transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.8 }}
+        transition={reducedMotion ? { duration: 0.01 } : { type: 'spring', stiffness: 380, damping: 32, mass: 0.8 }}
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 1200,
           maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 48px)',
@@ -276,7 +280,7 @@ export default function ChatWidget({ user, token }) {
 
               <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {messages.map((m, i) => (
-                  <div key={i} style={{
+                  <div key={i} className="chat-bubble" style={{
                     alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
                     maxWidth: '85%', padding: '11px 14px', borderRadius: 16,
                     background: m.role === 'user' ? 'linear-gradient(135deg, var(--accent), #34C1FF)' : 'var(--bg-overlay)',
@@ -289,7 +293,7 @@ export default function ChatWidget({ user, token }) {
                   </div>
                 ))}
                 {sending && (
-                  <div style={{
+                  <div className="chat-bubble" style={{
                     alignSelf: 'flex-start', display: 'flex', gap: 5, padding: '12px 16px',
                     borderRadius: 16, background: 'var(--bg-overlay)',
                     animation: 'chatBubbleInBot 0.32s cubic-bezier(0.16, 1, 0.3, 1) both',

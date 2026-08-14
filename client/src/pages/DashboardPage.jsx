@@ -165,8 +165,8 @@ export default function DashboardPage({ user, token, onLoginRequest, onGoToServi
           </button>
         </div>
       ) : summary && (
-        <>
-          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+        <div className="mac-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <section className="mac-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
             <StatCard label="추적 키워드" value={summary.totalKeywords} total={null} color="#8E8E93" icon={Target} />
             <StatCard label="추적 링크" value={summary.totalLinks} total={null} color="#0A84FF" icon={Link2} />
             <StatCard label="5위 내 노출" value={summary.top5LinkCount} total={summary.totalLinks} color="#30D158" icon={Trophy} />
@@ -186,7 +186,7 @@ export default function DashboardPage({ user, token, onLoginRequest, onGoToServi
                 가장 최근 갱신에서 감지된 순위 변동이 없어요.
               </p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div className="mac-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {summary.recentChanges.map((c, i) => {
                   const meta = CHANGE_META[c.kind];
                   if (!meta) return null;
@@ -213,17 +213,17 @@ export default function DashboardPage({ user, token, onLoginRequest, onGoToServi
               </div>
             )}
           </section>
-        </>
+        </div>
       )}
 
-      <section className="mac-card" style={{ padding: '20px 22px' }}>
+      <section className="mac-card mac-fade-in" style={{ padding: '20px 22px' }}>
         <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 14px' }}>최근 검색</h2>
         {history.length === 0 ? (
           <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: 0, padding: '4px 0' }}>
             최근 검색 기록이 없습니다.
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div className="mac-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {history.map((item, i) => {
               const meta = HISTORY_TYPE_META[item.type] || HISTORY_TYPE_META.keyword;
               const Icon = meta.icon;

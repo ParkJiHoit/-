@@ -30,9 +30,11 @@ function InlineBar({ value, color, max = 100 }) {
       <span style={{ fontSize: 13, fontWeight: 700, color, lineHeight: 1 }}>{value}</span>
       <div style={{ width: 36, height: 2, borderRadius: 1, background: 'var(--border)', overflow: 'hidden' }}>
         <div style={{
-          width: `${Math.min((typeof value === 'number' ? value : parseFloat(value)) / max * 100, 100)}%`,
+          width: '100%',
           height: '100%', background: color, borderRadius: 1,
-          transition: 'width 0.5s cubic-bezier(0.34,1.2,0.64,1)',
+          transformOrigin: 'left',
+          transform: `scaleX(${Math.min((typeof value === 'number' ? value : parseFloat(value)) / max * 100, 100) / 100})`,
+          transition: 'transform 0.5s cubic-bezier(0.34,1.2,0.64,1)',
         }} />
       </div>
     </div>
@@ -118,7 +120,7 @@ export default function KeywordTableB({ rows, sortConfig, onSort, visibleColumns
           </thead>
 
           {/* ── 바디 ── */}
-          <tbody>
+          <tbody className="mac-stagger">
             {rows.map((row, idx) => (
               <TableRow
                 key={row.keyword}

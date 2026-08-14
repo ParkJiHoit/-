@@ -1,5 +1,6 @@
 ﻿import { Download, Loader2, Moon, Sun, Search, ChevronDown } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import * as XLSX from 'xlsx-js-style';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabase';
@@ -464,28 +465,43 @@ function CompactNavSearch({ onSubmit, currentKeyword, visible }) {
 function HeroSection({ tab, blogSubTab, hasResults, theme, children }) {
   const maxW = tab === 'expansion' ? 1140 : 680;
   return (
-    <div className="hero-transition" style={{
+    <div style={{
       position: 'relative',
-      overflow: hasResults ? undefined : 'hidden',
-      background: hasResults
-        ? 'transparent'
-        : 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(10,132,255,0.09) 0%, transparent 65%)',
+      overflow: 'hidden',
+      boxSizing: 'border-box',
+      // height:100vh↔auto는 CSS로 부드럽게 전환할 수 없어서(auto는 애니메이션 불가) 대신
+      // min-height를 100vh↔0으로 트랜지션시킨다 — 줄어드는 동안 실제 박스 높이는
+      // "min-height 보간값과 콘텐츠 자연 높이 중 큰 쪽"이 되므로, 콘텐츠 높이 밑으로는
+      // 안 줄어들면서도 진짜로 부드럽게 수축한다. display/flexDirection/justifyContent도
+      // 항상 동일하게 유지해서(더 이상 조건부로 토글하지 않음) 레이아웃 모드 자체가
+      // 순간적으로 바뀌는 지점이 없게 한다.
+      minHeight: hasResults ? 0 : '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
       paddingTop: hasResults ? 'calc(var(--nav-offset) + 24px)' : 'calc(var(--nav-offset) + 190px)',
       paddingBottom: hasResults ? 20 : 72,
+      transition: 'min-height 0.5s var(--ease-in-out), padding-top 0.5s var(--ease-in-out), padding-bottom 0.5s var(--ease-in-out)',
       // 결과가 없는 랜딩 상태에서는 히어로가 정확히 한 화면(100vh)만 차지하게 해서,
       // 바로 아래 기능 소개 섹션과 절대 겹치지 않고, 화면 단위 스크롤 스냅의
       // 첫 번째 구간 역할을 하게 한다(App.jsx의 snap-flow 클래스와 짝).
-      height: hasResults ? undefined : '100vh',
-      display: hasResults ? undefined : 'flex',
-      flexDirection: hasResults ? undefined : 'column',
-      justifyContent: hasResults ? undefined : 'center',
-      boxSizing: 'border-box',
       scrollSnapAlign: hasResults ? undefined : 'start',
       scrollSnapStop: hasResults ? undefined : 'always',
     }}>
+      {/* 랜딩 배경(라디얼 그라디언트)은 항상 같은 자리에 두고 opacity만 트랜지션시킨다 —
+          'transparent' ↔ 그라디언트처럼 서로 다른 background 값은 CSS가 매끄럽게
+          보간하지 못해서, 대신 불투명도로 페이드시키는 편이 실제로 부드럽다. */}
+      <div className="pointer-events-none absolute inset-0" style={{
+        zIndex: 0,
+        background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(10,132,255,0.09) 0%, transparent 65%)',
+        opacity: hasResults ? 0 : 1,
+        transition: 'opacity 0.4s var(--ease-in-out)',
+      }} />
       {/* 구체(와이어프레임)는 히어로 자기 박스 안에서만(fixed가 아니라 absolute로) 떠 있어서
           스크롤해서 히어로를 벗어나면 같이 사라진다 — 별 파티클은 App.jsx에 한 번만 마운트되는
-          전역 레이어가 페이지 전체에 항상 깔려 있어 여기서는 그리지 않는다(중복 방지). */}
+          전역 레이어가 페이지 전체에 항상 깔려 있어 여기서는 그리지 않는다(중복 방지).
+          캔버스 애니메이션 루프를 계속 돌리는 비용을 피하려고, 페이드 대신 결과가 없을 때만
+          마운트한다 — 이 부분만은 그래서 여전히 조건부 마운트다. */}
       {!hasResults && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
           <HeroScene className="absolute inset-0" dark={theme === 'dark'} showSpheres particleCount={0} />
@@ -503,8 +519,14 @@ function HeroSection({ tab, blogSubTab, hasResults, theme, children }) {
         </div>
       )}
       <section className="mx-auto flex w-full flex-col items-center px-5 lg:px-8" style={{ maxWidth: maxW, position: 'relative', zIndex: 1 }}>
-        {!hasResults && (
-          <div className="mac-fade-in mb-10 text-center">
+        <div style={{
+          display: 'grid',
+          gridTemplateRows: hasResults ? '0fr' : '1fr',
+          width: '100%',
+          transition: 'grid-template-rows 0.5s var(--ease-in-out)',
+        }}>
+        <div style={{ overflow: 'hidden', minHeight: 0 }}>
+          <div className="mb-10 text-center" style={{ opacity: hasResults ? 0 : 1, transition: 'opacity 0.3s var(--ease-in-out)' }}>
             <p style={{
               fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase',
               color: 'var(--text-tertiary)', marginBottom: 14
@@ -554,7 +576,8 @@ function HeroSection({ tab, blogSubTab, hasResults, theme, children }) {
               {tab === 'blog' && blogSubTab === 'audit'     && '노출 가능성과 상위 노출 이력을 기반으로 블로그 적합성을 분석합니다'}
             </p>
           </div>
-        )}
+        </div>
+        </div>
         {children}
       </section>
       {/* 아래로 더 볼 거리(기능 소개 섹션)가 있는 탭에서만, 결과 없는 랜딩 화면일 때
@@ -613,6 +636,13 @@ export default function App() {
   const [blogStructure, setBlogStructure] = useState(null);
   const [blogStructureKeyword, setBlogStructureKeyword] = useState('');
   const [blogSubTab, setBlogSubTab] = useState('structure'); // 'structure' | 'audit'
+  const prefersReducedMotion = useReducedMotion();
+  const blogSubTabRefs = useRef({});
+  const [blogSubTabIndicator, setBlogSubTabIndicator] = useState({ left: 0, width: 0 });
+  useLayoutEffect(() => {
+    const el = blogSubTabRefs.current[blogSubTab];
+    if (el) setBlogSubTabIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [blogSubTab]);
   const [blogAudit, setBlogAudit] = useState(null);
   const [blogAuditLoading, setBlogAuditLoading] = useState(false);
   const [blogAuditError, setBlogAuditError] = useState('');
@@ -625,6 +655,7 @@ export default function App() {
   const [loading, setLoading]           = useState(false);
   const [error,   setError]             = useState('');
   const [toast,   setToast]             = useState('');
+  const [toastId, setToastId]           = useState(0);
   const [loginPrompt, setLoginPrompt]   = useState(null); // null | 'keyword' | 'blog'
   const [limitExceeded, setLimitExceeded] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false); // false | true | 'admin'
@@ -711,6 +742,7 @@ export default function App() {
   const showToast = useCallback((msg) => {
     if (toastRef.current) clearTimeout(toastRef.current);
     setToast(msg);
+    setToastId((id) => id + 1);
   }, []);
 
   const updateFilter = (key, value) => setFilters((p) => ({ ...p, [key]: value }));
@@ -943,19 +975,29 @@ export default function App() {
       )}
 
       {paymentSuccess && (
-        <div onClick={() => setPaymentSuccess(false)} style={{
+        <div onClick={() => setPaymentSuccess(false)} className="mac-modal-backdrop" style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 3000, padding: 24,
         }}>
-          <div onClick={e => e.stopPropagation()} style={{
+          <div onClick={e => e.stopPropagation()} className="mac-modal-card" style={{
             background: theme !== 'light' ? '#1C1C1E' : '#FFFFFF',
             borderRadius: 20, padding: '36px 32px', maxWidth: 400, width: '100%',
             textAlign: 'center',
             border: theme !== 'light' ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
             boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
           }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+            <div style={{
+              width: 72, height: 72, borderRadius: '50%', margin: '0 auto 16px',
+              background: 'linear-gradient(135deg,#30D158,#34C1FF)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(48,209,88,0.4)',
+              animation: prefersReducedMotion ? 'none' : 'paymentSuccessBounce 0.6s 0.1s cubic-bezier(0.34,1.56,0.64,1) both',
+            }}>
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
             <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>
               프리미엄 시작!
             </h2>
@@ -1067,6 +1109,7 @@ export default function App() {
             {/* 서브탭 스위처 */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
               <div style={{
+                position: 'relative',
                 display: 'inline-flex',
                 background: 'var(--bg-overlay)',
                 border: '1px solid var(--border)',
@@ -1074,19 +1117,30 @@ export default function App() {
                 padding: 3,
                 gap: 2,
               }}>
+                <div style={{
+                  position: 'absolute', top: 3, left: 0, bottom: 3,
+                  width: blogSubTabIndicator.width,
+                  borderRadius: 999,
+                  background: 'var(--accent)',
+                  transform: `translateX(${blogSubTabIndicator.left}px)`,
+                  transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1), width 0.28s cubic-bezier(0.4,0,0.2,1)',
+                  pointerEvents: 'none',
+                }} />
                 {[{ id: 'structure', label: '블로그 구조 분석' }, { id: 'audit', label: '블로그 진단' }].map(({ id, label }) => {
                   const isActive = blogSubTab === id;
                   return (
                     <button
                       key={id}
+                      ref={(el) => { blogSubTabRefs.current[id] = el; }}
                       onClick={() => { setBlogSubTab(id); setError(''); setBlogAuditError(''); }}
                       style={{
+                        position: 'relative', zIndex: 1,
                         padding: '8px 20px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                         fontSize: 13, fontWeight: isActive ? 700 : 500,
                         borderRadius: 999,
-                        background: isActive ? 'var(--accent)' : 'transparent',
+                        background: 'transparent',
                         color: isActive ? '#fff' : 'var(--text-secondary)',
-                        transition: 'background 0.2s, color 0.2s',
+                        transition: 'color 0.2s',
                         letterSpacing: '-0.1px',
                         whiteSpace: 'nowrap',
                       }}
@@ -1230,29 +1284,44 @@ export default function App() {
           </div>
         )}
 
-        {/* Blog audit results */}
-        {activeTab === 'blog' && blogSubTab === 'audit' && blogAudit && !blogAuditLoading && (
-          <div className="mac-fade-in flex flex-col" style={{ gap: 48 }}>
-            <section>
-              <SectionLabel>블로그 진단 결과</SectionLabel>
-              <BlogAuditPanel result={blogAudit} />
-            </section>
-          </div>
-        )}
+        {/* 블로그 구조 분석 ↔ 블로그 진단 결과 전환 — 이전 패널이 순간 사라지고 다음 패널이
+            튀어나오는 대신, 살짝 블러+페이드로 교차 전환되도록 AnimatePresence로 감싼다. */}
+        <AnimatePresence mode="wait">
+          {activeTab === 'blog' && blogSubTab === 'audit' && blogAudit && !blogAuditLoading && (
+            <motion.div
+              key="blog-audit-result"
+              initial={{ opacity: 0, filter: prefersReducedMotion ? 'blur(0px)' : 'blur(6px)' }}
+              animate={{ opacity: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, filter: prefersReducedMotion ? 'blur(0px)' : 'blur(6px)' }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              className="flex flex-col" style={{ gap: 48 }}
+            >
+              <section>
+                <SectionLabel>블로그 진단 결과</SectionLabel>
+                <BlogAuditPanel result={blogAudit} />
+              </section>
+            </motion.div>
+          )}
+          {activeTab === 'blog' && blogSubTab === 'structure' && blogStructure && (
+            <motion.div
+              key="blog-structure-result"
+              initial={{ opacity: 0, filter: prefersReducedMotion ? 'blur(0px)' : 'blur(6px)' }}
+              animate={{ opacity: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, filter: prefersReducedMotion ? 'blur(0px)' : 'blur(6px)' }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              className="flex flex-col" style={{ gap: 48 }}
+            >
+              <section>
+                <SectionLabel>블로그 구조 분석</SectionLabel>
+                <BlogStructurePanel result={blogStructure} keyword={blogStructureKeyword} />
+              </section>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {activeTab === 'blog' && blogSubTab === 'audit' && blogAuditError && blogAudit && (
           <div className="mac-fade-in mac-card mb-5 px-5 py-4"
             style={{ fontSize: 13, color: 'var(--destructive)', border: '1px solid rgba(255,69,58,0.25)' }}>
             {blogAuditError}
-          </div>
-        )}
-
-        {/* Blog structure results */}
-        {activeTab === 'blog' && blogSubTab === 'structure' && blogStructure && (
-          <div className="mac-fade-in flex flex-col" style={{ gap: 48 }}>
-            <section>
-              <SectionLabel>블로그 구조 분석</SectionLabel>
-              <BlogStructurePanel result={blogStructure} keyword={blogStructureKeyword} />
-            </section>
           </div>
         )}
       </div>
@@ -1263,7 +1332,7 @@ export default function App() {
 
       </> )} {/* end pricing conditional */}
 
-      {toast && <Toast message={toast} onDone={() => setToast('')} />}
+      {toast && <Toast key={toastId} message={toast} onDone={() => setToast('')} />}
       </div>
     </div>
   );

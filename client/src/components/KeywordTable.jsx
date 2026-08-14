@@ -100,7 +100,7 @@ export default function KeywordTable({ rows, sortConfig, onSort, visibleColumns,
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="mac-stagger">
             {rows.map((row) => (
               <tr key={row.keyword}>
                 {activeColumns.map((col) => (
@@ -208,6 +208,8 @@ function InfoTooltip({ text }) {
           boxShadow: '0 8px 28px rgba(0,0,0,0.4)',
           pointerEvents: 'none', whiteSpace: 'normal', textAlign: 'left',
           fontWeight: 400, letterSpacing: 0, textTransform: 'none',
+          transformOrigin: 'bottom center',
+          animation: 'macScaleIn 0.15s var(--ease-out) both',
         }}>
           {text}
         </span>
