@@ -642,7 +642,11 @@ export default function App() {
   useLayoutEffect(() => {
     const el = blogSubTabRefs.current[blogSubTab];
     if (el) setBlogSubTabIndicator({ left: el.offsetLeft, width: el.offsetWidth });
-  }, [blogSubTab]);
+    // activeTab도 의존성에 넣는 이유: 이 인디케이터를 그리는 버튼들은 activeTab==='blog'일
+    // 때만 마운트된다. 다른 탭에 있다가 "블로그 분석"으로 처음 들어올 때는 blogSubTab
+    // 값 자체는 그대로(예: 'structure')라 안 바뀌므로, blogSubTab만 의존성이면 버튼이
+    // 막 마운트된 이 순간에 effect가 재실행되지 않아 인디케이터가 안 그려진다.
+  }, [blogSubTab, activeTab]);
   const [blogAudit, setBlogAudit] = useState(null);
   const [blogAuditLoading, setBlogAuditLoading] = useState(false);
   const [blogAuditError, setBlogAuditError] = useState('');
