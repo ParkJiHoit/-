@@ -170,9 +170,11 @@ export default function BlogStructurePanel({ result, keyword }) {
 
   return (
     <div className="flex flex-col gap-5 mac-stagger">
-      {/* 헤더 */}
+      {/* 헤더 — 텍스트 몇 줄뿐이라 1400px 전체 폭으로 늘리면 가운데가 텅 비어 보여서,
+          검색창과 같은 폭(680px)으로 제한해 내용만큼만 차지하게 한다. */}
       <div className="mac-card-glass" style={{
         padding: '20px 24px',
+        maxWidth: 680,
         background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.09) 0%, transparent 60%)',
         borderTop: '2px solid rgba(10,132,255,0.35)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap',
