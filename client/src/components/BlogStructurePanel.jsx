@@ -84,7 +84,7 @@ const POSITION_SEGMENTS = [
   { key: 'front',   label: '앞',   color: '#0a84ff' },
   { key: 'middle',  label: '중간', color: '#5e5ce6' },
   { key: 'back',    label: '뒤',   color: '#bf5af2' },
-  { key: 'partial', label: '부분', color: '#ff9f0a' },
+  { key: 'partial', label: '분리', color: '#ff9f0a' },
   { key: 'none',    label: '없음', color: 'rgba(152,152,157,0.5)' },
 ];
 
@@ -97,7 +97,7 @@ const RECENCY_SEGMENTS = [
   { key: 'unknown', label: '알 수 없음', color: 'rgba(152,152,157,0.5)' },
 ];
 
-const POSITION_LABEL = { front: '앞', middle: '중간', back: '뒤', partial: '부분', none: '없음' };
+const POSITION_LABEL = { front: '앞', middle: '중간', back: '뒤', partial: '분리', none: '없음' };
 const POSITION_COLOR = { front: '#0a84ff', middle: '#5e5ce6', back: '#bf5af2', partial: '#ff9f0a', none: 'var(--text-tertiary)' };
 
 // 분석 수치를 바탕으로 "키워드 포함 여부 / 키워드 위치 / 최신성 / 블로그 다양성"
