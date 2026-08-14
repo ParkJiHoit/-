@@ -1,5 +1,93 @@
-import { RefreshCw, Plus, Trash2, Download, Pencil, Bell, Share2, AlertTriangle, Search, ChevronDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { RefreshCw, Plus, Trash2, Download, Pencil, Bell, Share2, AlertTriangle, Search, ChevronDown, Check } from 'lucide-react';
 import { formatKSTDateTime } from './trackerFormat';
+import useDelayedUnmount from '../../hooks/useDelayedUnmount';
+
+function GroupSelect({ groups, selectedGroupId, onGroupChange, onCreateGroup }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { shouldRender: menuMounted, isClosing: menuClosing, isEntering: menuEntering } = useDelayedUnmount(open);
+  const selectedName = selectedGroupId
+    ? (groups.find(g => String(g.id) === String(selectedGroupId))?.name || '전체 그룹')
+    : '전체 그룹';
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const handleKey = (e) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    window.addEventListener('keydown', handleKey);
+    return () => { document.removeEventListener('mousedown', handleClick); window.removeEventListener('keydown', handleKey); };
+  }, [open]);
+
+  const options = [{ id: '', name: '전체 그룹' }, ...groups];
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          height: 34, padding: '0 10px 0 12px', borderRadius: 10, minWidth: 118, maxWidth: 180,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
+          background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
+          color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          fontFamily: 'inherit', transition: 'border-color 0.15s',
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedName}</span>
+        <ChevronDown size={14} style={{ flexShrink: 0, color: 'var(--text-tertiary)', transition: 'transform 0.2s cubic-bezier(0.4,0,0.2,1)', transform: open ? 'rotate(180deg)' : 'none' }} />
+      </button>
+      {menuMounted && (
+        <div
+          className="mac-dropdown"
+          data-entering={menuEntering}
+          data-closing={menuClosing}
+          style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, minWidth: 190, zIndex: 200, padding: 6, transformOrigin: 'top left' }}
+        >
+          {options.map(g => {
+            const isSelected = g.id === '' ? !selectedGroupId : String(g.id) === String(selectedGroupId);
+            return (
+              <button
+                key={g.id || 'all'}
+                type="button"
+                onClick={() => { onGroupChange(g.id === '' ? '' : String(g.id)); setOpen(false); }}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: 7, border: 'none',
+                  background: isSelected ? 'rgba(10,132,255,0.12)' : 'transparent',
+                  color: isSelected ? 'var(--accent)' : 'var(--text-primary)',
+                  fontSize: 13, fontWeight: isSelected ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                  transition: 'background 0.12s ease',
+                }}
+                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
+                onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                {isSelected && <Check size={13} style={{ flexShrink: 0 }} />}
+              </button>
+            );
+          })}
+          <div className="mac-divider" style={{ margin: '6px 4px' }} />
+          <button
+            type="button"
+            onClick={() => { onCreateGroup(); setOpen(false); }}
+            style={{
+              width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: 7, border: 'none',
+              background: 'transparent', color: 'var(--accent)', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6,
+              transition: 'background 0.12s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(10,132,255,0.1)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <Plus size={13} /> 새 그룹 만들기
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TrackerToolbar({
   mode, groups, selectedGroupId, onGroupChange, onCreateGroup, onRenameGroup, onDeleteGroup,
@@ -16,22 +104,7 @@ export default function TrackerToolbar({
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-      <div className="mac-select-wrap" style={{ width: 150, flexShrink: 0 }}>
-        <select
-          value={selectedGroupId}
-          onChange={e => {
-            if (e.target.value === '__new__') { onCreateGroup(); return; }
-            onGroupChange(e.target.value);
-          }}
-          className="mac-select"
-          style={{ height: 34 }}
-        >
-          <option value="">전체 그룹</option>
-          {groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
-          <option value="__new__">+ 새 그룹 만들기</option>
-        </select>
-        <ChevronDown size={14} className="mac-select-chevron" />
-      </div>
+      <GroupSelect groups={groups} selectedGroupId={selectedGroupId} onGroupChange={onGroupChange} onCreateGroup={onCreateGroup} />
       {selectedGroupId && (
         <>
           <button onClick={onRenameGroup} title="그룹 이름 변경" className="mac-icon-btn"
