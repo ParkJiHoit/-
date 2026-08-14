@@ -274,9 +274,9 @@ export default function BlogStructurePanel({ result, keyword }) {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 600 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
                 {[
-                  { label: '#',        align: 'center', width: 36 },
+                  { label: '순위',      align: 'center', width: 44 },
                   { label: '블로그명', align: 'left',   width: 100 },
                   { label: '제목',     align: 'left',   width: undefined },
                   { label: '키워드 위치', align: 'left', width: 80 },
@@ -301,16 +301,12 @@ export default function BlogStructurePanel({ result, keyword }) {
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-overlay)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <td style={{ padding: '9px 12px', textAlign: 'center' }}>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      width: 22, height: 22, borderRadius: 6, fontSize: 11, fontWeight: 700,
-                      background: post.rank <= 3 ? 'rgba(255,214,10,0.12)' : 'var(--bg-overlay)',
-                      color: post.rank <= 3 ? '#b8920a' : 'var(--text-tertiary)',
-                      border: `1px solid ${post.rank <= 3 ? 'rgba(255,214,10,0.3)' : 'var(--border)'}`,
-                    }}>
-                      {post.rank}
-                    </span>
+                  <td style={{
+                    padding: '9px 12px', textAlign: 'center', fontSize: 13, fontWeight: 700,
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    color: post.rank <= 3 ? 'var(--warning)' : 'var(--text-tertiary)',
+                  }}>
+                    {post.rank}
                   </td>
                   <td style={{ padding: '9px 12px', fontSize: 11, color: 'var(--text-secondary)', width: 100, maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {post.author || '—'}
@@ -335,16 +331,11 @@ export default function BlogStructurePanel({ result, keyword }) {
                       제목 {post.titleLength}자
                     </p>
                   </td>
-                  <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
-                    <span style={{
-                      display: 'inline-block', padding: '2px 7px', borderRadius: 4,
-                      fontSize: 10, fontWeight: 700,
-                      background: `${POSITION_COLOR[post.keywordPosition] === 'var(--text-tertiary)' ? 'rgba(255,255,255,0.06)' : POSITION_COLOR[post.keywordPosition]}20`,
-                      color: POSITION_COLOR[post.keywordPosition],
-                      border: `1px solid ${POSITION_COLOR[post.keywordPosition] === 'var(--text-tertiary)' ? 'var(--border)' : `${POSITION_COLOR[post.keywordPosition]}40`}`,
-                    }}>
-                      {POSITION_LABEL[post.keywordPosition] || '—'}
-                    </span>
+                  <td style={{
+                    padding: '9px 12px', whiteSpace: 'nowrap', fontSize: 12, fontWeight: 700,
+                    color: POSITION_COLOR[post.keywordPosition],
+                  }}>
+                    {POSITION_LABEL[post.keywordPosition] || '—'}
                   </td>
                   <td style={{ padding: '9px 12px', fontSize: 11, color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
                     {post.date || '—'}
