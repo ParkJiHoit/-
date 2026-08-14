@@ -79,13 +79,10 @@ function BlogStructureSkeleton() {
   return (
     <div className="mac-stagger flex flex-col mac-fade-in" style={{ gap: 20 }}>
       {/* 헤더 */}
-      <div className="mac-card-glass" style={{ padding: '20px 24px', maxWidth: 680, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <SkelLine width={120} height={12} />
-          <SkelLine width={180} height={24} />
-          <SkelLine width={220} height={12} />
-        </div>
-        <SkelLine width={90} height={44} style={{ flexShrink: 0 }} />
+      <div className="mac-card-glass" style={{ padding: '20px 24px', maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <SkelLine width={120} height={12} />
+        <SkelLine width={180} height={24} />
+        <SkelLine width={220} height={12} />
       </div>
 
       {/* 수치 요약 카드 */}
