@@ -59,13 +59,9 @@ export default function TrackerStatCards({ mode, filteredItems, compact = false,
   const keywordCount = filteredItems.length;
 
   if (mode === 'all') {
-    const top5KeywordCount = filteredItems.filter(item =>
-      Object.values(item.latestRanks || {}).some(r => r.rank != null && r.rank <= 5)
-    ).length;
     return (
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: compact ? 8 : 10 }}>
+      <section style={{ display: 'grid', gridTemplateColumns: '1fr', gap: compact ? 8 : 10 }}>
         <StatCard label="추적 키워드" value={keywordCount} total={null} color="#8E8E93" icon={Target} sub="키워드 블로그탭 상위 10개 스냅샷" compact={compact} index={0} glass={glass} />
-        <StatCard label="5위 내 노출" value={top5KeywordCount} total={keywordCount} color="#30D158" icon={Trophy} sub={null} compact={compact} index={1} glass={glass} />
       </section>
     );
   }

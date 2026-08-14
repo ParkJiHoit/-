@@ -917,6 +917,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItem
         onSetStabilizedSelected={handleSetStabilized}
         onRefreshSelected={handleRefreshSelected}
         refreshingSelected={refreshingAll}
+        onAuditBlog={onAuditBlog}
         loading={loading}
       />
 

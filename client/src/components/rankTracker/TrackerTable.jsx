@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Trash2, X, ChevronRight, ChevronDown, Star, RefreshCw, PauseCircle, PlayCircle } from 'lucide-react';
+import { useState, Fragment } from 'react';
+import { Plus, Trash2, X, ChevronRight, ChevronDown, Star, RefreshCw, PauseCircle, PlayCircle, History, Stethoscope } from 'lucide-react';
 import { formatRankStatus } from './trackerFormat';
 import { STABILIZED_AFTER_DAYS, mostRecentAddedDate, itemAgeDays } from '../../utils/stabilization';
 
@@ -32,6 +32,7 @@ export default function TrackerTable({
   onSetStabilizedSelected,
   onRefreshSelected, refreshingSelected,
   onToggleFavorite,
+  onAuditBlog,
   loading,
 }) {
   const [expanded, setExpanded] = useState(new Set());
@@ -189,9 +190,11 @@ export default function TrackerTable({
             <th className={sortKey === 'searchVolume' ? 'th-active' : ''} onClick={() => headerClick('searchVolume')} style={{ cursor: 'pointer', width: '8%' }}>
               검색량{sortArrow('searchVolume')}
             </th>
-            <th className={sortKey === 'rank' ? 'th-active' : ''} onClick={() => headerClick('rank')} style={{ cursor: 'pointer', width: '8%' }}>
-              순위{sortArrow('rank')}
-            </th>
+            {mode === 'blog' && (
+              <th className={sortKey === 'rank' ? 'th-active' : ''} onClick={() => headerClick('rank')} style={{ cursor: 'pointer', width: '8%' }}>
+                순위{sortArrow('rank')}
+              </th>
+            )}
             {mode === 'blog' && <th style={{ width: '7%' }}>통검</th>}
             <th style={{ width: 72 }}></th>
           </tr>
@@ -227,13 +230,20 @@ export default function TrackerTable({
     const entry = blogId ? item.latestRanks?.[blogId] ?? null : null;
     const totalBlogCount = mode === 'blog' ? (item.blog_ids || []).length : 0;
     const { label, color } = formatRankStatus(entry?.rank ?? null, entry?.status ?? null);
-    const best = bestRank(item);
-    const allLabel = best != null ? `최고 ${best}위` : '기록 없음';
-    const allColor = best != null && best <= 5 ? '#30D158' : 'var(--text-tertiary)';
+    // "전체 순위 모드"는 링크가 아니라 키워드 하나에 스냅샷이 걸려있는 구조라, 행을
+    // 클릭하면 상세 드로어를 여는 대신 바로 아래에 블로그탭 상위 5개를 펼쳐 보여준다.
+    const isAllMode = mode === 'all';
+    const allTopBlogs = isAllMode
+      ? Object.entries(item.latestRanks || {})
+          .filter(([, r]) => r?.rank != null)
+          .sort((a, b) => a[1].rank - b[1].rank)
+          .slice(0, 5)
+      : [];
+    const isAllRowOpen = isAllMode && expanded.has(item.id);
     return (
+      <Fragment key={`${item.id}-${blogId ?? 'x'}-${i}`}>
               <tr
-                key={`${item.id}-${blogId ?? 'x'}-${i}`}
-                onClick={() => onRowClick(item)}
+                onClick={() => (isAllMode ? toggleExpand(item.id) : onRowClick(item))}
                 style={{
                   cursor: 'pointer',
                   borderTop: isFirst ? '2px solid var(--border-strong)' : undefined,
@@ -269,14 +279,14 @@ export default function TrackerTable({
                         <Star size={14} fill={item.is_favorite ? '#FFD60A' : 'none'} />
                       </button>
                       <span style={{ width: 17, flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-                        {totalBlogCount > 1 && (
+                        {(totalBlogCount > 1 || (isAllMode && allTopBlogs.length > 0)) && (
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleExpand(item.id); }}
                             className="mac-expand-toggle"
-                            title={isOpen ? '접기' : `블로그 ${totalBlogCount}개 펼치기`}
+                            title={(isAllMode ? isAllRowOpen : isOpen) ? '접기' : (isAllMode ? '블로그탭 상위 5개 보기' : `블로그 ${totalBlogCount}개 펼치기`)}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 2, display: 'flex' }}
                           >
-                            <ChevronRight size={13} style={{ transform: isOpen ? 'rotate(90deg)' : 'none' }} />
+                            <ChevronRight size={13} style={{ transform: (isAllMode ? isAllRowOpen : isOpen) ? 'rotate(90deg)' : 'none' }} />
                           </button>
                         )}
                       </span>
@@ -325,10 +335,8 @@ export default function TrackerTable({
                   </td>
                 )}
                 <td>{isFirst ? (item.searchVolume ?? '—') : ''}</td>
-                {mode === 'blog' ? (
+                {mode === 'blog' && (
                   <td style={{ color, fontWeight: 700 }}>{blogId ? label : '—'}</td>
-                ) : (
-                  <td style={{ color: allColor, fontWeight: 700 }}>{allLabel}</td>
                 )}
                 {mode === 'blog' && (
                   <td style={{ color: entry?.integratedExposed ? '#0A84FF' : 'var(--text-tertiary)', fontWeight: 700, whiteSpace: 'nowrap' }}>
@@ -351,6 +359,13 @@ export default function TrackerTable({
                         <Plus size={13} />
                       </button>
                     )}
+                    {isFirst && isAllMode && (
+                      <button onClick={(e) => { e.stopPropagation(); onRowClick(item); }} title="날짜별 이력 보기"
+                        className="mac-icon-btn"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, display: 'flex' }}>
+                        <History size={13} />
+                      </button>
+                    )}
                     {isFirst && (
                       <button onClick={() => onDeleteKeyword(item.id)} title="삭제"
                         className="mac-icon-btn mac-icon-btn-danger"
@@ -361,6 +376,44 @@ export default function TrackerTable({
                   </div>
                 </td>
               </tr>
+              {isFirst && isAllRowOpen && (
+                <tr>
+                  <td colSpan={4} style={{ padding: '4px 16px 14px 46px', background: 'rgba(255,255,255,0.015)' }}>
+                    {allTopBlogs.length === 0 ? (
+                      <p style={{ margin: 0, fontSize: 12, color: 'var(--text-tertiary)' }}>아직 확인된 스냅샷이 없어요.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {allTopBlogs.map(([bId, r]) => (
+                          <button
+                            key={bId}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onAuditBlog?.(bId); }}
+                            title="이 블로그 진단하기"
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 10,
+                              padding: '7px 8px', borderRadius: 6, border: 'none',
+                              background: 'none', cursor: onAuditBlog ? 'pointer' : 'default',
+                              fontFamily: 'inherit', textAlign: 'left', width: '100%',
+                            }}
+                          >
+                            <span style={{
+                              fontSize: 12, fontWeight: 800, fontFamily: "'Space Grotesk', sans-serif",
+                              color: r.rank <= 3 ? '#30D158' : 'var(--text-tertiary)', width: 16, flexShrink: 0,
+                            }}>
+                              {r.rank}
+                            </span>
+                            <span style={{ fontSize: 13, color: 'var(--accent)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {bId}
+                            </span>
+                            {onAuditBlog && <Stethoscope size={12} style={{ opacity: 0.6, flexShrink: 0 }} />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              )}
+      </Fragment>
     );
   }
 }
