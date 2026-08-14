@@ -397,16 +397,27 @@ function BlogAuditForm({ onSubmit, loading, dark = true }) {
 /* ── 검색창만 스크롤을 따라다니는 플로팅 래퍼 (탭 스위처 등 나머지는 그대로 흘러가게 둔다) ──
    collapsed에 따라 감싸는 엘리먼트 자체를 있다/없다 하면(조건부 wrapper) React가 트리
    구조 변화로 인식해 안의 KeywordSearchForm을 매번 새로 마운트해버려서, 검색 직후
-   막 입력한 키워드가 사라지는 버그가 있었다. 그래서 wrapper div는 항상 렌더링하고
-   style만 바꿔서, 안의 컴포넌트가 계속 같은 인스턴스로 유지되게 한다. */
+   막 입력한 키워드가 사라지는 버그가 있었다 — 그래서 트리 모양(spacer + content 두
+   엘리먼트)은 항상 동일하게 유지하고 style만 바꾼다.
+   position:sticky가 아니라 fixed를 쓰는 이유: 검색창이 들어있는 HeroSection 자체가
+   검색창 높이만큼만 짧게 끝나고, 그 아래 결과 영역은 완전히 별개의 형제 엘리먼트라
+   sticky의 기준이 되는 containing block이 HeroSection 높이로 짧게 끝나버린다. 그래서
+   결과를 조금만 스크롤해도 sticky가 같이 사라져버려 fixed로 바꾸고, 원래 자리는
+   spacer로 높이만큼 비워서 아래 콘텐츠가 위로 붙지 않게 한다. */
 function FloatingSearchBar({ collapsed, children }) {
   return (
-    <div style={collapsed
-      ? { position: 'sticky', top: 'var(--nav-offset)', zIndex: 500, width: '100%' }
-      : { width: '100%' }}
-    >
-      {children}
-    </div>
+    <>
+      <div style={{ width: '100%', height: collapsed ? 64 : 0 }} aria-hidden="true" />
+      <div style={collapsed
+        ? {
+            position: 'fixed', top: 'var(--nav-offset)', left: '50%', transform: 'translateX(-50%)',
+            zIndex: 500, width: '100%', maxWidth: 680, padding: '0 20px', boxSizing: 'border-box',
+          }
+        : { width: '100%' }}
+      >
+        {children}
+      </div>
+    </>
   );
 }
 
