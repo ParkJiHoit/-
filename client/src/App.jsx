@@ -402,6 +402,7 @@ function BlogAuditForm({ onSubmit, loading, dark = true }) {
    무관하므로 리마운트 걱정이 없다. */
 function CompactNavSearch({ onSubmit, currentKeyword, visible }) {
   const [value, setValue] = useState(currentKeyword || '');
+  const [focused, setFocused] = useState(false);
 
   useEffect(() => {
     setValue(currentKeyword || '');
@@ -417,21 +418,27 @@ function CompactNavSearch({ onSubmit, currentKeyword, visible }) {
       style={{
         position: 'fixed', top: 16, left: 16, zIndex: 999,
         display: 'flex', alignItems: 'center', height: 44, width: 220,
-        borderRadius: 999, overflow: 'hidden',
+        borderRadius: 999,
         background: 'rgba(28,28,30,0.92)',
         backdropFilter: 'blur(24px) saturate(1.8)',
         WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
-        border: '1px solid rgba(255,255,255,0.10)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+        border: focused
+          ? '1.5px solid rgba(10,180,255,0.85)'
+          : '1px solid rgba(255,255,255,0.10)',
+        boxShadow: focused
+          ? '0 0 0 3px rgba(10,180,255,0.18), 0 0 32px rgba(10,180,255,0.28), 0 0 64px rgba(10,180,255,0.12)'
+          : '0 4px 24px rgba(0,0,0,0.5)',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateX(0) scale(1)' : 'translateX(-16px) scale(0.94)',
         pointerEvents: visible ? 'auto' : 'none',
-        transition: 'opacity 0.25s ease, transform 0.25s cubic-bezier(0.4,0,0.2,1)',
+        transition: 'opacity 0.25s ease, transform 0.25s cubic-bezier(0.4,0,0.2,1), box-shadow 0.25s ease, border-color 0.25s ease',
       }}
     >
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         tabIndex={visible ? 0 : -1}
         style={{
           flex: 1, minWidth: 0, height: '100%', background: 'transparent', border: 'none', outline: 'none',
@@ -443,8 +450,10 @@ function CompactNavSearch({ onSubmit, currentKeyword, visible }) {
         tabIndex={visible ? 0 : -1}
         style={{
           flexShrink: 0, width: 34, height: 34, marginRight: 4, borderRadius: 999, border: 'none',
-          background: 'var(--search-btn-bg)', color: 'var(--search-btn-icon)',
+          background: focused ? 'var(--accent)' : 'var(--search-btn-bg)',
+          color: focused ? '#fff' : 'var(--search-btn-icon)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          transition: 'background 0.15s, color 0.15s',
         }}
       >
         <Search style={{ width: 14, height: 14 }} />
