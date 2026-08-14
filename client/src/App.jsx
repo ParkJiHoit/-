@@ -394,30 +394,62 @@ function BlogAuditForm({ onSubmit, loading, dark = true }) {
   );
 }
 
-/* ── 검색창만 스크롤을 따라다니는 플로팅 래퍼 (탭 스위처 등 나머지는 그대로 흘러가게 둔다) ──
-   collapsed에 따라 감싸는 엘리먼트 자체를 있다/없다 하면(조건부 wrapper) React가 트리
-   구조 변화로 인식해 안의 KeywordSearchForm을 매번 새로 마운트해버려서, 검색 직후
-   막 입력한 키워드가 사라지는 버그가 있었다 — 그래서 트리 모양(spacer + content 두
-   엘리먼트)은 항상 동일하게 유지하고 style만 바꾼다.
-   position:sticky가 아니라 fixed를 쓰는 이유: 검색창이 들어있는 HeroSection 자체가
-   검색창 높이만큼만 짧게 끝나고, 그 아래 결과 영역은 완전히 별개의 형제 엘리먼트라
-   sticky의 기준이 되는 containing block이 HeroSection 높이로 짧게 끝나버린다. 그래서
-   결과를 조금만 스크롤해도 sticky가 같이 사라져버려 fixed로 바꾸고, 원래 자리는
-   spacer로 높이만큼 비워서 아래 콘텐츠가 위로 붙지 않게 한다. */
-function FloatingSearchBar({ collapsed, children }) {
+/* ── 스크롤하면 네브바 옆에 나타나는 미니 검색창 ──
+   원래 큰 검색창은 절대 안 움직인다(다른 위치로 옮기거나 마운트/언마운트하지 않음) —
+   sticky/fixed로 "이동"시키려다 containing block 문제·리마운트 문제를 반복해서 겪었다.
+   그래서 대신 완전히 별개의, 작고 늘 같은 자리에 떠 있는 미니 검색창을 하나 더 두고
+   opacity/transform 트랜지션으로 스크롤 시에만 나타나게 한다 — 큰 검색창의 내부 상태와는
+   무관하므로 리마운트 걱정이 없다. */
+function CompactNavSearch({ onSubmit, currentKeyword, visible }) {
+  const [value, setValue] = useState(currentKeyword || '');
+
+  useEffect(() => {
+    setValue(currentKeyword || '');
+  }, [currentKeyword]);
+
   return (
-    <>
-      <div style={{ width: '100%', height: collapsed ? 64 : 0 }} aria-hidden="true" />
-      <div style={collapsed
-        ? {
-            position: 'fixed', top: 'var(--nav-offset)', left: '50%', transform: 'translateX(-50%)',
-            zIndex: 500, width: '100%', maxWidth: 680, padding: '0 20px', boxSizing: 'border-box',
-          }
-        : { width: '100%' }}
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const trimmed = value.trim();
+        if (trimmed) onSubmit(trimmed);
+      }}
+      style={{
+        position: 'fixed', top: 16, left: 16, zIndex: 999,
+        display: 'flex', alignItems: 'center', height: 44, width: 220,
+        borderRadius: 999, overflow: 'hidden',
+        background: 'rgba(28,28,30,0.92)',
+        backdropFilter: 'blur(24px) saturate(1.8)',
+        WebkitBackdropFilter: 'blur(24px) saturate(1.8)',
+        border: '1px solid rgba(255,255,255,0.10)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateX(0) scale(1)' : 'translateX(-16px) scale(0.94)',
+        pointerEvents: visible ? 'auto' : 'none',
+        transition: 'opacity 0.25s ease, transform 0.25s cubic-bezier(0.4,0,0.2,1)',
+      }}
+    >
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        tabIndex={visible ? 0 : -1}
+        style={{
+          flex: 1, minWidth: 0, height: '100%', background: 'transparent', border: 'none', outline: 'none',
+          paddingLeft: 16, fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit',
+        }}
+      />
+      <button
+        type="submit"
+        tabIndex={visible ? 0 : -1}
+        style={{
+          flexShrink: 0, width: 34, height: 34, marginRight: 4, borderRadius: 999, border: 'none',
+          background: 'var(--search-btn-bg)', color: 'var(--search-btn-icon)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        }}
       >
-        {children}
-      </div>
-    </>
+        <Search style={{ width: 14, height: 14 }} />
+      </button>
+    </form>
   );
 }
 
@@ -639,6 +671,15 @@ export default function App() {
   // 자연스럽게 실제 콘텐츠로 바뀐다(로딩 끝날 때까지 100vh 랜딩에 갇혀 있지 않음).
   const heroCollapsed = hasResults || loading;
   const [rankTrackerHasItems, setRankTrackerHasItems] = useState(false);
+
+  // 큰 검색창을 지나칠 만큼 스크롤하면 네브바 옆에 미니 검색창을 띄운다.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 120);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -955,6 +996,13 @@ export default function App() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
       <Navbar activeTab={activeTab} onSwitchTab={switchTab} onGoHome={goHome} onGoToService={goToService} theme={theme} isSubscribed={isSubscribed} onSelectHistory={handleSelectHistory} />
+      {(isKeywordTab || (activeTab === 'blog' && blogSubTab === 'structure')) && (
+        <CompactNavSearch
+          onSubmit={isKeywordTab ? analyzeKeyword : analyzeBlogStructure}
+          currentKeyword={isKeywordTab ? (analysis?.baseKeyword || '') : blogStructureKeyword}
+          visible={scrolled && heroCollapsed}
+        />
+      )}
       <ThemeToggle theme={theme} onToggle={toggleTheme} />
       <ChatWidget user={user} token={session?.access_token} />
 
@@ -995,11 +1043,9 @@ export default function App() {
 
       <HeroSection tab={activeTab} blogSubTab={blogSubTab} hasResults={heroCollapsed} theme={theme}>
         {activeTab === 'analysis' && (
-          <FloatingSearchBar collapsed={heroCollapsed}>
-            <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
-              suggestions={analysis?.searchSuggestions || []}
-              isMain={!heroCollapsed} dark={theme === 'dark'} />
-          </FloatingSearchBar>
+          <KeywordSearchForm onSubmit={analyzeKeyword} loading={loading}
+            suggestions={analysis?.searchSuggestions || []}
+            isMain={!heroCollapsed} dark={theme === 'dark'} />
         )}
         {activeTab === 'blog' && (
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1038,9 +1084,7 @@ export default function App() {
             </div>
             {/* 구조 분석 폼 */}
             {blogSubTab === 'structure' && (
-              <FloatingSearchBar collapsed={heroCollapsed}>
-                <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!heroCollapsed} historyKey="keywordlab.blogHistory" dark={theme === 'dark'} />
-              </FloatingSearchBar>
+              <KeywordSearchForm onSubmit={analyzeBlogStructure} loading={loading} isMain={!heroCollapsed} historyKey="keywordlab.blogHistory" dark={theme === 'dark'} />
             )}
             {/* 감사 폼 */}
             {blogSubTab === 'audit' && (
