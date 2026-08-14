@@ -162,7 +162,7 @@ export default function TrackerTable({
         </div>
       )}
 
-      <div style={{ maxHeight: 560, overflowY: 'auto', borderRadius: 10, border: '1px solid var(--border)' }}>
+      <div className="mac-scroll" style={{ maxHeight: 560, overflowY: 'auto', borderRadius: 10, border: '1px solid var(--border)' }}>
       <table className="mac-table mac-table-lg" style={{ tableLayout: 'fixed' }}>
         <thead>
           <tr>
