@@ -1,4 +1,4 @@
-import { RefreshCw, Plus, Trash2, Download, Pencil, Bell, Share2, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Plus, Trash2, Download, Pencil, Bell, Share2, AlertTriangle, Search, ChevronDown } from 'lucide-react';
 import { formatKSTDateTime } from './trackerFormat';
 
 export default function TrackerToolbar({
@@ -16,51 +16,52 @@ export default function TrackerToolbar({
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-      <select
-        value={selectedGroupId}
-        onChange={e => {
-          if (e.target.value === '__new__') { onCreateGroup(); return; }
-          onGroupChange(e.target.value);
-        }}
-        style={{
-          height: 34, padding: '0 8px', borderRadius: 8,
-          background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
-          color: 'var(--text-primary)', fontSize: 13, fontWeight: 600,
-          outline: 'none', fontFamily: 'inherit', cursor: 'pointer',
-        }}
-      >
-        <option value="">전체 그룹</option>
-        {groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
-        <option value="__new__">+ 새 그룹 만들기</option>
-      </select>
+      <div className="mac-select-wrap" style={{ width: 150, flexShrink: 0 }}>
+        <select
+          value={selectedGroupId}
+          onChange={e => {
+            if (e.target.value === '__new__') { onCreateGroup(); return; }
+            onGroupChange(e.target.value);
+          }}
+          className="mac-select"
+          style={{ height: 34 }}
+        >
+          <option value="">전체 그룹</option>
+          {groups.map(g => <option key={g.id} value={String(g.id)}>{g.name}</option>)}
+          <option value="__new__">+ 새 그룹 만들기</option>
+        </select>
+        <ChevronDown size={14} className="mac-select-chevron" />
+      </div>
       {selectedGroupId && (
         <>
-          <button onClick={onRenameGroup} title="그룹 이름 변경" className="mac-btn-ghost mac-btn-sm" style={{ display: 'flex', padding: 6 }}>
-            <Pencil size={12} />
+          <button onClick={onRenameGroup} title="그룹 이름 변경" className="mac-icon-btn"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 6, display: 'flex' }}>
+            <Pencil size={13} />
           </button>
-          <button onClick={onDeleteGroup} title="그룹 삭제" className="mac-btn-ghost mac-btn-sm" style={{ display: 'flex', padding: 6, color: '#FF453A' }}>
-            <Trash2 size={12} />
+          <button onClick={onDeleteGroup} title="그룹 삭제" className="mac-icon-btn mac-icon-btn-danger"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 6, display: 'flex' }}>
+            <Trash2 size={13} />
           </button>
         </>
       )}
       <button
         onClick={onOpenShareModal}
         title={selectedGroupId ? '이 그룹 리포트 공유' : '전체 그룹 리포트 공유'}
-        className="mac-btn-ghost mac-btn-sm"
-        style={{ display: 'flex', padding: 6 }}
+        className="mac-icon-btn"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 6, display: 'flex' }}
       >
-        <Share2 size={12} />
+        <Share2 size={13} />
       </button>
-      <input
-        value={searchQuery}
-        onChange={e => onSearchChange(e.target.value)}
-        placeholder="키워드 검색"
-        style={{
-          height: 34, padding: '0 10px', borderRadius: 8, width: 170,
-          background: 'var(--bg-overlay)', border: '1px solid var(--border-strong)',
-          color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit', outline: 'none',
-        }}
-      />
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
+        <input
+          value={searchQuery}
+          onChange={e => onSearchChange(e.target.value)}
+          placeholder="키워드 검색"
+          className="mac-input"
+          style={{ height: 34, width: 170, padding: '0 10px 0 30px', fontSize: 13 }}
+        />
+      </div>
       {(failedCount > 0 || failedOnly) && (
         <button
           onClick={onToggleFailedOnly}
@@ -101,7 +102,8 @@ export default function TrackerToolbar({
           <Download size={12} /> 내보내기
         </button>
       )}
-      <button onClick={onOpenNotificationSettings} title="순위 변동 Slack 알림 설정" className="mac-btn-ghost mac-btn-sm" style={{ display: 'flex', padding: 6 }}>
+      <button onClick={onOpenNotificationSettings} title="순위 변동 Slack 알림 설정" className="mac-icon-btn"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 6, display: 'flex' }}>
         <Bell size={13} />
       </button>
       <button onClick={onOpenBulkModal} className="mac-btn-ghost mac-btn-sm">대량 등록</button>
