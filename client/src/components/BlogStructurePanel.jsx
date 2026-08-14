@@ -170,25 +170,8 @@ export default function BlogStructurePanel({ result, keyword }) {
 
   return (
     <div className="flex flex-col gap-5 mac-stagger">
-      {/* 헤더 — 텍스트 몇 줄뿐이라 1400px 전체 폭으로 늘리면 비어 보여서,
-          검색창과 같은 폭(680px)으로 제한해 내용만큼만 차지하게 한다.
-          제목 키워드 포함률은 바로 아래 KPI 카드에도 있어 중복 표시하지 않는다. */}
-      <div className="mac-card-glass" style={{
-        padding: '20px 24px',
-        maxWidth: 680,
-        background: 'radial-gradient(ellipse at top left, rgba(10,132,255,0.09) 0%, transparent 60%)',
-        borderTop: '2px solid rgba(10,132,255,0.35)',
-      }}>
-        <p style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: 'var(--accent)', margin: 0 }}>
-          블로그 구조 분석
-        </p>
-        <p style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text-primary)', margin: '6px 0 0' }}>
-          "{keyword}"
-        </p>
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
-          네이버 블로그 탭 상위 {posts.length}개 게시물 기준
-        </p>
-      </div>
+      {/* 검색한 키워드는 위쪽 플로팅 검색창에 이미 떠 있어서, 결과 안에서 또
+          크게 반복해서 보여주지 않는다(중복 제거). */}
 
       {/* 수치 요약 카드 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>

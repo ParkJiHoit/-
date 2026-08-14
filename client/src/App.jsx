@@ -399,11 +399,18 @@ function HeroSection({ tab, blogSubTab, hasResults, theme, children }) {
   const maxW = tab === 'expansion' ? 1140 : 680;
   return (
     <div className="hero-transition" style={{
-      position: 'relative',
+      // 결과가 있는(=압축된) 상태에서는 검색창이 플로팅 네브바처럼 스크롤을 따라다니게
+      // sticky로 상단에 고정한다 — 결과를 훑다가 다시 검색하고 싶을 때 위로 스크롤해
+      // 올라올 필요가 없게. 랜딩(100vh) 상태에서는 그 자체로 화면에 꽉 차 있어 필요 없다.
+      position: hasResults ? 'sticky' : 'relative',
+      top: hasResults ? 0 : undefined,
+      zIndex: hasResults ? 500 : undefined,
       overflow: hasResults ? undefined : 'hidden',
       background: hasResults
-        ? 'transparent'
+        ? (theme === 'dark' ? 'rgba(28,28,30,0.75)' : 'rgba(242,242,247,0.75)')
         : 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(10,132,255,0.09) 0%, transparent 65%)',
+      backdropFilter: hasResults ? 'blur(20px) saturate(1.8)' : undefined,
+      WebkitBackdropFilter: hasResults ? 'blur(20px) saturate(1.8)' : undefined,
       paddingTop: hasResults ? 'calc(var(--nav-offset) + 24px)' : 'calc(var(--nav-offset) + 190px)',
       paddingBottom: hasResults ? 20 : 72,
       // 결과가 없는 랜딩 상태에서는 히어로가 정확히 한 화면(100vh)만 차지하게 해서,

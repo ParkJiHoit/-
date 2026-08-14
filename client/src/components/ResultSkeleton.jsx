@@ -78,13 +78,6 @@ function KeywordSkeleton() {
 function BlogStructureSkeleton() {
   return (
     <div className="mac-stagger flex flex-col mac-fade-in" style={{ gap: 20 }}>
-      {/* 헤더 */}
-      <div className="mac-card-glass" style={{ padding: '20px 24px', maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <SkelLine width={120} height={12} />
-        <SkelLine width={180} height={24} />
-        <SkelLine width={220} height={12} />
-      </div>
-
       {/* 수치 요약 카드 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
         {Array.from({ length: 6 }).map((_, i) => <SkelStatCard key={i} />)}
