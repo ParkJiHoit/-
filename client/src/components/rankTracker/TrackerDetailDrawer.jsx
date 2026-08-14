@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import { X, RefreshCw, ExternalLink } from 'lucide-react';
+import { X, RefreshCw, ExternalLink, Stethoscope } from 'lucide-react';
 import RankChart from '../RankChart';
 import RankCalendar from '../RankCalendar';
 import { formatRankStatus, formatKSTDateTime } from './trackerFormat';
 
-export default function TrackerDetailDrawer({ open, onClose, mode, selected, snapshots, refreshing, onRefresh }) {
+export default function TrackerDetailDrawer({ open, onClose, mode, selected, snapshots, refreshing, onRefresh, onAuditBlog }) {
   useEffect(() => {
     if (!open) return;
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -149,7 +149,23 @@ export default function TrackerDetailDrawer({ open, onClose, mode, selected, sna
                         </a>
                       ) : (s.post_title || '(제목 없음)')}
                     </td>
-                    <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--accent)' }}>{s.blog_id}</td>
+                    <td style={{ padding: '10px 14px' }}>
+                      {onAuditBlog ? (
+                        <button
+                          type="button"
+                          onClick={() => onAuditBlog(s.blog_id)}
+                          title="이 블로그 진단하기"
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 5,
+                            fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none',
+                            padding: 0, cursor: 'pointer', fontFamily: 'inherit',
+                          }}
+                        >
+                          {s.blog_id}
+                          <Stethoscope size={11} style={{ opacity: 0.7, flexShrink: 0 }} />
+                        </button>
+                      ) : s.blog_id}
+                    </td>
                   </tr>
                 ))}
               </tbody>

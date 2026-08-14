@@ -850,6 +850,14 @@ export default function App() {
     analyzeBlogStructure(keyword);
   };
 
+  // 순위추적 "전체 순위 모드" 상세보기에서 상위 노출 블로그를 클릭하면, 블로그 진단
+  // 탭으로 이동해 그 블로그를 바로 진단한다.
+  const handleAuditFromBlog = (blogId) => {
+    setActiveTab('blog');
+    setBlogSubTab('audit');
+    auditBlog(`https://blog.naver.com/${blogId}`);
+  };
+
   const handleSort = (key) =>
     setSortConfig((p) => ({ key, direction: p.key === key && p.direction === 'desc' ? 'asc' : 'desc' }));
 
@@ -1041,7 +1049,7 @@ export default function App() {
       ) : activeTab === 'rank-tracker' ? (
         <div style={{ paddingTop: 'calc(var(--nav-offset) + 24px)', paddingBottom: 64 }}>
           <div className="mx-auto w-full max-w-[1400px] px-5 lg:px-10">
-            <RankTrackerPage onLoginRequest={() => switchTab('auth')} onGoPricing={() => switchTab('pricing')} onHasItemsChange={setRankTrackerHasItems} />
+            <RankTrackerPage onLoginRequest={() => switchTab('auth')} onGoPricing={() => switchTab('pricing')} onHasItemsChange={setRankTrackerHasItems} onAuditBlog={handleAuditFromBlog} />
           </div>
           {!rankTrackerHasItems && <FeatureShowcaseSection tab="rank-tracker" />}
         </div>

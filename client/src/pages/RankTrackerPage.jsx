@@ -412,7 +412,7 @@ async function apiFetch(path, options, token) {
 }
 
 // status는 이미 상위 5위 판정을 반영한다(백엔드 refreshRanks) — 'ranked'일 때만 숫자를 보여준다.
-export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItemsChange }) {
+export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItemsChange, onAuditBlog }) {
   const { user, session } = useAuth();
   const token = session?.access_token;
 
@@ -928,6 +928,10 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItem
         snapshots={snapshots}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        onAuditBlog={onAuditBlog && ((blogId) => {
+          setSelected(null); setSnapshots([]);
+          onAuditBlog(blogId);
+        })}
       />
 
       {showModal && (
