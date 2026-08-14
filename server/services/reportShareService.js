@@ -250,7 +250,10 @@ export async function getPublicReport(token) {
   const cutoffDate = new Date(new Date(sharedAt).getTime() - 14 * 24 * 60 * 60 * 1000)
     .toISOString().slice(0, 10);
 
-  const all = await listTracked(userId);
+  // 공유 리포트는 "블로그 추적 모드"(특정 블로그의 키워드별 순위)만 다룬다 — "전체 순위
+  // 모드"(키워드별 상위 10개 스냅샷)는 링크/그룹 개념이 달라 같은 리포트에 섞으면 통계
+  // 카드·순위 변동 목록에 서로 다른 성격의 데이터가 뒤섞여 보인다.
+  const all = (await listTracked(userId)).filter((i) => i.mode === 'blog');
   const scoped = groupId == null ? all : all.filter((i) => i.group_id === groupId);
   const cutoffItems = filterItemsByCutoff(scoped, cutoffDate);
 
