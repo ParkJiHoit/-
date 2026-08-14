@@ -394,11 +394,17 @@ function BlogAuditForm({ onSubmit, loading, dark = true }) {
   );
 }
 
-/* ── 검색창만 스크롤을 따라다니는 플로팅 래퍼 (탭 스위처 등 나머지는 그대로 흘러가게 둔다) ── */
+/* ── 검색창만 스크롤을 따라다니는 플로팅 래퍼 (탭 스위처 등 나머지는 그대로 흘러가게 둔다) ──
+   collapsed에 따라 감싸는 엘리먼트 자체를 있다/없다 하면(조건부 wrapper) React가 트리
+   구조 변화로 인식해 안의 KeywordSearchForm을 매번 새로 마운트해버려서, 검색 직후
+   막 입력한 키워드가 사라지는 버그가 있었다. 그래서 wrapper div는 항상 렌더링하고
+   style만 바꿔서, 안의 컴포넌트가 계속 같은 인스턴스로 유지되게 한다. */
 function FloatingSearchBar({ collapsed, children }) {
-  if (!collapsed) return children;
   return (
-    <div style={{ position: 'sticky', top: 'var(--nav-offset)', zIndex: 500, width: '100%' }}>
+    <div style={collapsed
+      ? { position: 'sticky', top: 'var(--nav-offset)', zIndex: 500, width: '100%' }
+      : { width: '100%' }}
+    >
       {children}
     </div>
   );
