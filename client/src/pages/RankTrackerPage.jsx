@@ -725,7 +725,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItem
   const handleSetStabilized = async (ids, stabilized) => {
     if (!token || !ids.length) return;
     const prevItems = items;
-    setItems(prev => prev.map(i => ids.includes(i.id) ? { ...i, is_stabilized: stabilized } : i));
+    setItems(prev => prev.map(i => ids.includes(i.id) ? { ...i, is_stabilized: stabilized, stabilization_manual: true } : i));
     try {
       await apiFetch('/bulk-stabilize', { method: 'POST', body: JSON.stringify({ ids, stabilized }) }, token);
       setSelectedIds(prev => { const next = new Set(prev); ids.forEach(id => next.delete(id)); return next; });

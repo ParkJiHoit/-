@@ -119,6 +119,11 @@ export async function initDb() {
     -- 그대로 남고, 선택 갱신/수동 재시도 등 명시적으로 지정한 경우에는 여전히
     -- 갱신 대상이 된다(전체 갱신에서만 자동으로 건너뛴다).
     ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS is_stabilized BOOLEAN NOT NULL DEFAULT FALSE;
+    -- is_stabilized 하나만으로는 "한 번도 안 건드림(등록 14일 경과로 자동 판정)"과
+    -- "사람이 일부러 안정화 해제함"을 구분할 수 없어서, 자동 판정을 무시하고 사람이
+    -- 지정한 값을 그대로 신뢰해야 하는 항목을 표시하는 컬럼을 따로 둔다. 안정화
+    -- 처리/해제 버튼을 누르는 순간 항상 TRUE로 같이 기록된다.
+    ALTER TABLE tracked_keywords ADD COLUMN IF NOT EXISTS stabilization_manual BOOLEAN NOT NULL DEFAULT FALSE;
     CREATE TABLE IF NOT EXISTS rank_snapshots (
       id             SERIAL PRIMARY KEY,
       tracked_id     INTEGER     NOT NULL REFERENCES tracked_keywords(id) ON DELETE CASCADE,

@@ -136,7 +136,7 @@ export async function backfillSearchVolumeChunk(userId) {
 export async function listTracked(userId) {
   const pool = getPool();
   const { rows } = await pool.query(
-    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search, pc_ctr, mobile_ctr, is_favorite, is_stabilized
+    `SELECT id, keyword, mode, blog_ids, group_id, created_at, last_refreshed_at, pc_search, mobile_search, pc_ctr, mobile_ctr, is_favorite, is_stabilized, stabilization_manual
      FROM tracked_keywords WHERE user_id = $1 AND deleted_at IS NULL
      ORDER BY is_favorite DESC, created_at DESC`,
     [userId]
@@ -341,8 +341,11 @@ export async function setFavorite(userId, trackedId, isFavorite) {
 // 삭제가 아니라 플래그만 바꾸는 것이라 순위 기록은 그대로 남는다.
 export async function setStabilizedBulk(userId, trackedIds, isStabilized) {
   const pool = getPool();
+  // stabilization_manual도 함께 TRUE로 기록해서, 이후 "안정화됨" 판정이 등록일 기준
+  // 자동 계산이 아니라 이 is_stabilized 값을 그대로 신뢰하도록 한다 — 그래야 14일이
+  // 지난 항목의 안정화를 해제해도(is_stabilized=false) 다시 자동으로 안정화됨 취급되지 않는다.
   const { rowCount } = await pool.query(
-    `UPDATE tracked_keywords SET is_stabilized = $1
+    `UPDATE tracked_keywords SET is_stabilized = $1, stabilization_manual = TRUE
      WHERE id = ANY($2) AND user_id = $3 AND deleted_at IS NULL`,
     [isStabilized, trackedIds, userId]
   );

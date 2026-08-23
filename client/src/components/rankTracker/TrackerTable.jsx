@@ -1,7 +1,7 @@
 import { useState, Fragment } from 'react';
 import { Plus, Trash2, X, ChevronRight, ChevronDown, Star, RefreshCw, PauseCircle, PlayCircle, History, Stethoscope } from 'lucide-react';
 import { formatRankStatus } from './trackerFormat';
-import { STABILIZED_AFTER_DAYS, mostRecentAddedDate, itemAgeDays } from '../../utils/stabilization';
+import { STABILIZED_AFTER_DAYS, mostRecentAddedDate, isEffectivelyStabilized } from '../../utils/stabilization';
 
 const SORT_DEFAULT_DIR = { keyword: 'asc', searchVolume: 'desc', rank: 'asc', addedDate: 'desc' };
 
@@ -99,8 +99,8 @@ export default function TrackerTable({
   // 등록 14일 경과(자동, 화면 정리용)뿐 아니라 사람이 범위 선택해서 수동으로 표시한
   // is_stabilized 항목도 함께 "안정화됨" 섹션으로 접어서 분리한다 — 특정 그룹 보기든
   // 전체 그룹 보기든 동일하게 적용한다.
-  const recentItems = sortedItems.filter(i => !i.is_stabilized && itemAgeDays(i, mode) < STABILIZED_AFTER_DAYS);
-  const stabilizedItems = sortedItems.filter(i => i.is_stabilized || itemAgeDays(i, mode) >= STABILIZED_AFTER_DAYS);
+  const recentItems = sortedItems.filter(i => !isEffectivelyStabilized(i, mode));
+  const stabilizedItems = sortedItems.filter(i => isEffectivelyStabilized(i, mode));
 
   const flatRows = buildFlatRows(recentItems);
   const stabilizedFlatRows = buildFlatRows(stabilizedItems);
