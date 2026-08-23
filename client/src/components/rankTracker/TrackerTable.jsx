@@ -27,7 +27,7 @@ function getSortValue(item, key) {
 
 export default function TrackerTable({
   mode, rows, groups, sortKey, sortDir, onSortChange,
-  selectedIds, onToggleSelect, onToggleSelectAll,
+  selectedIds, onToggleSelect, onSelectRange, onToggleSelectAll,
   onRowClick, onMoveItemGroup, onAddBlog, onRemoveBlog, onDeleteKeyword, onBulkDeleteSelected,
   onSetStabilizedSelected,
   onRefreshSelected, refreshingSelected,
@@ -37,6 +37,7 @@ export default function TrackerTable({
 }) {
   const [expanded, setExpanded] = useState(new Set());
   const [showStabilized, setShowStabilized] = useState(false);
+  const [lastClickedId, setLastClickedId] = useState(null);
   const toggleExpand = (id) => {
     setExpanded(prev => {
       const next = new Set(prev);
@@ -103,6 +104,28 @@ export default function TrackerTable({
 
   const flatRows = buildFlatRows(recentItems);
   const stabilizedFlatRows = buildFlatRows(stabilizedItems);
+
+  // 쉬프트+클릭 범위 선택 기준이 되는, 실제로 화면에 보이는 체크박스들의 순서.
+  // 접힌 안정화 섹션은 화면에 없으니 펼쳐져 있을 때만 범위에 포함시킨다.
+  const orderedSelectableIds = [...flatRows, ...(showStabilized ? stabilizedFlatRows : [])]
+    .filter(r => r.isFirst)
+    .map(r => r.item.id);
+
+  const handleCheckboxClick = (e, id) => {
+    if (e.shiftKey && onSelectRange && lastClickedId != null && lastClickedId !== id) {
+      e.preventDefault();
+      const from = orderedSelectableIds.indexOf(lastClickedId);
+      const to = orderedSelectableIds.indexOf(id);
+      if (from !== -1 && to !== -1) {
+        const [start, end] = from < to ? [from, to] : [to, from];
+        onSelectRange(orderedSelectableIds.slice(start, end + 1));
+        setLastClickedId(id);
+        return;
+      }
+    }
+    setLastClickedId(id);
+    onToggleSelect(id);
+  };
 
   const allSelected = rows.length > 0 && rows.every(r => selectedIds.has(r.id));
 
@@ -255,7 +278,9 @@ export default function TrackerTable({
                     <input
                       type="checkbox" className="mac-checkbox"
                       checked={selectedIds.has(item.id)}
-                      onChange={() => onToggleSelect(item.id)}
+                      onClick={(e) => handleCheckboxClick(e, item.id)}
+                      onChange={() => {}}
+                      title="Shift+클릭으로 범위 선택"
                     />
                   )}
                 </td>

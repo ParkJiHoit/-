@@ -704,6 +704,12 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItem
     });
   };
 
+  // 쉬프트+클릭 범위 선택 — 파일 탐색기/Gmail처럼, 범위 안의 항목은 이전 체크 상태와
+  // 무관하게 전부 선택 상태로 맞춘다(일부만 개별 토글하면 오히려 헷갈린다).
+  const selectRangeIds = (ids) => {
+    setSelectedIds(prev => new Set([...prev, ...ids]));
+  };
+
   const handleBulkDelete = async (ids) => {
     if (!token || !ids.length) return;
     if (!confirm(`선택한 ${ids.length}개 항목을 삭제할까요? 모든 순위 기록이 사라집니다.`)) return;
@@ -940,6 +946,7 @@ export default function RankTrackerPage({ onLoginRequest, onGoPricing, onHasItem
         onSortChange={(key, dir) => { setSortKey(key); setSortDir(dir); }}
         selectedIds={selectedIds}
         onToggleSelect={toggleSelectId}
+        onSelectRange={selectRangeIds}
         onToggleSelectAll={handleToggleSelectAll}
         onRowClick={selectItem}
         onMoveItemGroup={handleMoveItemGroup}
